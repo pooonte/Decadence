@@ -192,19 +192,21 @@
                                 </ListView.ItemTemplate>
                             </ListView>
                         </Grid>
-                        <Grid x:Name="SettingsPanel"  Background="White" RequestedTheme="Light" Visibility="Collapsed" Canvas.ZIndex="50" HorizontalAlignment="Stretch" Margin="0,0,0,0" Grid.RowSpan="2" VerticalAlignment="Stretch">
-
+                        <Grid x:Name="SettingsPanel" Background="White" Visibility="Collapsed" Canvas.ZIndex="50" HorizontalAlignment="Stretch" Margin="0,0,0,0" Grid.RowSpan="2" VerticalAlignment="Stretch">
                             <TextBlock Text="settings" Foreground="Black" FontSize="34" FontFamily="Segoe UI Light" HorizontalAlignment="Stretch" Margin="10,10,0,588" Grid.RowSpan="2" VerticalAlignment="Stretch"/>
 
-                            <Pivot x:Name="SettingsPivot" Grid.Row="1" Margin="0,56,0,0">
-                                <PivotItem Header="Library">
-                                    <Grid Margin="10">
-                                        <TextBlock Text="Update library" FontSize="20" FontFamily="Segoe UI Light" Foreground="Black" Margin="1,0,-1,20" SelectionChanged="TextBlock_SelectionChanged"/>
-                                        <TextBlock Text="При обновлении библиотеки приложение пересканирует все папки и найдет новые треки. Это может занять некоторое время." TextWrapping="Wrap" FontSize="14" Foreground="Gray" Margin="1,53,-1,-53"/>
-                                        <Button x:Name="RefreshLibraryButton" Content="Update" Click="RefreshLibraryButton_Click" Height="45" Width="120" Background="White" Foreground="Black" BorderThickness="1" BorderBrush="LightGray" FontSize="20" FontFamily="Segoe UI Light" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0,-10,10,0"/>
-                                    </Grid>
-                                </PivotItem>
-                            </Pivot>
+                            <TextBlock Text="Update library" Foreground="Black" FontSize="26" FontFamily="Segoe UI Light" Margin="10,60,188,544" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+                            <Button x:Name="RefreshLibraryButton"
+                                Content="⟳ Обновить библиотеку"
+                                Click="RefreshLibraryButton_Click"
+                                Margin="15,30,15,0"
+                                Height="45"
+                                Background="{StaticResource SurfaceBrush}"
+                                Foreground="{StaticResource TextBrush}"
+                                BorderThickness="0"
+                                FontSize="16"/>
+                            <TextBlock Text="При обновлении библиотеки приложение пересканирует все папки и найдет новые треки. Это может занять некоторое время."/>
+
                         </Grid>
                     </Grid>
                 </Grid>

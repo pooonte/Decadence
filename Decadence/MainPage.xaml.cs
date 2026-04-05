@@ -404,7 +404,7 @@ namespace Decadence
         private void SettingsButton_Click(object sender, RoutedEventArgs e)
         {
             // Заглушка
-            SettingsPanel.Visibility = Visibility.Visible;
+            System.Diagnostics.Debug.WriteLine("Settings - будет позже");
         }
 
         private void AboutButton_Click(object sender, RoutedEventArgs e)
@@ -508,58 +508,6 @@ namespace Decadence
             // Когда пользователь кликает на поисковик
             // Можно очистить текст-подсказку или выделить весь текст
             SearchBox.SelectAll(); // Выделить весь текст, если он есть
-        }
-        private async void RefreshLibraryButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (_isLoading) return;
-
-            var dialog = new Windows.UI.Popups.MessageDialog(
-                "Обновление библиотеки пересканирует все музыкальные файлы. Это может занять несколько минут. Продолжить?",
-                "Обновление библиотеки");
-
-            dialog.Commands.Add(new Windows.UI.Popups.UICommand("Да") { Id = 0 });
-            dialog.Commands.Add(new Windows.UI.Popups.UICommand("Нет") { Id = 1 });
-            dialog.DefaultCommandIndex = 0;
-            dialog.CancelCommandIndex = 1;
-
-            var result = await dialog.ShowAsync();
-            if ((int)result.Id == 0)
-                await RefreshLibraryAsync();
-        }
-        private async Task RefreshLibraryAsync()
-        {
-            try
-            {
-                _isLoading = true;
-                ShowLoadingIndicator(true);
-
-                System.Diagnostics.Debug.WriteLine("🔄 Принудительное обновление библиотеки...");
-
-                var cachedTracks = await MusicCacheService.FullScanAsync();
-                ShowTracksFromCache(cachedTracks);
-
-                var completeDialog = new Windows.UI.Popups.MessageDialog(
-                    $"Библиотека обновлена. Найдено {cachedTracks.Count} треков.", "Готово");
-                _ = completeDialog.ShowAsync();
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"❌ Ошибка обновления: {ex.Message}");
-
-                var errorDialog = new Windows.UI.Popups.MessageDialog(
-                    $"Ошибка при обновлении: {ex.Message}", "Ошибка");
-                _ = errorDialog.ShowAsync();
-            }
-            finally
-            {
-                _isLoading = false;
-                ShowLoadingIndicator(false);
-            }
-        }
-
-        private void TextBlock_SelectionChanged(object sender, RoutedEventArgs e)
-        {
-
         }
     }
 }
