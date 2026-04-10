@@ -30,11 +30,10 @@ namespace Decadence
         private TrackItem currentTrack;
 
         private DispatcherTimer _positionTimer;
-        private int _currentTrackIndex = -1;
+        private List<TrackItem> _currentPlaylist = new List<TrackItem>();
+        private int _currentPlaylistIndex = -1;
         private bool _userIsSeeking = false;
         private bool _wasPlayingBeforeSeek = false;
-
-        private List<TrackItem> _currentPlaylist = new List<TrackItem>();
         private bool _isArtistViewActive = false;
 
         private enum RepeatMode { None, One, All }
@@ -218,14 +217,26 @@ namespace Decadence
         {
             if (file == null) return;
 
-            var track = _tracks.FirstOrDefault(t => t.FilePath == file.Path);
+            var track = _currentPlaylist.FirstOrDefault(t => t.FilePath == file.Path);
+            if (track == null)
+            {
+                track = _tracks.FirstOrDefault(t => t.FilePath == file.Path);
+                if (track == null) return;
+
+                _currentPlaylist = _tracks.ToList();
+                _currentPlaylistIndex = _tracks.IndexOf(track);
+            }
+            else
+            {
+                _currentPlaylistIndex = _currentPlaylist.IndexOf(track);
+            }
+
             currentTrack = track;
-            if (track == null) return;
-
-            _currentTrackIndex = _tracks.IndexOf(track);
-            track.File = file;
-
             MediaPlayerSingleton.PlayFile(file);
+
+            // ===== ОБНОВЛЯЕМ UI =====
+            FullTrackTitle.Text = track.Title;
+            FullTrackArtist.Text = track.Artist;
 
             ProgressSlider.Value = 0;
             CurrentTimeText.Text = "0:00";
@@ -233,9 +244,6 @@ namespace Decadence
 
             var saved = ApplicationData.Current.LocalSettings.Values["SavedVolume"];
             MediaPlayerSingleton.Player.Volume = saved is double v ? v : 1.0;
-
-            FullTrackTitle.Text = track.Title;
-            FullTrackArtist.Text = track.Artist;
 
             try
             {
@@ -254,6 +262,8 @@ namespace Decadence
 
             if (_positionTimer == null)
                 StartPositionTimer();
+            else
+                _positionTimer.Start();
         }
         private void Player_MediaEnded(Windows.Media.Playback.MediaPlayer sender, object args)
         {
@@ -305,54 +315,32 @@ namespace Decadence
         }
         private async Task PlayNextTrack()
         {
-            System.Diagnostics.Debug.WriteLine($"PlayNextTrack. RepeatMode: {_repeatMode}, CurrentIndex: {_currentTrackIndex}");
+            if (_currentPlaylist.Count == 0) return;
 
-            // Режим повтора одного трека
             if (_repeatMode == RepeatMode.One)
             {
-                if (_currentTrackIndex >= 0 && _currentTrackIndex < _tracks.Count)
-                {
-                    var currentFile = _tracks[_currentTrackIndex].FilePath;
-                    var trackFile = StorageFile.GetFileFromPathAsync(currentFile).AsTask().Result;
-                    PlayTrack(trackFile);
-                }
+                var trackFile = await StorageFile.GetFileFromPathAsync(currentTrack.FilePath);
+                await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () => PlayTrack(trackFile));
                 return;
             }
 
-            // Определяем, откуда брать следующий трек
-            List<TrackItem> sourceList = _currentPlaylist.Count > 0
-                ? _currentPlaylist.ToList()
-                : _tracks.ToList();
+            int nextIndex = _currentPlaylistIndex + 1;
 
-            if (sourceList.Count == 0) return;
-
-            // Находим индекс текущего трека в источнике
-            int currentSourceIndex = sourceList.FindIndex(t => t.FilePath == _tracks[_currentTrackIndex]?.FilePath);
-            if (currentSourceIndex < 0) currentSourceIndex = 0;
-
-            // Вычисляем следующий индекс
-            int nextIndex = currentSourceIndex + 1;
-
-            // Если дошли до конца
-            if (nextIndex >= sourceList.Count)
+            if (nextIndex >= _currentPlaylist.Count)
             {
                 if (_repeatMode == RepeatMode.None)
                 {
                     MediaPlayerSingleton.Player.Pause();
-                    System.Diagnostics.Debug.WriteLine("Конец списка, повтор выключен - остановка");
                     return;
                 }
-
-                if (_repeatMode == RepeatMode.All)
+                else if (_repeatMode == RepeatMode.All)
                 {
                     nextIndex = 0;
-                    System.Diagnostics.Debug.WriteLine("Конец списка, повтор включен - начало с начала");
                 }
             }
 
-            // Воспроизводим следующий трек
-            var nextTrack = sourceList[nextIndex];
-            var nextFile = StorageFile.GetFileFromPathAsync(nextTrack.FilePath).AsTask().Result;
+            var nextTrack = _currentPlaylist[nextIndex];
+            var nextFile = await StorageFile.GetFileFromPathAsync(nextTrack.FilePath);
             await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () => PlayTrack(nextFile));
         }
 
@@ -364,78 +352,56 @@ namespace Decadence
 
         private void PrevButton_Click(object sender, RoutedEventArgs e)
         {
-            if (_currentPlaylist.Count == 0)
-            {
-                if (_tracks.Count == 0) return;
-                _currentTrackIndex = Math.Max(0, _currentTrackIndex - 1);
-                var track = _tracks[_currentTrackIndex];
-                try
-                {
-                    var file = StorageFile.GetFileFromPathAsync(track.FilePath).AsTask().Result;
-                    PlayTrack(file);
-                }
-                catch { }
-                return;
-            }
-
-            int currentIndex = _currentPlaylist.FindIndex(t => t.FilePath == _tracks[_currentTrackIndex]?.FilePath);
-            if (currentIndex < 0) currentIndex = 0;
-
-            int prevIndex = (currentIndex - 1 + _currentPlaylist.Count) % _currentPlaylist.Count;
-            var prevTrack = _currentPlaylist[prevIndex];
-
-            try
-            {
-                var file = StorageFile.GetFileFromPathAsync(prevTrack.FilePath).AsTask().Result;
-                PlayTrack(file);
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"❌ Ошибка PrevButton: {ex.Message}");
-            }
+            if (_currentPlaylist.Count == 0) return;
 
             if (_repeatMode == RepeatMode.One)
             {
                 var session = MediaPlayerSingleton.Player.PlaybackSession;
-                if (session.Position.TotalSeconds > 3)
+                if (session != null && session.Position.TotalSeconds > 3)
                 {
                     session.Position = TimeSpan.Zero;
                     return;
                 }
             }
+
+            int prevIndex = _currentPlaylistIndex - 1;
+            if (prevIndex < 0)
+            {
+                if (_repeatMode == RepeatMode.All)
+                {
+                    prevIndex = _currentPlaylist.Count - 1;
+                }
+                else
+                {
+                    return;
+                }
+            }
+
+            var prevTrack = _currentPlaylist[prevIndex];
+            var file = StorageFile.GetFileFromPathAsync(prevTrack.FilePath).AsTask().Result;
+            PlayTrack(file);
         }
 
         private void NextButton_Click(object sender, RoutedEventArgs e)
         {
-            if (_currentPlaylist.Count == 0)
+            if (_currentPlaylist.Count == 0) return;
+
+            int nextIndex = _currentPlaylistIndex + 1;
+            if (nextIndex >= _currentPlaylist.Count)
             {
-                if (_tracks.Count == 0) return;
-                _currentTrackIndex = Math.Min(_tracks.Count - 1, _currentTrackIndex + 1);
-                var track = _tracks[_currentTrackIndex];
-                try
+                if (_repeatMode == RepeatMode.All)
                 {
-                    var file = StorageFile.GetFileFromPathAsync(track.FilePath).AsTask().Result;
-                    PlayTrack(file);
+                    nextIndex = 0;
                 }
-                catch { }
-                return;
+                else
+                {
+                    return;
+                }
             }
 
-            int currentIndex = _currentPlaylist.FindIndex(t => t.FilePath == _tracks[_currentTrackIndex]?.FilePath);
-            if (currentIndex < 0) currentIndex = 0;
-
-            int nextIndex = (currentIndex + 1) % _currentPlaylist.Count;
             var nextTrack = _currentPlaylist[nextIndex];
-
-            try
-            {
-                var file = StorageFile.GetFileFromPathAsync(nextTrack.FilePath).AsTask().Result;
-                PlayTrack(file);
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"❌ Ошибка NextButton: {ex.Message}");
-            }
+            var file = StorageFile.GetFileFromPathAsync(nextTrack.FilePath).AsTask().Result;
+            PlayTrack(file);
         }
 
         private async void ProgressSlider_ManipulationCompleted(object sender, Windows.UI.Xaml.Input.ManipulationCompletedRoutedEventArgs e)
@@ -448,7 +414,7 @@ namespace Decadence
 
             if (remainingTime < 2 && ProgressSlider.Value > 0)
             {
-                await Task.Run(() => PlayNextTrack());
+                await PlayNextTrack();
             }
             else
             {
@@ -517,52 +483,51 @@ namespace Decadence
             TracksPanel.Visibility = Visibility.Collapsed;
         }
 
+        // Из TracksPanel
         private async void Track_ItemClick(object sender, ItemClickEventArgs e)
         {
             if (e.ClickedItem is TrackItem track)
             {
-                try
-                {
-                    MainPivot.SelectedIndex = 0;
+                // Создаем плейлист из всех треков
+                _currentPlaylist = _tracks.ToList();
+                _currentPlaylistIndex = _tracks.IndexOf(track);
 
-                    ClosePanel_Click(null, null);
+                var file = await StorageFile.GetFileFromPathAsync(track.FilePath);
+                PlayTrack(file);
 
-                    var file = await StorageFile.GetFileFromPathAsync(track.FilePath);
+                MainPivot.SelectedIndex = 0;
+                TracksPanel.Visibility = Visibility.Collapsed;
+            }
+        }
 
-                    FullTrackTitle.Text = track.Title;
-                    FullTrackArtist.Text = track.Artist;
+        // Из Search
+        private async void SearchResult_ItemClick(object sender, ItemClickEventArgs e)
+        {
+            if (e.ClickedItem is TrackItem track)
+            {
+                _currentPlaylist = _tracks.ToList();
+                _currentPlaylistIndex = _tracks.IndexOf(track);
 
-                    MediaPlayerSingleton.PlayFile(file);
+                var file = await StorageFile.GetFileFromPathAsync(track.FilePath);
+                PlayTrack(file);
 
-                    try
-                    {
-                        var thumb = await file.GetThumbnailAsync(
-                            Windows.Storage.FileProperties.ThumbnailMode.MusicView, 256);
-                        if (thumb != null && thumb.Size > 0)
-                        {
-                            var bitmap = new BitmapImage();
-                            await bitmap.SetSourceAsync(thumb);
-                            FullAlbumArt.Source = bitmap;
-                        }
-                    }
-                    catch { }
+                MainPivot.SelectedIndex = 0;
+                SearchPanel.Visibility = Visibility.Collapsed;
+            }
+        }
 
-                    ProgressSlider.Value = 0;
-                    CurrentTimeText.Text = "0:00";
+        // Из Artist
+        private async void ArtistSong_ItemClick(object sender, ItemClickEventArgs e)
+        {
+            if (e.ClickedItem is TrackItem track)
+            {
+                // Плейлист уже создан в Artist_ItemClick
+                _currentPlaylistIndex = _currentPlaylist.IndexOf(track);
 
-                    MediaPlayerSingleton.PlayFile(file);
+                var file = await StorageFile.GetFileFromPathAsync(track.FilePath);
+                PlayTrack(file);
 
-                    if (_positionTimer == null)
-                        StartPositionTimer();
-                    else
-                        _positionTimer.Start();
-
-                    UpdatePlayButtonState();
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"Ошибка: {ex.Message}");
-                }
+                MainPivot.SelectedIndex = 0;
             }
         }
         private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
@@ -638,26 +603,6 @@ namespace Decadence
             SearchBox.SelectAll();
         }
 
-        private async void SearchResult_ItemClick(object sender, ItemClickEventArgs e)
-        {
-            if (e.ClickedItem is TrackItem track)
-            {
-                try
-                {
-                    var file = await StorageFile.GetFileFromPathAsync(track.FilePath);
-                    MainPivot.SelectedIndex = 0;
-                    SearchPanel.Visibility = Visibility.Collapsed;
-                    _currentPlaylist = new List<TrackItem> { track };
-                    _isArtistViewActive = false;
-                    PlayTrack(file);
-                }
-                catch
-                {
-                    _tracks.Remove(track);
-                    SearchBox_TextChanged(null, null);
-                }
-            }
-        }
         private async void RefreshLibraryButton_Click(object sender, RoutedEventArgs e)
         {
             if (_isLoading) return;
@@ -715,6 +660,14 @@ namespace Decadence
         {
             if (e.ClickedItem is ArtistItem artist)
             {
+                _currentPlaylist = _tracks
+                    .Where(t => t.Artist == artist.Name)
+                    .OrderBy(t => t.Album)
+                    .ThenBy(t => t.Title)
+                    .ToList();
+
+                _currentPlaylistIndex = 0;
+
                 var artistTracks = _tracks
                     .Where(t => t.Artist == artist.Name)
                     .OrderBy(t => t.Album)
@@ -762,29 +715,6 @@ namespace Decadence
             );
             await dialog.ShowAsync();
         }
-        private async void ArtistSong_ItemClick(object sender, ItemClickEventArgs e)
-        {
-            if (e.ClickedItem is TrackItem track)
-            {
-                try
-                {
-                    MainPivot.SelectedIndex = 0;
-
-                    var file = await StorageFile.GetFileFromPathAsync(track.FilePath);
-
-                    int index = _currentPlaylist.IndexOf(track);
-                    if (index >= 0)
-                    {
-                        _currentTrackIndex = index;
-                        PlayTrack(file);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"❌ Ошибка: {ex.Message}");
-                }
-            }
-        }
         private void BackToArtistsButton_Click(object sender, RoutedEventArgs e)
         {
             ArtistsList.Visibility = Visibility.Visible;
@@ -811,6 +741,7 @@ namespace Decadence
                     RepeatButtonImage.Source = new BitmapImage(new Uri("ms-appx:///Assets/repeat_none.png"));
                     break;
             }
+            System.Diagnostics.Debug.WriteLine($"RepeatMode изменен на: {_repeatMode}");
         }
     }
 }
