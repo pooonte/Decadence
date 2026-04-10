@@ -144,10 +144,16 @@
     <PRIResource Include="Strings\ru-RU\Resources.resw" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Assets\intelligence.png" />
     <Content Include="Assets\next.png" />
+    <Content Include="Assets\pause.png" />
+    <Content Include="Assets\more.png" />
+    <Content Include="Assets\play.png" />
     <Content Include="Assets\prev.png" />
-    <Content Include="Assets\Quotes\en-EN\quotes.txt" />
-    <Content Include="Assets\Quotes\ru-RU\quotes.txt" />
+    <Content Include="Assets\bar.png" />
+    <Content Include="Assets\repeat_all.png" />
+    <Content Include="Assets\repeat_none.png" />
+    <Content Include="Assets\repeat_one.png" />
     <Content Include="Assets\white_bg.png" />
     <Content Include="Assets\dark_bg.png" />
     <Content Include="Properties\Default.rd.xml" />
@@ -158,7 +164,6 @@
     <Content Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png" />
     <Content Include="Assets\StoreLogo.png" />
     <Content Include="Assets\Wide310x150Logo.scale-200.png" />
-    <Content Include="README.txt" />
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml">

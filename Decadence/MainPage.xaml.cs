@@ -7,12 +7,14 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using Windows.Storage;
+using Windows.UI.Core;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Media.Animation;
 using Windows.UI.Xaml.Media.Imaging;
+using Windows.UI.Xaml.Navigation;
 
 namespace Decadence
 {
@@ -25,6 +27,8 @@ namespace Decadence
         private bool _isLoading = false;
         private bool _isInitialized = false;
 
+        private TrackItem currentTrack;
+
         private DispatcherTimer _positionTimer;
         private int _currentTrackIndex = -1;
         private bool _userIsSeeking = false;
@@ -32,13 +36,65 @@ namespace Decadence
 
         private List<TrackItem> _currentPlaylist = new List<TrackItem>();
         private bool _isArtistViewActive = false;
+
+        private enum RepeatMode { None, One, All }
+        private RepeatMode _repeatMode = RepeatMode.None;
+
         public MainPage()
         {
             this.InitializeComponent();
 
             _ = InitializeLibraryAsync();
+
+            SystemNavigationManager.GetForCurrentView().BackRequested += OnBackRequested;
+            Window.Current.CoreWindow.KeyDown += OnKeyDown;
+            MediaPlayerSingleton.Player.MediaEnded += Player_MediaEnded;
+        }
+        private void OnBackRequested(object sender, BackRequestedEventArgs e)
+        {
+            if (CloseAnyOpenPanel())
+            {
+                e.Handled = true; // Закрыли панель, приложение не закрываем
+            }
+            else
+            {
+                e.Handled = false; // Панелей нет, можно закрыть приложение
+            }
         }
 
+        private void OnKeyDown(CoreWindow sender, KeyEventArgs args)
+        {
+            if (args.VirtualKey == Windows.System.VirtualKey.Escape)
+            {
+                CloseAnyOpenPanel();
+                args.Handled = true;
+            }
+        }
+        private bool CloseAnyOpenPanel()
+        {
+            bool anyPanelClosed = false;
+
+            if (SettingsPanel.Visibility == Visibility.Visible)
+            {
+                SettingsPanel.Visibility = Visibility.Collapsed;
+                anyPanelClosed = true;
+            }
+
+            if (TracksPanel.Visibility == Visibility.Visible)
+            {
+                TracksPanel.Visibility = Visibility.Collapsed;
+                anyPanelClosed = true;
+            }
+
+            //нужно добавлять панели сюда
+            return anyPanelClosed;
+        }
+        protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)
+        {
+            SystemNavigationManager.GetForCurrentView().BackRequested -= OnBackRequested;
+            Window.Current.CoreWindow.KeyDown -= OnKeyDown;
+            base.OnNavigatingFrom(e);
+        }
         private async Task InitializeLibraryAsync()
         {
             if (_isLoading) return;
@@ -152,7 +208,7 @@ namespace Decadence
             }
 
             TracksList.ItemsSource = _tracks;
-            //ArtistsList.ItemsSource = _artists;
+            ArtistsList.ItemsSource = _artists;
             //AlbumsList.ItemsSource = _albums;
 
             System.Diagnostics.Debug.WriteLine($"📊 Показано: {_tracks.Count} треков, {_artists.Count} исполнителей, {_albums.Count} альбомов");
@@ -163,6 +219,7 @@ namespace Decadence
             if (file == null) return;
 
             var track = _tracks.FirstOrDefault(t => t.FilePath == file.Path);
+            currentTrack = track;
             if (track == null) return;
 
             _currentTrackIndex = _tracks.IndexOf(track);
@@ -246,39 +303,57 @@ namespace Decadence
             };
             _positionTimer.Start();
         }
-        private void PlayNextTrack()
+        private async Task PlayNextTrack()
         {
-            if (_currentPlaylist.Count == 0 || _currentTrackIndex < 0)
+            System.Diagnostics.Debug.WriteLine($"PlayNextTrack. RepeatMode: {_repeatMode}, CurrentIndex: {_currentTrackIndex}");
+
+            // Режим повтора одного трека
+            if (_repeatMode == RepeatMode.One)
             {
-                if (_tracks.Count == 0) return;
-
-                int globalNextIndex = (_currentTrackIndex + 1) % _tracks.Count;
-                var globalNextTrack = _tracks[globalNextIndex];
-
-                try
+                if (_currentTrackIndex >= 0 && _currentTrackIndex < _tracks.Count)
                 {
-                    var file = StorageFile.GetFileFromPathAsync(globalNextTrack.FilePath).AsTask().Result;
-                    PlayTrack(file);
+                    var currentFile = _tracks[_currentTrackIndex].FilePath;
+                    var trackFile = StorageFile.GetFileFromPathAsync(currentFile).AsTask().Result;
+                    PlayTrack(trackFile);
                 }
-                catch { }
                 return;
             }
 
-            int currentIndex = _currentPlaylist.FindIndex(t => t.FilePath == _tracks[_currentTrackIndex]?.FilePath);
-            if (currentIndex < 0) currentIndex = 0;
+            // Определяем, откуда брать следующий трек
+            List<TrackItem> sourceList = _currentPlaylist.Count > 0
+                ? _currentPlaylist.ToList()
+                : _tracks.ToList();
 
-            int playlistNextIndex = (currentIndex + 1) % _currentPlaylist.Count;
-            var playlistNextTrack = _currentPlaylist[playlistNextIndex];
+            if (sourceList.Count == 0) return;
 
-            try
+            // Находим индекс текущего трека в источнике
+            int currentSourceIndex = sourceList.FindIndex(t => t.FilePath == _tracks[_currentTrackIndex]?.FilePath);
+            if (currentSourceIndex < 0) currentSourceIndex = 0;
+
+            // Вычисляем следующий индекс
+            int nextIndex = currentSourceIndex + 1;
+
+            // Если дошли до конца
+            if (nextIndex >= sourceList.Count)
             {
-                var file = StorageFile.GetFileFromPathAsync(playlistNextTrack.FilePath).AsTask().Result;
-                PlayTrack(file);
+                if (_repeatMode == RepeatMode.None)
+                {
+                    MediaPlayerSingleton.Player.Pause();
+                    System.Diagnostics.Debug.WriteLine("Конец списка, повтор выключен - остановка");
+                    return;
+                }
+
+                if (_repeatMode == RepeatMode.All)
+                {
+                    nextIndex = 0;
+                    System.Diagnostics.Debug.WriteLine("Конец списка, повтор включен - начало с начала");
+                }
             }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"❌ Error: {ex.Message}");
-            }
+
+            // Воспроизводим следующий трек
+            var nextTrack = sourceList[nextIndex];
+            var nextFile = StorageFile.GetFileFromPathAsync(nextTrack.FilePath).AsTask().Result;
+            await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () => PlayTrack(nextFile));
         }
 
         private void PlayPauseButton_Click(object sender, RoutedEventArgs e)
@@ -317,6 +392,16 @@ namespace Decadence
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"❌ Ошибка PrevButton: {ex.Message}");
+            }
+
+            if (_repeatMode == RepeatMode.One)
+            {
+                var session = MediaPlayerSingleton.Player.PlaybackSession;
+                if (session.Position.TotalSeconds > 3)
+                {
+                    session.Position = TimeSpan.Zero;
+                    return;
+                }
             }
         }
 
@@ -380,7 +465,7 @@ namespace Decadence
         private void ArtistsButton_Click(object sender, RoutedEventArgs e)
         {
             // Заглушка
-            System.Diagnostics.Debug.WriteLine("Artists - будет позже");
+            ArtistsPanel.Visibility = Visibility.Visible;
         }
 
         private void AlbumsButton_Click(object sender, RoutedEventArgs e)
@@ -397,13 +482,11 @@ namespace Decadence
 
         private void GenresButton_Click(object sender, RoutedEventArgs e)
         {
-            // Заглушка
             System.Diagnostics.Debug.WriteLine("Genres - будет позже");
         }
 
         private void SettingsButton_Click(object sender, RoutedEventArgs e)
         {
-            // Заглушка
             SettingsPanel.Visibility = Visibility.Visible;
         }
 
@@ -440,11 +523,41 @@ namespace Decadence
             {
                 try
                 {
+                    MainPivot.SelectedIndex = 0;
+
+                    ClosePanel_Click(null, null);
+
                     var file = await StorageFile.GetFileFromPathAsync(track.FilePath);
+
+                    FullTrackTitle.Text = track.Title;
+                    FullTrackArtist.Text = track.Artist;
+
                     MediaPlayerSingleton.PlayFile(file);
 
-                    // Закрываем панель после выбора трека
-                    ClosePanel_Click(null, null);
+                    try
+                    {
+                        var thumb = await file.GetThumbnailAsync(
+                            Windows.Storage.FileProperties.ThumbnailMode.MusicView, 256);
+                        if (thumb != null && thumb.Size > 0)
+                        {
+                            var bitmap = new BitmapImage();
+                            await bitmap.SetSourceAsync(thumb);
+                            FullAlbumArt.Source = bitmap;
+                        }
+                    }
+                    catch { }
+
+                    ProgressSlider.Value = 0;
+                    CurrentTimeText.Text = "0:00";
+
+                    MediaPlayerSingleton.PlayFile(file);
+
+                    if (_positionTimer == null)
+                        StartPositionTimer();
+                    else
+                        _positionTimer.Start();
+
+                    UpdatePlayButtonState();
                 }
                 catch (Exception ex)
                 {
@@ -458,31 +571,71 @@ namespace Decadence
 
             if (string.IsNullOrWhiteSpace(searchText))
             {
-                SearchResultsList.Visibility = Visibility.Collapsed;
-                EmptyStatePanel.Visibility = Visibility.Visible;
-                return;
-            }
-
-            var results = _tracks.Where(t =>
-                (t.Title?.ToLower().Contains(searchText) ?? false) ||
-                (t.Artist?.ToLower().Contains(searchText) ?? false) ||
-                (t.Album?.ToLower().Contains(searchText) ?? false)
-            ).ToList();
-
-            if (results.Any())
-            {
-                SearchResultsList.ItemsSource = results;
-                SearchResultsList.Visibility = Visibility.Visible;
-                EmptyStatePanel.Visibility = Visibility.Collapsed;
+                // Нет текста - скрываем панель
+                SearchPanel.Visibility = Visibility.Collapsed;
             }
             else
             {
+                // Есть текст - показываем панель
+                SearchPanel.Visibility = Visibility.Visible;
+
+                // Ищем результаты
+                var results = _tracks.Where(t =>
+                    (t.Title?.ToLower().Contains(searchText) ?? false) ||
+                    (t.Artist?.ToLower().Contains(searchText) ?? false) ||
+                    (t.Album?.ToLower().Contains(searchText) ?? false)
+                ).ToList();
+
+                if (results.Any())
+                {
+                    SearchResultsList.ItemsSource = results;
+                    SearchResultsList.Visibility = Visibility.Visible;
+                    EmptyStatePanel.Visibility = Visibility.Collapsed;
+                }
+                else
+                {
+                    SearchResultsList.Visibility = Visibility.Collapsed;
+                    EmptyStatePanel.Visibility = Visibility.Visible;
+                }
+            }
+        }
+
+        // При получении фокуса - показываем панель (если есть текст)
+        private void SearchBox_GotFocus(object sender, RoutedEventArgs e)
+        {
+            // Открываем панель при клике
+            SearchPanel.Visibility = Visibility.Visible;
+
+            // Если текст есть, показываем результаты
+            if (!string.IsNullOrWhiteSpace(SearchBox.Text))
+            {
+                string searchText = SearchBox.Text.ToLower().Trim();
+                var results = _tracks.Where(t =>
+                    (t.Title?.ToLower().Contains(searchText) ?? false) ||
+                    (t.Artist?.ToLower().Contains(searchText) ?? false) ||
+                    (t.Album?.ToLower().Contains(searchText) ?? false)
+                ).ToList();
+
+                if (results.Any())
+                {
+                    SearchResultsList.ItemsSource = results;
+                    SearchResultsList.Visibility = Visibility.Visible;
+                    EmptyStatePanel.Visibility = Visibility.Collapsed;
+                }
+                else
+                {
+                    SearchResultsList.Visibility = Visibility.Collapsed;
+                    EmptyStatePanel.Visibility = Visibility.Visible;
+                }
+            }
+            else
+            {
+                // Текст пустой - показываем пустое состояние
                 SearchResultsList.Visibility = Visibility.Collapsed;
                 EmptyStatePanel.Visibility = Visibility.Visible;
-
-                if (EmptyStatePanel.Children[1] is TextBlock emptyText)
-                    emptyText.Text = "Ничего не найдено";
             }
+
+            SearchBox.SelectAll();
         }
 
         private async void SearchResult_ItemClick(object sender, ItemClickEventArgs e)
@@ -492,6 +645,8 @@ namespace Decadence
                 try
                 {
                     var file = await StorageFile.GetFileFromPathAsync(track.FilePath);
+                    MainPivot.SelectedIndex = 0;
+                    SearchPanel.Visibility = Visibility.Collapsed;
                     _currentPlaylist = new List<TrackItem> { track };
                     _isArtistViewActive = false;
                     PlayTrack(file);
@@ -502,12 +657,6 @@ namespace Decadence
                     SearchBox_TextChanged(null, null);
                 }
             }
-        }
-        private void SearchBox_GotFocus(object sender, RoutedEventArgs e)
-        {
-            // Когда пользователь кликает на поисковик
-            // Можно очистить текст-подсказку или выделить весь текст
-            SearchBox.SelectAll(); // Выделить весь текст, если он есть
         }
         private async void RefreshLibraryButton_Click(object sender, RoutedEventArgs e)
         {
@@ -560,6 +709,108 @@ namespace Decadence
         private void TextBlock_SelectionChanged(object sender, RoutedEventArgs e)
         {
 
+        }
+
+        private void Artist_ItemClick(object sender, ItemClickEventArgs e)
+        {
+            if (e.ClickedItem is ArtistItem artist)
+            {
+                var artistTracks = _tracks
+                    .Where(t => t.Artist == artist.Name)
+                    .OrderBy(t => t.Album)
+                    .ThenBy(t => t.Title)
+                    .ToList();
+
+                int trackNumber = 1;
+                foreach (var track in artistTracks)
+                {
+                    track.TrackNumber = trackNumber++;
+                }
+
+                _currentPlaylist = artistTracks;
+                _isArtistViewActive = true;
+
+                SelectedArtistName.Text = artist.Name;
+                ArtistSongsList.ItemsSource = artistTracks;
+
+                ArtistsList.Visibility = Visibility.Collapsed;
+                ArtistSongsPanel.Visibility = Visibility.Visible;
+            }
+        }
+        private async void TrackInfo_Click(object sender, RoutedEventArgs e)
+        {
+            if (currentTrack == null) return;
+
+            var dialog = new Windows.UI.Popups.MessageDialog(
+                $"Название: {currentTrack.Title}\n" +
+                $"Исполнитель: {currentTrack.Artist}\n" +
+                $"Альбом: {currentTrack.Album}\n" +
+                $"Длительность: {currentTrack.Duration.ToString(@"mm\:ss")}\n" +
+                $"Путь: {currentTrack.FilePath}",
+                "Информация о треке"
+            );
+
+            await dialog.ShowAsync();
+        }
+
+        // Добавить в плейлист (пока заглушка)
+        private async void AddToPlaylist_Click(object sender, RoutedEventArgs e)
+        {
+            var dialog = new Windows.UI.Popups.MessageDialog(
+                "Эта функция будет доступна в следующей версии",
+                "Добавление в плейлист"
+            );
+            await dialog.ShowAsync();
+        }
+        private async void ArtistSong_ItemClick(object sender, ItemClickEventArgs e)
+        {
+            if (e.ClickedItem is TrackItem track)
+            {
+                try
+                {
+                    MainPivot.SelectedIndex = 0;
+
+                    var file = await StorageFile.GetFileFromPathAsync(track.FilePath);
+
+                    int index = _currentPlaylist.IndexOf(track);
+                    if (index >= 0)
+                    {
+                        _currentTrackIndex = index;
+                        PlayTrack(file);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"❌ Ошибка: {ex.Message}");
+                }
+            }
+        }
+        private void BackToArtistsButton_Click(object sender, RoutedEventArgs e)
+        {
+            ArtistsList.Visibility = Visibility.Visible;
+            ArtistSongsPanel.Visibility = Visibility.Collapsed;
+
+            _currentPlaylist = _tracks.ToList();
+            _isArtistViewActive = false;
+        }
+        private void RepeatButton_Click(object sender, RoutedEventArgs e)
+        {
+            // Переключение режимов: None -> One -> All -> None
+            switch (_repeatMode)
+            {
+                case RepeatMode.None:
+                    _repeatMode = RepeatMode.One;
+                    RepeatButtonImage.Source = new BitmapImage(new Uri("ms-appx:///Assets/repeat_one.png"));
+                    break;
+                case RepeatMode.One:
+                    _repeatMode = RepeatMode.All;
+                    RepeatButtonImage.Source = new BitmapImage(new Uri("ms-appx:///Assets/repeat_all.png"));
+                    break;
+                case RepeatMode.All:
+                    _repeatMode = RepeatMode.None;
+                    RepeatButtonImage.Source = new BitmapImage(new Uri("ms-appx:///Assets/repeat_none.png"));
+                    break;
+            }
         }
     }
 }
