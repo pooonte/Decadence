@@ -61,19 +61,6 @@ namespace Decadence
                 // Устанавливаем минимальный размер (окно нельзя будет сделать меньше 360x640)
                 view.SetPreferredMinSize(new Size(360, 640));
 
-                // Пытаемся установить точный размер окна
-                view.TryResizeView(new Size(360, 640));
-
-                // Для имитации "неизменяемого" размера - подписываемся на событие
-                view.VisibleBoundsChanged += (sender, args) =>
-                {
-                    var currentView = ApplicationView.GetForCurrentView();
-                    if (currentView.VisibleBounds.Width != 360 || currentView.VisibleBounds.Height != 640)
-                    {
-                        currentView.TryResizeView(new Size(360, 640));
-                    }
-                };
-
                 Window.Current.Activate();
             }
         }

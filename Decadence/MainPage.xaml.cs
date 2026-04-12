@@ -39,6 +39,11 @@ namespace Decadence
         private enum RepeatMode { None, One, All }
         private RepeatMode _repeatMode = RepeatMode.None;
 
+        private List<string> _phrases = new List<string>();
+        private Random _random = new Random();
+
+        private BitmapImage _playIcon;
+        private BitmapImage _pauseIcon;
         public MainPage()
         {
             this.InitializeComponent();
@@ -48,6 +53,14 @@ namespace Decadence
             SystemNavigationManager.GetForCurrentView().BackRequested += OnBackRequested;
             Window.Current.CoreWindow.KeyDown += OnKeyDown;
             MediaPlayerSingleton.Player.MediaEnded += Player_MediaEnded;
+
+            // 🔹 Загружаем иконки ОДИН раз при старте
+            _playIcon = new BitmapImage(new Uri("ms-appx:///Assets/play.png"));
+            _pauseIcon = new BitmapImage(new Uri("ms-appx:///Assets/pause.png"));
+
+            // Устанавливаем начальную иконку
+            if (FullPlayPauseIcon != null)
+                FullPlayPauseIcon.Source = _playIcon;
         }
         private void OnBackRequested(object sender, BackRequestedEventArgs e)
         {
@@ -85,6 +98,11 @@ namespace Decadence
                 anyPanelClosed = true;
             }
 
+            if (ArtistsPanel.Visibility == Visibility.Visible)
+            {
+                ArtistsPanel.Visibility = Visibility.Collapsed;
+                anyPanelClosed = true;
+            }
             //нужно добавлять панели сюда
             return anyPanelClosed;
         }
@@ -282,12 +300,12 @@ namespace Decadence
 
         private void UpdatePlayButtonState()
         {
-            // Обновляем кнопку в полноэкранном плеере (Image)
-            if (FullPlayPauseIcon is Image fullImage)
+            // 🔹 Просто меняем ссылку на УЖЕ загруженную иконку
+            if (FullPlayPauseIcon != null)
             {
-                string iconName = MediaPlayerSingleton.IsPlaying ? "pause.png" : "play.png";
-                var source = new BitmapImage(new Uri($"ms-appx:///Assets/{iconName}"));
-                fullImage.Source = source;
+                FullPlayPauseIcon.Source = MediaPlayerSingleton.IsPlaying
+                    ? _pauseIcon   // Используем предзагруженную
+                    : _playIcon;   // Используем предзагруженную
             }
         }
         private string FormatTime(TimeSpan t) => $"{(int)t.TotalMinutes}:{t.Seconds:D2}";
@@ -437,7 +455,7 @@ namespace Decadence
         private void AlbumsButton_Click(object sender, RoutedEventArgs e)
         {
             // Заглушка
-            System.Diagnostics.Debug.WriteLine("Albums - будет позже");
+            AlbumsPanel.Visibility = Visibility.Visible;
         }
 
         private void PlaylistsButton_Click(object sender, RoutedEventArgs e)
@@ -521,13 +539,13 @@ namespace Decadence
         {
             if (e.ClickedItem is TrackItem track)
             {
-                // Плейлист уже создан в Artist_ItemClick
                 _currentPlaylistIndex = _currentPlaylist.IndexOf(track);
 
                 var file = await StorageFile.GetFileFromPathAsync(track.FilePath);
                 PlayTrack(file);
 
                 MainPivot.SelectedIndex = 0;
+                ArtistsPanel.Visibility = Visibility.Collapsed;
             }
         }
         private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
@@ -742,6 +760,67 @@ namespace Decadence
                     break;
             }
             System.Diagnostics.Debug.WriteLine($"RepeatMode изменен на: {_repeatMode}");
+        }
+
+        private void Album_ItemClick(object sender, ItemClickEventArgs e)
+        {
+            if (e.ClickedItem is AlbumItem album)
+            {
+                var albumTracks = _tracks
+                    .Where(t => t.Album == album.Name)
+                    .OrderBy(t => t.Title)
+                    .ToList();
+
+                int trackNumber = 1;
+                foreach (var track in albumTracks)
+                {
+                    track.TrackNumber = trackNumber++;
+                }
+
+                _currentPlaylist = albumTracks;
+                _currentPlaylistIndex = 0;  // <-- добавь эту строку
+
+                //SelectedAlbumName.Text = album.Name;
+                AlbumSongsList.ItemsSource = albumTracks;
+
+                AlbumsList.Visibility = Visibility.Collapsed;
+                AlbumSongsPanel.Visibility = Visibility.Visible;
+            }
+        }
+
+        private async void AlbumSong_ItemClick(object sender, ItemClickEventArgs e)
+        {
+            if (e.ClickedItem is TrackItem track)
+            {
+                try
+                {
+                    var file = await StorageFile.GetFileFromPathAsync(track.FilePath);
+
+                    int index = _currentPlaylist.IndexOf(track);
+                    if (index >= 0)
+                    {
+                        _currentPlaylistIndex = index;  // <-- замени _currentTrackIndex на _currentPlaylistIndex
+                        PlayTrack(file);
+                    }
+
+                    // Переключиться на FullPlayer и закрыть панель
+                    MainPivot.SelectedIndex = 0;
+                    AlbumsPanel.Visibility = Visibility.Collapsed;
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"❌ Ошибка: {ex.Message}");
+                }
+            }
+        }
+
+        private void BackToAlbumsButton_Click(object sender, RoutedEventArgs e)
+        {
+            AlbumsList.Visibility = Visibility.Visible;
+            AlbumSongsPanel.Visibility = Visibility.Collapsed;
+
+            _currentPlaylist = _tracks.ToList();
+            _currentPlaylistIndex = -1;  // <-- добавь
         }
     }
 }

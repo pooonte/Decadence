@@ -28,6 +28,7 @@ namespace Decadence.Models
         public TimeSpan Duration { get; set; }
 
         public int TrackNumber { get; set; }
+        public string Genre { get; set; }
         public string DurationString => $"{(int)Duration.TotalMinutes}:{Duration.Seconds:D2}";
         // ДЛЯ АЛФАВИТНОЙ НАВИГАЦИИ - ПЕРВАЯ БУКВА
         public string FirstLetter

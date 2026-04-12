@@ -4,7 +4,7 @@
   <mp:PhoneIdentity PhoneProductId="0443dc2e-07f2-4f95-b1b2-b0f11bf5da7b" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
   <Properties>
     <DisplayName>Decadence</DisplayName>
-    <PublisherDisplayName>maxim</PublisherDisplayName>
+    <PublisherDisplayName>ponte</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
   <Dependencies>
