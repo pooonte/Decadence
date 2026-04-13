@@ -342,8 +342,8 @@
                     </Grid>
                 </Grid>
             </PivotItem>
-            <PivotItem Margin="0,0,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                <Grid Margin="-11,-46,-13,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <PivotItem Margin="0,-48,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <Grid Margin="-11,0,-13,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                     <Grid x:Name="MenuAboutsLayer" Margin="10,0,10,0">
                         <TextBlock Text="collections!" FontFamily="Segoe UI" FontWeight="Light" x:Name="TilesName" Foreground="{StaticResource AppTitleBrush}" FontSize="50" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,10,11,0"/>
                         <Button Content="artists" FontSize="34" FontFamily="Segoe UI" FontWeight="Light" Padding="0" BorderThickness="0" Background="Transparent" Foreground="{StaticResource TextBrush}" Margin="54,92,0,0" Click="ArtistsButton_Click" HorizontalAlignment="Left" VerticalAlignment="Top"/>
