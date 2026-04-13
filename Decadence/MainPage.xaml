@@ -17,7 +17,7 @@
         </Grid.RowDefinitions>
         <!-- <Rectangle Fill="#CCFFFFFF" Grid.RowSpan="2"/> -->
         <Pivot x:Name="MainPivot" Margin="0,0,0,0" HeaderTemplate="{x:Null}" Grid.RowSpan="2" FontFamily="Segoe UI Light" SelectedIndex="1">
-            <PivotItem Foreground="Black" Margin="0,-47,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <PivotItem Foreground="Black" Margin="0,-48,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                 <Grid>
                     <Grid>
                         <TextBlock Text="now playing" FontFamily="Segoe UI" FontWeight="Light" Foreground="{StaticResource AppTitleBrush}" FontSize="50"  HorizontalAlignment="Right"  VerticalAlignment="Top"  Margin="0,10,10,0"/>
@@ -99,17 +99,82 @@
                             <!-- Время справа -->
                             <TextBlock Grid.Column="2" x:Name="TotalTimeText" Text="0:00" Foreground="{StaticResource TextBrush}" VerticalAlignment="Center" TextAlignment="Left"/>
                         </Grid>
-                        <Grid HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Grid.Row="2">
+                        <Grid x:Name="MenuSlidePanel" Width="250" HorizontalAlignment="Left" Background="Black" BorderBrush="{StaticResource AccentBrush}" Visibility="Collapsed" Canvas.ZIndex="200">
+                            <Grid.RenderTransform>
+                                <TranslateTransform x:Name="SlidePanelTransform" X="0"/>
+                            </Grid.RenderTransform>
+                            <Button x:Name="CloseMenuPanelButton" HorizontalAlignment="Left" VerticalAlignment="Top" Width="40" Height="40" Background="Transparent" Click="CloseMenuPanel_Click">
+                                <Image Source="ms-appx:///Assets/prev_white.png" Stretch="Uniform" Width="50" Height="50" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="-25,-21,-15,-11"/>
+                            </Button>
+                            <Button Content="Добавить в..." 
+                    FontSize="30" 
+                    FontFamily="Segoe UI" FontWeight="Light"
+                    Padding="0" 
+                    BorderThickness="0" 
+                    Background="Transparent" 
+                    Foreground="White" 
+                    Margin="20,110,0,0" 
+                    Click="AddToPlaylist_Click" 
+                    HorizontalAlignment="Left" 
+                    VerticalAlignment="Top"/>
+
+                            <Button Content="О треке" 
+                    FontSize="30" 
+                    FontFamily="Segoe UI" FontWeight="Light" 
+                    Padding="0" 
+                    BorderThickness="0" 
+                    Background="Transparent" 
+                    Foreground="White" 
+                    Margin="20,65,0,0" 
+                    Click="TrackInfo_Click" 
+                    HorizontalAlignment="Left" 
+                    VerticalAlignment="Top"/>
+                            <Button x:Name="RepeatButton" 
+                    Background="Transparent" 
+                    Foreground="White" 
+                    FontFamily="Segoe UI" 
+                    FontWeight="Light" 
+                    Click="RepeatButton_Click" 
+                    Margin="20,155,0,0"
+                    Padding="0" Height="46"
+                    HorizontalAlignment="Left" 
+                    VerticalAlignment="Top">
+                                <Grid HorizontalAlignment="Left" Width="218" Margin="-12,0,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock x:Name="RepeatButtonText" 
+                                               Grid.Column="0"
+                                               Text="Зациклить" 
+                                               FontFamily="Segoe UI" 
+                                               FontWeight="Light" 
+                                               FontSize="30"
+                                               VerticalAlignment="Center"
+                                               HorizontalAlignment="Left" Margin="10,0,0,0"/>
+                                    <Image x:Name="RepeatButtonImage" 
+                                           Grid.Column="1"
+                                           Source="ms-appx:///Assets/repeat_none_white.png" 
+                                           Width="35" Height="35"
+                                           VerticalAlignment="Center"
+                                           Margin="10,0,0,0"/>
+                                </Grid>
+                            </Button>
+                        </Grid>
+                        <Grid HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Height="103">
                             <Button x:Name="PrevButton" Click="PrevButton_Click" Background="Transparent"  Foreground="{StaticResource AccentBrush}" FontSize="24" HorizontalAlignment="Left" Margin="-8,0,0,0" VerticalAlignment="Bottom" Height="76" Width="100" >
                                 <Image x:Name="PrevButtonImage" Width="100" Height="100" Source="ms-appx:///Assets/prev.png" Margin="-10,-6,-10,-7"/>
                             </Button>
-                            <Button x:Name="PlayPauseButton" Click="PlayPauseButton_Click" Background="Transparent" Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Top" Height="70" Width="80" >
+                            <Button x:Name="PlayPauseButton" Click="PlayPauseButton_Click" Background="Transparent" Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Top" Height="70" Width="80" Margin="177,0,103,0" >
                                 <Image x:Name="FullPlayPauseIcon" Source="ms-appx:///Assets/play.png" Stretch="Uniform" Width="70" Height="70" HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </Button>
                             <Button x:Name="NextButton" Click="NextButton_Click" Background="Transparent" Foreground="{StaticResource AccentBrush}" FontSize="24" HorizontalAlignment="Right" Margin="0" VerticalAlignment="Bottom" Height="76" Width="92">
                                 <Image x:Name="NextButtonImage" Height="100" Width="100" Source="ms-appx:///Assets/next.png" Margin="-10,-6,-10,-7"/>
                             </Button>
-                            <Button x:Name="MenuButton" Foreground="Transparent" HorizontalAlignment="Left" Margin="222,104,0,0" VerticalAlignment="Top" Height="40" Width="40">
+                            <Button x:Name="MenuToggleButton" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="97,0,0,0" Width="80" Height="70" Click="MenuToggleButton_Click" Foreground="{StaticResource AccentBrush}" BorderThickness="0">
+                                <Image x:Name="MenuToggleImage" Source="ms-appx:///Assets/menu.png" Stretch="Uniform" Width="70" Height="70" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Button>
+                            <!--<Button x:Name="MenuButton" Foreground="Transparent" HorizontalAlignment="Left" Margin="222,104,0,0" VerticalAlignment="Top" Height="40" Width="40">
                                 <Button.Flyout>
                                     <MenuFlyout>
                                         <MenuFlyoutItem Text="О треке" Click="TrackInfo_Click"/>
@@ -120,8 +185,9 @@
                             </Button>
                             <Button x:Name="RepeatButton" Click="RepeatButton_Click" Background="Transparent" Height="40" Width="40" HorizontalAlignment="Left" Margin="97,104,0,0" VerticalAlignment="Top">
                                 <Image x:Name="RepeatButtonImage" Source="ms-appx:///Assets/repeat_none.png" Height="40" Width="40" HorizontalAlignment="Stretch" Margin="-10,-6,-10,-7" VerticalAlignment="Stretch"/>
-                            </Button>
+                            </Button>-->
                         </Grid>
+
                     </Grid>
                 </Grid>
             </PivotItem>

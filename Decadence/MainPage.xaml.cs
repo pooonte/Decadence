@@ -61,6 +61,7 @@ namespace Decadence
             // Устанавливаем начальную иконку
             if (FullPlayPauseIcon != null)
                 FullPlayPauseIcon.Source = _playIcon;
+
         }
         private void OnBackRequested(object sender, BackRequestedEventArgs e)
         {
@@ -748,18 +749,26 @@ namespace Decadence
             {
                 case RepeatMode.None:
                     _repeatMode = RepeatMode.One;
-                    RepeatButtonImage.Source = new BitmapImage(new Uri("ms-appx:///Assets/repeat_one.png"));
+                    RepeatButtonImage.Source = new BitmapImage(new Uri("ms-appx:///Assets/repeat_one_white.png"));
                     break;
                 case RepeatMode.One:
                     _repeatMode = RepeatMode.All;
-                    RepeatButtonImage.Source = new BitmapImage(new Uri("ms-appx:///Assets/repeat_all.png"));
+                    RepeatButtonImage.Source = new BitmapImage(new Uri("ms-appx:///Assets/repeat_all_white.png"));
                     break;
                 case RepeatMode.All:
                     _repeatMode = RepeatMode.None;
-                    RepeatButtonImage.Source = new BitmapImage(new Uri("ms-appx:///Assets/repeat_none.png"));
+                    RepeatButtonImage.Source = new BitmapImage(new Uri("ms-appx:///Assets/repeat_none_white.png"));
                     break;
             }
             System.Diagnostics.Debug.WriteLine($"RepeatMode изменен на: {_repeatMode}");
+        }
+        private void MenuToggleButton_Click(object sender, RoutedEventArgs e)
+        {
+            MenuSlidePanel.Visibility = Visibility.Visible;
+        }
+        private void CloseMenuPanel_Click(object sender, RoutedEventArgs e)
+        {
+            MenuSlidePanel.Visibility = Visibility.Collapsed;
         }
 
         private void Album_ItemClick(object sender, ItemClickEventArgs e)

@@ -8,6 +8,7 @@ using Windows.ApplicationModel.Activation;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.Storage;
+using Windows.System.Profile;
 using Windows.UI.ViewManagement;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -16,7 +17,6 @@ using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
-
 namespace Decadence
 {
     sealed partial class App : Application
@@ -43,8 +43,6 @@ namespace Decadence
 
                 Window.Current.Content = rootFrame;
             }
-
-
             if (e.PrelaunchActivated == false)
             {
                 if (rootFrame.Content == null)
@@ -60,6 +58,15 @@ namespace Decadence
 
                 // Устанавливаем минимальный размер (окно нельзя будет сделать меньше 360x640)
                 view.SetPreferredMinSize(new Size(360, 640));
+
+
+                var family = AnalyticsInfo.VersionInfo.DeviceFamily;
+
+                if (family == "Windows.Mobile")
+                {
+                    // Полноэкранный режим (скрывает системную панель автоматически)
+                    ApplicationView.GetForCurrentView().TryEnterFullScreenMode();
+                }
 
                 Window.Current.Activate();
             }

@@ -144,15 +144,20 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Assets\intelligence.png" />
+    <Content Include="Assets\menu.png" />
     <Content Include="Assets\next.png" />
     <Content Include="Assets\pause.png" />
     <Content Include="Assets\more.png" />
     <Content Include="Assets\play.png" />
     <Content Include="Assets\prev.png" />
     <Content Include="Assets\bar.png" />
+    <Content Include="Assets\prev_white.png" />
     <Content Include="Assets\repeat_all.png" />
+    <Content Include="Assets\repeat_all_white.png" />
     <Content Include="Assets\repeat_none.png" />
+    <Content Include="Assets\repeat_none_white.png" />
     <Content Include="Assets\repeat_one.png" />
+    <Content Include="Assets\repeat_one_white.png" />
     <Content Include="Assets\white_bg.png" />
     <Content Include="Assets\dark_bg.png" />
     <Content Include="Properties\Default.rd.xml" />
