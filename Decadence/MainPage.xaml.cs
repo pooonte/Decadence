@@ -36,6 +36,16 @@ namespace Decadence
         private bool _wasPlayingBeforeSeek = false;
         private bool _isArtistViewActive = false;
 
+        // 🔹 Панели
+        private bool _isArtistsPanelOpen = false;
+        private bool _isAlbumsPanelOpen = false;
+        private bool _isGenresPanelOpen = false;
+
+        // 🔹 Просмотр списка песен внутри панели
+        private bool _isArtistSongViewActive = false;
+        private bool _isAlbumSongViewActive = false;
+        private bool _isGenreSongViewActive = false;
+
         private enum RepeatMode { None, One, All }
         private RepeatMode _repeatMode = RepeatMode.None;
 
@@ -227,7 +237,7 @@ namespace Decadence
 
             TracksList.ItemsSource = _tracks;
             ArtistsList.ItemsSource = _artists;
-            //AlbumsList.ItemsSource = _albums;
+            AlbumsList.ItemsSource = _albums;
 
             System.Diagnostics.Debug.WriteLine($"📊 Показано: {_tracks.Count} треков, {_artists.Count} исполнителей, {_albums.Count} альбомов");
         }
@@ -831,6 +841,7 @@ namespace Decadence
             _currentPlaylist = _tracks.ToList();
             _currentPlaylistIndex = -1;  // <-- добавь
         }
+
     }
 }
 

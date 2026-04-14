@@ -128,7 +128,6 @@
     <Compile Include="Models\ArtistItem.cs" />
     <Compile Include="Models\CachedTrack.cs" />
     <Compile Include="Models\GenreItem.cs" />
-    <Compile Include="Models\LibraryPanelBase.cs" />
     <Compile Include="Models\MusicTagHelper.cs" />
     <Compile Include="Models\TrackItem.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
