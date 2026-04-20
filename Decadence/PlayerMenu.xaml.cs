@@ -24,6 +24,8 @@ namespace Decadence
         private int _currentPlaylistIndex = -1;
         private TrackItem _currentTrack;
 
+        public event EventHandler Clicked;
+
         private DispatcherTimer _positionTimer;
         private bool _userIsSeeking = false;
         private bool _wasPlayingBeforeSeek = false;
@@ -40,6 +42,7 @@ namespace Decadence
             _pauseIcon = new BitmapImage(new Uri("ms-appx:///Assets/pause.png"));
 
             MediaPlayerSingleton.Player.MediaEnded += Player_MediaEnded;
+
         }
 
         protected override async void OnNavigatedTo(NavigationEventArgs e)
@@ -389,5 +392,11 @@ namespace Decadence
             if (Frame.CanGoBack)
                 Frame.GoBack();
         }
+        private void RootButton_Click(object sender, RoutedEventArgs e)
+        {
+            Clicked?.Invoke(this, EventArgs.Empty);
+        }
+
+
     }
 }

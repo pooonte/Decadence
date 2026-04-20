@@ -7,7 +7,7 @@
         <ResourceDictionary>
             <!-- Монотонная цветовая схема -->
             <Color x:Key="AccentColor">#3A332E</Color>
-            <Color x:Key="BackgroundColor">#FAF7F2</Color>
+            <Color x:Key="BackgroundColor">#E8E4F0</Color>
             <Color x:Key="SurfaceColor">#F1EDE6</Color>
             <Color x:Key="TextColor">#3A332E</Color>
             <Color x:Key="TextSecondaryColor">#7A736D</Color>

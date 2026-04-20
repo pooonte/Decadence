@@ -29,6 +29,8 @@ namespace Decadence
 
         private TrackItem currentTrack;
 
+        private DispatcherTimer _miniPlayerTimer;
+
         private List<TrackItem> _currentPlaylist = new List<TrackItem>();
         private int _currentPlaylistIndex = -1;
 
@@ -82,6 +84,11 @@ namespace Decadence
             if (ArtistsPanelControl.IsVisible)
             {
                 ArtistsPanelControl.Hide();
+                anyPanelClosed = true;
+            }
+            if (AlbumsPanelControl.IsVisible)
+            {
+                AlbumsPanelControl.Hide();
                 anyPanelClosed = true;
             }
             //нужно добавлять панели сюда
@@ -227,13 +234,11 @@ namespace Decadence
                 _currentPlaylistIndex = _currentPlaylist.IndexOf(track);
             }
 
-            currentTrack = track;
+            currentTrack = track;  // ← ЭТО ВАЖНО
             MediaPlayerSingleton.PlayFile(file);
-
             var saved = ApplicationData.Current.LocalSettings.Values["SavedVolume"];
             MediaPlayerSingleton.Player.Volume = saved is double v ? v : 1.0;
         }
-
         private void PlaylistsButton_Click(object sender, RoutedEventArgs e)
         {
             // Заглушка
@@ -350,12 +355,16 @@ namespace Decadence
             await dialog.ShowAsync();
         }
         // Обработчик клика по треку
-        private void TracksPanelControl_TrackClicked(object sender, ItemClickEventArgs e)
+        private async void TracksPanelControl_TrackClicked(object sender, ItemClickEventArgs e)
         {
             if (e.ClickedItem is TrackItem track)
             {
                 _currentPlaylist = _tracks.ToList();
                 _currentPlaylistIndex = _tracks.IndexOf(track);
+
+                // Воспроизводим трек
+                var file = await StorageFile.GetFileFromPathAsync(track.FilePath);
+                PlayTrack(file);  // ← ДОБАВЬ ЭТУ СТРОКУ
 
                 var navigationData = new FullPlayerNavigationData
                 {
@@ -365,8 +374,8 @@ namespace Decadence
                     CurrentRepeatMode = _repeatMode
                 };
 
-                Frame.Navigate(typeof(PlayerMenu), navigationData);
                 TracksPanelControl.Hide();
+                Frame.Navigate(typeof(PlayerMenu), navigationData);
             }
         }
         private void TracksButton_Click(object sender, RoutedEventArgs e)
@@ -417,6 +426,50 @@ namespace Decadence
         private void ArtistsPanelControl_BackClicked(object sender, EventArgs e)
         {
             ArtistsPanelControl.Hide();
+        }
+
+        // Открыть панель альбомов
+        private void AlbumsButton_Click(object sender, RoutedEventArgs e)
+        {
+            AlbumsPanelControl.SetAlbums(_albums);
+            AlbumsPanelControl.Show();
+        }
+
+        // Клик по альбому
+        private void AlbumsPanelControl_AlbumClicked(object sender, ItemClickEventArgs e)
+        {
+            if (e.ClickedItem is AlbumItem album)
+            {
+                var tracks = _tracks.Where(t => t.Album == album.Name).ToList();
+                AlbumsPanelControl.SetTracks(tracks, album.Name);
+            }
+        }
+
+        // Клик по треку
+        private async void AlbumsPanelControl_TrackClicked(object sender, ItemClickEventArgs e)
+        {
+            if (e.ClickedItem is TrackItem track)
+            {
+                _currentPlaylist = _tracks.Where(t => t.Album == track.Album).ToList();
+                _currentPlaylistIndex = _currentPlaylist.IndexOf(track);
+
+                var navigationData = new FullPlayerNavigationData
+                {
+                    Track = track,
+                    Playlist = _currentPlaylist,
+                    PlaylistIndex = _currentPlaylistIndex,
+                    CurrentRepeatMode = _repeatMode
+                };
+
+                Frame.Navigate(typeof(PlayerMenu), navigationData);
+                AlbumsPanelControl.Hide();
+            }
+        }
+
+        // Закрыть панель
+        private void AlbumsPanelControl_BackClicked(object sender, EventArgs e)
+        {
+            AlbumsPanelControl.Hide();
         }
     }
 }

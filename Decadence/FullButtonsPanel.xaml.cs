@@ -24,7 +24,6 @@ namespace Decadence
         public void SetTracks(ObservableCollection<TrackItem> tracks)
         {
             TracksListView.ItemsSource = tracks;
-            TracksListView.ItemClick += TracksListView_ItemClick;
         }
 
         // Показать панель
