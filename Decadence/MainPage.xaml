@@ -7,18 +7,14 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
     Background="{StaticResource BackgroundBrush}">
-    <!-- <<Page.Background>
-       <ImageBrush ImageSource="ms-appx:///Assets/white_bg.png" Stretch="UniformToFill"/>
-    </Page.Background> -->
     <Grid x:Name="MainContainer">
         <Grid.RowDefinitions>
             <RowDefinition Height="385*"/>
             <RowDefinition Height="383*"/>
         </Grid.RowDefinitions>
-        <!-- <Rectangle Fill="#CCFFFFFF" Grid.RowSpan="2"/> -->
-        <Pivot x:Name="MainPivot" Margin="0,0,0,0" HeaderTemplate="{x:Null}" Grid.RowSpan="2" FontFamily="Segoe UI Light" SelectedIndex="1">
+        <Pivot x:Name="MainPivot" Margin="0,0,0,0" HeaderTemplate="{x:Null}" Grid.RowSpan="2" FontFamily="Segoe UI Light">
             <PivotItem Margin="0,0,0,0">
-                <Grid Margin="-11,-46,-13,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                <Grid Margin="0,-46,-13,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                     <Grid x:Name="MenuTracksLayer" Margin="11,0,13,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
@@ -62,9 +58,9 @@
                     VerticalAlignment="Top" Grid.Row="1"/>
 
                         <Button Content="artists" FontSize="34" FontFamily="Segoe UI" FontWeight="Light" Padding="0" BorderThickness="0" Background="Transparent" Foreground="{StaticResource TextBrush}" Margin="0,217,10,0" Click="ArtistsButton_Click" HorizontalAlignment="Right" VerticalAlignment="Top"/>
-                        <Button Content="albums" FontSize="34" FontFamily="Segoe UI" FontWeight="Light" Padding="0" BorderThickness="0" Background="Transparent" Foreground="{StaticResource TextBrush}" Margin="0,262,10,0" Click="AlbumsButton_Click" HorizontalAlignment="Right" VerticalAlignment="Top" Grid.RowSpan="2"/>
+                        <!--<Button Content="albums" FontSize="34" FontFamily="Segoe UI" FontWeight="Light" Padding="0" BorderThickness="0" Background="Transparent" Foreground="{StaticResource TextBrush}" Margin="0,262,10,0" Click="AlbumsButton_Click" HorizontalAlignment="Right" VerticalAlignment="Top" Grid.RowSpan="2"/>
                         <Button Content="playlists" FontSize="34" FontFamily="Segoe UI" FontWeight="Light" Padding="0" BorderThickness="0" Background="Transparent" Foreground="{StaticResource TextBrush}" Margin="0,89.667,10,0" Click="PlaylistsButton_Click" HorizontalAlignment="Right" VerticalAlignment="Top" Grid.Row="1"/>
-                        <Button Content="genres" FontSize="34" FontFamily="Segoe UI" FontWeight="Light" Padding="0" BorderThickness="0" Background="Transparent" Foreground="{StaticResource TextBrush}" Margin="0,44.667,10,0" Click="GenresButton_Click" HorizontalAlignment="Right" VerticalAlignment="Top" Grid.Row="1"/>
+                        <Button Content="genres" FontSize="34" FontFamily="Segoe UI" FontWeight="Light" Padding="0" BorderThickness="0" Background="Transparent" Foreground="{StaticResource TextBrush}" Margin="0,44.667,10,0" Click="GenresButton_Click" HorizontalAlignment="Right" VerticalAlignment="Top" Grid.Row="1"/>-->
 
                         <!-- Выдвижная панель для треков -->
                         <Grid x:Name="TracksPanel" Background="White" Visibility="Collapsed" Canvas.ZIndex="50" HorizontalAlignment="Stretch" Margin="0,0,0,0" Grid.RowSpan="2" VerticalAlignment="Stretch">
@@ -171,236 +167,13 @@
                             </Grid>
                         </Grid>
                     </Grid>
-                </Grid>
-            </PivotItem>
-            <PivotItem Margin="0,-48,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                <Grid Margin="-11,0,-13,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                    <Grid x:Name="MenuAboutsLayer" Margin="10,0,10,0">
-                        <TextBlock Text="collections!" FontFamily="Segoe UI" FontWeight="Light" x:Name="TilesName" Foreground="{StaticResource AppTitleBrush}" FontSize="50" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,10,11,0"/>
-                        <Button Content="artists" FontSize="34" FontFamily="Segoe UI" FontWeight="Light" Padding="0" BorderThickness="0" Background="Transparent" Foreground="{StaticResource TextBrush}" Margin="54,92,0,0" Click="ArtistsButton_Click" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-                        <Button Content="albums" FontSize="34" FontFamily="Segoe UI" FontWeight="Light" Padding="0" BorderThickness="0" Background="Transparent" Foreground="{StaticResource TextBrush}" Margin="54,146,0,0" Click="AlbumsButton_Click" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-                        <Button Content="playlists" FontSize="34" FontFamily="Segoe UI" FontWeight="Light" Padding="0" BorderThickness="0" Background="Transparent" Foreground="{StaticResource TextBrush}" Margin="54,200,0,0" Click="PlaylistsButton_Click" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-                        <Button Content="genres" FontSize="34" FontFamily="Segoe UI" FontWeight="Light" Padding="0" BorderThickness="0" Background="Transparent" Foreground="{StaticResource TextBrush}" Margin="54,254,0,0" Click="GenresButton_Click" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-                    </Grid>
-                    <Grid x:Name="ArtistsPanel" Background="White" Visibility="Collapsed" Canvas.ZIndex="50" Margin="11,0,11,0">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                        </Grid.RowDefinitions>
-                        <Grid Grid.Row="0">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <Button x:Name="BackToArtistsButton"
-                                    Grid.Column="1"
-                                    Width="50"
-                                    Height="50"
-                                    Background="Transparent"
-                                    Click="BackToArtistsButton_Click" HorizontalAlignment="Left" Margin="310,0,0,0" VerticalAlignment="Top">
-                                <Image Source="ms-appx:///Assets/prev.png" Margin="-10,-16,-20,-7" Width="60" Height="60" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
-                            </Button>
-                            <TextBlock Text="artists" Foreground="Black" FontSize="34" FontFamily="Segoe UI" FontWeight="Light" Grid.ColumnSpan="2" Margin="10,10,265,39" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
-
-                            <TextBlock Grid.Column="1"
-                                           x:Name="SelectedArtistName"
-                                           Text="Исполнители"
-                                           Foreground="{StaticResource TextBrush}"
-                                           FontSize="20"
-                                           VerticalAlignment="Top"
-                                           Margin="10,56,50,0"/>
-                        </Grid>
-                        <ListView x:Name="ArtistsList" 
-                                  ItemClick="Artist_ItemClick" 
-                                  IsItemClickEnabled="True" 
-                                  Background="Transparent"
-                                  Visibility="Visible" Margin="0,91,0,0" Grid.RowSpan="1">
-                            <ListView.ItemTemplate>
-                                <DataTemplate>
-                                    <StackPanel Orientation="Horizontal" Margin="16,8">
-                                        <TextBlock Text="{Binding Name}" 
-                                                   Foreground="{StaticResource TextBrush}" 
-                                                   FontSize="16"
-                                                   VerticalAlignment="Center"/>
-                                        <TextBlock Text=" (" 
-                                                   Foreground="{StaticResource AccentBrush}"
-                                                   FontSize="14"
-                                                   Margin="4,0,0,0"
-                                                   VerticalAlignment="Center"/>
-                                        <TextBlock Text="{Binding TrackCount}" 
-                                                   Foreground="{StaticResource AccentBrush}"
-                                                   FontSize="14"
-                                                   VerticalAlignment="Center"/>
-                                        <TextBlock Text=")" 
-                                                   Foreground="{StaticResource AccentBrush}"
-                                                   FontSize="14"
-                                                   VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </DataTemplate>
-                            </ListView.ItemTemplate>
-                        </ListView>
-                        <Grid x:Name="ArtistSongsPanel" Visibility="Collapsed" Margin="0,0,0,0" Grid.RowSpan="1" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-
-                            <ListView x:Name="ArtistSongsList"
-                                      Grid.Row="1"
-                                      ItemClick="ArtistSong_ItemClick"
-                                      IsItemClickEnabled="True"
-                                      Background="Transparent"
-                                      Margin="0,91,0,0">
-                                <ListView.ItemTemplate>
-                                    <DataTemplate>
-                                        <Grid Height="50" Margin="16,8">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="40"/>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-
-                                            <TextBlock Grid.Column="0" 
-                                                       Text="{Binding TrackNumber}" 
-                                                       Foreground="{StaticResource TextSecondaryBrush}"
-                                                       FontSize="14"
-                                                       VerticalAlignment="Center"
-                                                       HorizontalAlignment="Center"/>
-
-                                            <StackPanel Grid.Column="1" 
-                                                        VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding Title}" 
-                                                           Foreground="{StaticResource TextBrush}" 
-                                                           FontSize="16"
-                                                           FontWeight="SemiBold"/>
-                                                <TextBlock Text="{Binding Album}" 
-                                                           Foreground="{StaticResource TextSecondaryBrush}" 
-                                                           FontSize="12"
-                                                           Margin="0,2,0,0"/>
-                                            </StackPanel>
-
-                                            <TextBlock Grid.Column="2" 
-                                                       Text="{Binding DurationString}" 
-                                                       Foreground="{StaticResource TextSecondaryBrush}"
-                                                       FontSize="12"
-                                                       Margin="0,0,16,0"
-                                                       VerticalAlignment="Center"/>
-                                        </Grid>
-                                    </DataTemplate>
-                                </ListView.ItemTemplate>
-                            </ListView>
-                        </Grid>
-                    </Grid>
-                    <Grid x:Name="AlbumsPanel" Background="White" Visibility="Collapsed" Canvas.ZIndex="50" Margin="11,0,11,0">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="*"/>
-                        </Grid.RowDefinitions>
-                        <Grid Grid.Row="0">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <Button x:Name="BackToAlbumsButton"
-                                    Grid.Column="1"
-                                    Width="50"
-                                    Height="50"
-                                    Background="Transparent"
-                                    Click="BackToArtistsButton_Click" HorizontalAlignment="Left" Margin="310,0,0,0" VerticalAlignment="Top">
-                                <Image Source="ms-appx:///Assets/prev.png" Margin="-10,-16,-20,-7" Width="60" Height="60" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
-                            </Button>
-                            <TextBlock Text="albums" Foreground="Black" FontSize="34" FontFamily="Segoe UI" FontWeight="Light" Grid.ColumnSpan="2" Margin="10,10,265,39" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
-
-                            <TextBlock Grid.Column="1"
-                                           x:Name="SelectedAlbumsName"
-                                           Text="Альбомы"
-                                           Foreground="{StaticResource TextBrush}"
-                                           FontSize="20"
-                                           VerticalAlignment="Top"
-                                           Margin="10,56,50,0"/>
-                        </Grid>
-                        <ListView x:Name="AlbumsList" ItemClick="Album_ItemClick" IsItemClickEnabled="True" Background="Transparent" Visibility="Collapsed" Margin="0,94,0,0" Grid.RowSpan="2">
-                            <ListView.ItemTemplate>
-                                <DataTemplate>
-                                    <StackPanel Orientation="Horizontal" Margin="16,8">
-                                        <TextBlock Text="{Binding Name}" 
-                               Foreground="{StaticResource TextBrush}" 
-                               FontSize="16"
-                               VerticalAlignment="Center"/>
-                                        <TextBlock Text=" (" 
-                               Foreground="{StaticResource AccentBrush}"
-                               FontSize="14"
-                               Margin="4,0,0,0"
-                               VerticalAlignment="Center"/>
-                                        <TextBlock Text="{Binding TrackCount}" 
-                               Foreground="{StaticResource AccentBrush}"
-                               FontSize="14"
-                               VerticalAlignment="Center"/>
-                                        <TextBlock Text=" треков" 
-                               Foreground="{StaticResource AccentBrush}"
-                               FontSize="14"
-                               VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </DataTemplate>
-                            </ListView.ItemTemplate>
-                        </ListView>
-
-                        <Grid x:Name="AlbumSongsPanel" 
-          Visibility="Collapsed" 
-          Margin="0,94,0,0" 
-          Grid.RowSpan="2" 
-          HorizontalAlignment="Stretch" 
-          VerticalAlignment="Stretch">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-
-                            <ListView x:Name="AlbumSongsList"
-                  Grid.Row="1"
-                  ItemClick="AlbumSong_ItemClick"
-                  IsItemClickEnabled="True"
-                  Background="Transparent">
-                                <ListView.ItemTemplate>
-                                    <DataTemplate>
-                                        <Grid Height="50" Margin="16,8">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="40"/>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-
-                                            <TextBlock Grid.Column="0" 
-                                   Text="{Binding TrackNumber}" 
-                                   Foreground="{StaticResource TextSecondaryBrush}"
-                                   FontSize="14"
-                                   VerticalAlignment="Center"
-                                   HorizontalAlignment="Center"/>
-
-                                            <StackPanel Grid.Column="1" 
-                                    VerticalAlignment="Center">
-                                                <TextBlock Text="{Binding Title}" 
-                                       Foreground="{StaticResource TextBrush}" 
-                                       FontSize="16"
-                                       FontWeight="SemiBold"/>
-                                                <TextBlock Text="{Binding Artist}" 
-                                       Foreground="{StaticResource TextSecondaryBrush}" 
-                                       FontSize="12"
-                                       Margin="0,2,0,0"/>
-                                            </StackPanel>
-
-                                            <TextBlock Grid.Column="2" 
-                                   Text="{Binding DurationString}" 
-                                   Foreground="{StaticResource TextSecondaryBrush}"
-                                   FontSize="12"
-                                   Margin="0,0,16,0"
-                                   VerticalAlignment="Center"/>
-                                        </Grid>
-                                    </DataTemplate>
-                                </ListView.ItemTemplate>
-                            </ListView>
-                        </Grid>
-                    </Grid>
+                    <local:FullButtonsPanel x:Name="TracksPanelControl"
+                                TrackClicked="TracksPanelControl_TrackClicked"
+                                BackClicked="TracksPanelControl_BackClicked" Margin="11,0,13,0"/>
+                    <local:ArtistsPanelControl x:Name="ArtistsPanelControl"
+                           ArtistClicked="ArtistsPanelControl_ArtistClicked"
+                           TrackClicked="ArtistsPanelControl_TrackClicked"
+                           BackClicked="ArtistsPanelControl_BackClicked"/>
                 </Grid>
             </PivotItem>
         </Pivot>

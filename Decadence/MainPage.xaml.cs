@@ -44,7 +44,6 @@ namespace Decadence
 
             SystemNavigationManager.GetForCurrentView().BackRequested += OnBackRequested;
             Window.Current.CoreWindow.KeyDown += OnKeyDown;
-
         }
         private void OnBackRequested(object sender, BackRequestedEventArgs e)
         {
@@ -75,16 +74,14 @@ namespace Decadence
                 SettingsPanel.Visibility = Visibility.Collapsed;
                 anyPanelClosed = true;
             }
-
-            if (TracksPanel.Visibility == Visibility.Visible)
+            if (TracksPanelControl.IsVisible)
             {
-                TracksPanel.Visibility = Visibility.Collapsed;
+                TracksPanelControl.Hide();
                 anyPanelClosed = true;
             }
-
-            if (ArtistsPanel.Visibility == Visibility.Visible)
+            if (ArtistsPanelControl.IsVisible)
             {
-                ArtistsPanel.Visibility = Visibility.Collapsed;
+                ArtistsPanelControl.Hide();
                 anyPanelClosed = true;
             }
             //нужно добавлять панели сюда
@@ -208,9 +205,6 @@ namespace Decadence
                 });
             }
 
-            TracksList.ItemsSource = _tracks;
-            ArtistsList.ItemsSource = _artists;
-            AlbumsList.ItemsSource = _albums;
 
             System.Diagnostics.Debug.WriteLine($"📊 Показано: {_tracks.Count} треков, {_artists.Count} исполнителей, {_albums.Count} альбомов");
         }
@@ -238,18 +232,6 @@ namespace Decadence
 
             var saved = ApplicationData.Current.LocalSettings.Values["SavedVolume"];
             MediaPlayerSingleton.Player.Volume = saved is double v ? v : 1.0;
-        }
-
-        private void ArtistsButton_Click(object sender, RoutedEventArgs e)
-        {
-            // Заглушка
-            ArtistsPanel.Visibility = Visibility.Visible;
-        }
-
-        private void AlbumsButton_Click(object sender, RoutedEventArgs e)
-        {
-            // Заглушка
-            AlbumsPanel.Visibility = Visibility.Visible;
         }
 
         private void PlaylistsButton_Click(object sender, RoutedEventArgs e)
@@ -289,7 +271,20 @@ namespace Decadence
                 System.Diagnostics.Debug.WriteLine("⚠️ _tracks пуст!");
             }
         }
+        private void ArtistsButton_Click(object sender, RoutedEventArgs e)
+        {
+            System.Diagnostics.Debug.WriteLine($"Артистов в _artists: {_artists.Count}");
 
+            if (_artists.Count > 0)
+            {
+                ArtistsPanelControl.SetArtists(_artists);
+                ArtistsPanelControl.Show();
+            }
+            else
+            {
+                System.Diagnostics.Debug.WriteLine("⚠️ _artists пуст!");
+            }
+        }
         private void ClosePanel_Click(object sender, RoutedEventArgs e)
         {
             TracksPanel.Visibility = Visibility.Collapsed;
@@ -332,20 +327,6 @@ namespace Decadence
             }
         }
 
-        // Из Artist
-        private async void ArtistSong_ItemClick(object sender, ItemClickEventArgs e)
-        {
-            if (e.ClickedItem is TrackItem track)
-            {
-                _currentPlaylistIndex = _currentPlaylist.IndexOf(track);
-
-                var file = await StorageFile.GetFileFromPathAsync(track.FilePath);
-                PlayTrack(file);
-
-                Frame.Navigate(typeof(PlayerMenu));
-                ArtistsPanel.Visibility = Visibility.Collapsed;
-            }
-        }
         private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
         {
             string searchText = SearchBox.Text.ToLower().Trim();
@@ -472,39 +453,6 @@ namespace Decadence
 
         }
 
-        private void Artist_ItemClick(object sender, ItemClickEventArgs e)
-        {
-            if (e.ClickedItem is ArtistItem artist)
-            {
-                _currentPlaylist = _tracks
-                    .Where(t => t.Artist == artist.Name)
-                    .OrderBy(t => t.Album)
-                    .ThenBy(t => t.Title)
-                    .ToList();
-
-                _currentPlaylistIndex = 0;
-
-                var artistTracks = _tracks
-                    .Where(t => t.Artist == artist.Name)
-                    .OrderBy(t => t.Album)
-                    .ThenBy(t => t.Title)
-                    .ToList();
-
-                int trackNumber = 1;
-                foreach (var track in artistTracks)
-                {
-                    track.TrackNumber = trackNumber++;
-                }
-
-                _currentPlaylist = artistTracks;
-
-                SelectedArtistName.Text = artist.Name;
-                ArtistSongsList.ItemsSource = artistTracks;
-
-                ArtistsList.Visibility = Visibility.Collapsed;
-                ArtistSongsPanel.Visibility = Visibility.Visible;
-            }
-        }
         private async void TrackInfo_Click(object sender, RoutedEventArgs e)
         {
             if (currentTrack == null) return;
@@ -530,74 +478,68 @@ namespace Decadence
             );
             await dialog.ShowAsync();
         }
-        private void BackToArtistsButton_Click(object sender, RoutedEventArgs e)
-        {
-            ArtistsList.Visibility = Visibility.Visible;
-            ArtistSongsPanel.Visibility = Visibility.Collapsed;
-
-            _currentPlaylist = _tracks.ToList();
-        }
-        private void Album_ItemClick(object sender, ItemClickEventArgs e)
-        {
-            if (e.ClickedItem is AlbumItem album)
-            {
-                var albumTracks = _tracks
-                    .Where(t => t.Album == album.Name)
-                    .OrderBy(t => t.Title)
-                    .ToList();
-
-                int trackNumber = 1;
-                foreach (var track in albumTracks)
-                {
-                    track.TrackNumber = trackNumber++;
-                }
-
-                _currentPlaylist = albumTracks;
-                _currentPlaylistIndex = 0;  // <-- добавь эту строку
-
-                //SelectedAlbumName.Text = album.Name;
-                AlbumSongsList.ItemsSource = albumTracks;
-
-                AlbumsList.Visibility = Visibility.Collapsed;
-                AlbumSongsPanel.Visibility = Visibility.Visible;
-            }
-        }
-
-        private async void AlbumSong_ItemClick(object sender, ItemClickEventArgs e)
+        // Обработчик клика по треку
+        private void TracksPanelControl_TrackClicked(object sender, ItemClickEventArgs e)
         {
             if (e.ClickedItem is TrackItem track)
             {
-                try
-                {
-                    var file = await StorageFile.GetFileFromPathAsync(track.FilePath);
+                _currentPlaylist = _tracks.ToList();
+                _currentPlaylistIndex = _tracks.IndexOf(track);
 
-                    int index = _currentPlaylist.IndexOf(track);
-                    if (index >= 0)
-                    {
-                        _currentPlaylistIndex = index;  // <-- замени _currentTrackIndex на _currentPlaylistIndex
-                        PlayTrack(file);
-                    }
-
-                    // Переключиться на FullPlayer и закрыть панель
-                    Frame.Navigate(typeof(PlayerMenu));
-                    AlbumsPanel.Visibility = Visibility.Collapsed;
-                }
-                catch (Exception ex)
+                var navigationData = new FullPlayerNavigationData
                 {
-                    System.Diagnostics.Debug.WriteLine($"❌ Ошибка: {ex.Message}");
-                }
+                    Track = track,
+                    Playlist = _currentPlaylist,
+                    PlaylistIndex = _currentPlaylistIndex,
+                    CurrentRepeatMode = _repeatMode
+                };
+
+                Frame.Navigate(typeof(PlayerMenu), navigationData);
+                TracksPanelControl.Hide();
             }
         }
 
-        private void BackToAlbumsButton_Click(object sender, RoutedEventArgs e)
+        // Обработчик кнопки назад
+        private void TracksPanelControl_BackClicked(object sender, EventArgs e)
         {
-            AlbumsList.Visibility = Visibility.Visible;
-            AlbumSongsPanel.Visibility = Visibility.Collapsed;
-
-            _currentPlaylist = _tracks.ToList();
-            _currentPlaylistIndex = -1;  // <-- добавь
+            TracksPanelControl.Hide();
+        }
+        // Обработчик клика по артисту
+        private void ArtistsPanelControl_ArtistClicked(object sender, ItemClickEventArgs e)
+        {
+            if (e.ClickedItem is ArtistItem artist)
+            {
+                var tracks = _tracks.Where(t => t.Artist == artist.Name).ToList();
+                ArtistsPanelControl.SetTracks(tracks, artist.Name);
+            }
         }
 
+        // Обработчик клика по треку
+        private async void ArtistsPanelControl_TrackClicked(object sender, ItemClickEventArgs e)
+        {
+            if (e.ClickedItem is TrackItem track)
+            {
+                _currentPlaylist = _tracks.Where(t => t.Artist == track.Artist).ToList();
+                _currentPlaylistIndex = _currentPlaylist.IndexOf(track);
+
+                var navigationData = new FullPlayerNavigationData
+                {
+                    Track = track,
+                    Playlist = _currentPlaylist,
+                    PlaylistIndex = _currentPlaylistIndex,
+                    CurrentRepeatMode = _repeatMode
+                };
+
+                Frame.Navigate(typeof(PlayerMenu), navigationData);
+                ArtistsPanelControl.Hide();
+            }
+        }
+
+        // Обработчик кнопки "Назад"
+        private void ArtistsPanelControl_BackClicked(object sender, EventArgs e)
+        {
+            ArtistsPanelControl.Hide();
+        }
     }
 }
 
