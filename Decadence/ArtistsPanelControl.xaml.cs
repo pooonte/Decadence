@@ -54,7 +54,6 @@ namespace Decadence
         {
             ArtistsList.Visibility = Visibility.Visible;
             ArtistSongsPanel.Visibility = Visibility.Collapsed;
-            BackToArtistsButton.Visibility = Visibility.Collapsed;
             SelectedArtistName.Visibility = Visibility.Collapsed;
         }
 
@@ -62,7 +61,6 @@ namespace Decadence
         {
             ArtistsList.Visibility = Visibility.Collapsed;
             ArtistSongsPanel.Visibility = Visibility.Visible;
-            BackToArtistsButton.Visibility = Visibility.Visible;
             SelectedArtistName.Visibility = Visibility.Visible;
         }
 
@@ -70,10 +68,12 @@ namespace Decadence
         {
             if (ArtistSongsPanel.Visibility == Visibility.Visible)
             {
+                // Сейчас в списке песен → возвращаемся к списку артистов
                 ShowArtistsList();
             }
             else
             {
+                // Сейчас в списке артистов → закрываем всю панель
                 BackClicked?.Invoke(this, EventArgs.Empty);
                 Hide();
             }
