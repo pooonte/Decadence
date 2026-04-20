@@ -6,7 +6,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    Background="White">
+    Background="{StaticResource BackgroundBrush}">
     <!-- <<Page.Background>
        <ImageBrush ImageSource="ms-appx:///Assets/white_bg.png" Stretch="UniformToFill"/>
     </Page.Background> -->
@@ -17,180 +17,6 @@
         </Grid.RowDefinitions>
         <!-- <Rectangle Fill="#CCFFFFFF" Grid.RowSpan="2"/> -->
         <Pivot x:Name="MainPivot" Margin="0,0,0,0" HeaderTemplate="{x:Null}" Grid.RowSpan="2" FontFamily="Segoe UI Light" SelectedIndex="1">
-            <PivotItem Foreground="Black" Margin="0,-48,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                <Grid>
-                    <Grid>
-                        <TextBlock Text="now playing" FontFamily="Segoe UI" FontWeight="Light" Foreground="{StaticResource AppTitleBrush}" FontSize="50"  HorizontalAlignment="Right"  VerticalAlignment="Top"  Margin="0,10,10,0"/>
-                        <Grid HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,100,0,0">
-                            <Border BorderBrush="Black"  BorderThickness="2"  Width="276"  Height="276">
-                                <Grid>
-                                    <Image x:Name="FullAlbumArt" Width="272" Height="272" Stretch="UniformToFill"/>
-
-                                    <Border Height="6" VerticalAlignment="Top">
-                                        <Border.Background>
-                                            <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                                <GradientStop Color="#FF000000" Offset="0"/>
-                                                <GradientStop Color="#00000000" Offset="1"/>
-                                            </LinearGradientBrush>
-                                        </Border.Background>
-                                    </Border>
-                                    <Border Height="6" VerticalAlignment="Bottom">
-                                        <Border.Background>
-                                            <LinearGradientBrush StartPoint="0,1" EndPoint="0,0">
-                                                <GradientStop Color="#FF000000" Offset="0"/>
-                                                <GradientStop Color="#00000000" Offset="1"/>
-                                            </LinearGradientBrush>
-                                        </Border.Background>
-                                    </Border>
-                                    <Border Width="6" HorizontalAlignment="Left">
-                                        <Border.Background>
-                                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                                <GradientStop Color="#FF000000" Offset="0"/>
-                                                <GradientStop Color="#00000000" Offset="1"/>
-                                            </LinearGradientBrush>
-                                        </Border.Background>
-                                    </Border>
-                                    <Border Width="6" HorizontalAlignment="Right">
-                                        <Border.Background>
-                                            <LinearGradientBrush StartPoint="1,0" EndPoint="0,0">
-                                                <GradientStop Color="#FF000000" Offset="0"/>
-                                                <GradientStop Color="#00000000" Offset="1"/>
-                                            </LinearGradientBrush>
-                                        </Border.Background>
-                                    </Border>
-                                </Grid>
-                            </Border>
-
-                            <Grid VerticalAlignment="Bottom" Background="Black" Margin="-62,6,10,16" Padding="10,8" MaxWidth="200">
-                                <StackPanel>
-                                    <TextBlock x:Name="FullTrackTitle" Foreground="White" FontSize="18" FontFamily="Segoe UI" FontWeight="Light" TextWrapping="Wrap" MaxWidth="250"/>
-                                    <TextBlock x:Name="FullTrackArtist" Foreground="Gray" FontSize="13" FontFamily="Segoe UI" FontWeight="Light" Margin="0,5,0,0"/>
-                                </StackPanel>
-                            </Grid>
-                        </Grid>
-                        <Grid HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Margin="10,0,10,180">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="35"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="35"/>
-                            </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" x:Name="CurrentTimeText" Text="0:00" Foreground="{StaticResource TextBrush}" VerticalAlignment="Center" TextAlignment="Right"/>
-                            <Slider Grid.Column="1" x:Name="ProgressSlider" Height="30" Margin="5,0,5,0" VerticalAlignment="Center" ManipulationMode="TranslateX" ManipulationStarted="ProgressSlider_ManipulationStarted" ManipulationCompleted="ProgressSlider_ManipulationCompleted">
-                                <Slider.Background>
-                                    <LinearGradientBrush EndPoint="1,0.5" StartPoint="0,0.5">
-                                        <GradientStop Color="#E0E0E0" Offset="0"/>
-                                        <GradientStop Color="#E0E0E0" Offset="1"/>
-                                    </LinearGradientBrush>
-                                </Slider.Background>
-                                <Slider.Foreground>
-                                    <LinearGradientBrush EndPoint="1,0.5" StartPoint="0,0.5">
-                                        <GradientStop Color="#00A0B1" Offset="0"/>
-                                        <GradientStop Color="#2E8DEF" Offset="0.14"/>
-                                        <GradientStop Color="#0A5BC4" Offset="0.28"/>
-                                        <GradientStop Color="#643EBF" Offset="0.42"/>
-                                        <GradientStop Color="#A700AE" Offset="0.57"/>
-                                        <GradientStop Color="#BF1E4B" Offset="0.71"/>
-                                        <GradientStop Color="#DC572E" Offset="0.85"/>
-                                        <GradientStop Color="#00A600" Offset="1"/>
-                                    </LinearGradientBrush>
-                                </Slider.Foreground>
-                            </Slider>
-
-                            <!-- Время справа -->
-                            <TextBlock Grid.Column="2" x:Name="TotalTimeText" Text="0:00" Foreground="{StaticResource TextBrush}" VerticalAlignment="Center" TextAlignment="Left"/>
-                        </Grid>
-                        <Grid x:Name="MenuSlidePanel" Width="250" HorizontalAlignment="Left" Background="Black" BorderBrush="{StaticResource AccentBrush}" Visibility="Collapsed" Canvas.ZIndex="200">
-                            <Grid.RenderTransform>
-                                <TranslateTransform x:Name="SlidePanelTransform" X="0"/>
-                            </Grid.RenderTransform>
-                            <Button x:Name="CloseMenuPanelButton" HorizontalAlignment="Left" VerticalAlignment="Top" Width="40" Height="40" Background="Transparent" Click="CloseMenuPanel_Click">
-                                <Image Source="ms-appx:///Assets/prev_white.png" Stretch="Uniform" Width="50" Height="50" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="-25,-21,-15,-11"/>
-                            </Button>
-                            <Button Content="Добавить в..." 
-                    FontSize="30" 
-                    FontFamily="Segoe UI" FontWeight="Light"
-                    Padding="0" 
-                    BorderThickness="0" 
-                    Background="Transparent" 
-                    Foreground="White" 
-                    Margin="20,110,0,0" 
-                    Click="AddToPlaylist_Click" 
-                    HorizontalAlignment="Left" 
-                    VerticalAlignment="Top"/>
-
-                            <Button Content="О треке" 
-                    FontSize="30" 
-                    FontFamily="Segoe UI" FontWeight="Light" 
-                    Padding="0" 
-                    BorderThickness="0" 
-                    Background="Transparent" 
-                    Foreground="White" 
-                    Margin="20,65,0,0" 
-                    Click="TrackInfo_Click" 
-                    HorizontalAlignment="Left" 
-                    VerticalAlignment="Top"/>
-                            <Button x:Name="RepeatButton" 
-                    Background="Transparent" 
-                    Foreground="White" 
-                    FontFamily="Segoe UI" 
-                    FontWeight="Light" 
-                    Click="RepeatButton_Click" 
-                    Margin="20,155,0,0"
-                    Padding="0" Height="46"
-                    HorizontalAlignment="Left" 
-                    VerticalAlignment="Top">
-                                <Grid HorizontalAlignment="Left" Width="218" Margin="-12,0,0,0">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock x:Name="RepeatButtonText" 
-                                               Grid.Column="0"
-                                               Text="Зациклить" 
-                                               FontFamily="Segoe UI" 
-                                               FontWeight="Light" 
-                                               FontSize="30"
-                                               VerticalAlignment="Center"
-                                               HorizontalAlignment="Left" Margin="10,0,0,0"/>
-                                    <Image x:Name="RepeatButtonImage" 
-                                           Grid.Column="1"
-                                           Source="ms-appx:///Assets/repeat_none_white.png" 
-                                           Width="35" Height="35"
-                                           VerticalAlignment="Center"
-                                           Margin="10,0,0,0"/>
-                                </Grid>
-                            </Button>
-                        </Grid>
-                        <Grid HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Height="103">
-                            <Button x:Name="PrevButton" Click="PrevButton_Click" Background="Transparent"  Foreground="{StaticResource AccentBrush}" FontSize="24" HorizontalAlignment="Left" Margin="-8,0,0,0" VerticalAlignment="Bottom" Height="76" Width="100" >
-                                <Image x:Name="PrevButtonImage" Width="100" Height="100" Source="ms-appx:///Assets/prev.png" Margin="-10,-6,-10,-7"/>
-                            </Button>
-                            <Button x:Name="PlayPauseButton" Click="PlayPauseButton_Click" Background="Transparent" Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Top" Height="70" Width="80" Margin="177,0,103,0" >
-                                <Image x:Name="FullPlayPauseIcon" Source="ms-appx:///Assets/play.png" Stretch="Uniform" Width="70" Height="70" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                            </Button>
-                            <Button x:Name="NextButton" Click="NextButton_Click" Background="Transparent" Foreground="{StaticResource AccentBrush}" FontSize="24" HorizontalAlignment="Right" Margin="0" VerticalAlignment="Bottom" Height="76" Width="92">
-                                <Image x:Name="NextButtonImage" Height="100" Width="100" Source="ms-appx:///Assets/next.png" Margin="-10,-6,-10,-7"/>
-                            </Button>
-                            <Button x:Name="MenuToggleButton" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="97,0,0,0" Width="80" Height="70" Click="MenuToggleButton_Click" Foreground="{StaticResource AccentBrush}" BorderThickness="0">
-                                <Image x:Name="MenuToggleImage" Source="ms-appx:///Assets/menu.png" Stretch="Uniform" Width="70" Height="70" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                            </Button>
-                            <!--<Button x:Name="MenuButton" Foreground="Transparent" HorizontalAlignment="Left" Margin="222,104,0,0" VerticalAlignment="Top" Height="40" Width="40">
-                                <Button.Flyout>
-                                    <MenuFlyout>
-                                        <MenuFlyoutItem Text="О треке" Click="TrackInfo_Click"/>
-                                        <MenuFlyoutItem Text="Добавить в..." Click="AddToPlaylist_Click"/>
-                                    </MenuFlyout>
-                                </Button.Flyout>
-                                <Image Source="ms-appx:///Assets/more.png" Height="40" Width="40" Margin="-10,-6,-10,-7" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
-                            </Button>
-                            <Button x:Name="RepeatButton" Click="RepeatButton_Click" Background="Transparent" Height="40" Width="40" HorizontalAlignment="Left" Margin="97,104,0,0" VerticalAlignment="Top">
-                                <Image x:Name="RepeatButtonImage" Source="ms-appx:///Assets/repeat_none.png" Height="40" Width="40" HorizontalAlignment="Stretch" Margin="-10,-6,-10,-7" VerticalAlignment="Stretch"/>
-                            </Button>-->
-                        </Grid>
-
-                    </Grid>
-                </Grid>
-            </PivotItem>
             <PivotItem Margin="0,0,0,0">
                 <Grid Margin="-11,-46,-13,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                     <Grid x:Name="MenuTracksLayer" Margin="11,0,13,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
@@ -206,9 +32,9 @@
                     BorderThickness="0" 
                     Background="Transparent" 
                     Foreground="{StaticResource TextBrush}" 
-                    Margin="10,265,0,0" 
+                    Margin="0,172,10,0" 
                     Click="TracksButton_Click" 
-                    HorizontalAlignment="Left" 
+                    HorizontalAlignment="Right" 
                     VerticalAlignment="Top"/>
 
                         <Button Content="about" 
@@ -218,10 +44,10 @@
                     BorderThickness="0" 
                     Background="Transparent" 
                     Foreground="{StaticResource TextBrush}" 
-                    Margin="5,172,0,0" 
+                    Margin="0,179.667,10,0" 
                     Click="AboutButton_Click" 
-                    HorizontalAlignment="Left" 
-                    VerticalAlignment="Top"/>
+                    HorizontalAlignment="Right" 
+                    VerticalAlignment="Top" Grid.Row="1"/>
 
                         <Button Content="settings" 
                     FontSize="34" 
@@ -230,10 +56,16 @@
                     BorderThickness="0" 
                     Background="Transparent" 
                     Foreground="{StaticResource TextBrush}" 
-                    Margin="10,218,0,0" 
+                    Margin="0,134.667,10,0" 
                     Click="SettingsButton_Click" 
-                    HorizontalAlignment="Left" 
-                    VerticalAlignment="Top"/>
+                    HorizontalAlignment="Right" 
+                    VerticalAlignment="Top" Grid.Row="1"/>
+
+                        <Button Content="artists" FontSize="34" FontFamily="Segoe UI" FontWeight="Light" Padding="0" BorderThickness="0" Background="Transparent" Foreground="{StaticResource TextBrush}" Margin="0,217,10,0" Click="ArtistsButton_Click" HorizontalAlignment="Right" VerticalAlignment="Top"/>
+                        <Button Content="albums" FontSize="34" FontFamily="Segoe UI" FontWeight="Light" Padding="0" BorderThickness="0" Background="Transparent" Foreground="{StaticResource TextBrush}" Margin="0,262,10,0" Click="AlbumsButton_Click" HorizontalAlignment="Right" VerticalAlignment="Top" Grid.RowSpan="2"/>
+                        <Button Content="playlists" FontSize="34" FontFamily="Segoe UI" FontWeight="Light" Padding="0" BorderThickness="0" Background="Transparent" Foreground="{StaticResource TextBrush}" Margin="0,89.667,10,0" Click="PlaylistsButton_Click" HorizontalAlignment="Right" VerticalAlignment="Top" Grid.Row="1"/>
+                        <Button Content="genres" FontSize="34" FontFamily="Segoe UI" FontWeight="Light" Padding="0" BorderThickness="0" Background="Transparent" Foreground="{StaticResource TextBrush}" Margin="0,44.667,10,0" Click="GenresButton_Click" HorizontalAlignment="Right" VerticalAlignment="Top" Grid.Row="1"/>
+
                         <!-- Выдвижная панель для треков -->
                         <Grid x:Name="TracksPanel" Background="White" Visibility="Collapsed" Canvas.ZIndex="50" HorizontalAlignment="Stretch" Margin="0,0,0,0" Grid.RowSpan="2" VerticalAlignment="Stretch">
                             <Grid.RowDefinitions>
@@ -277,7 +109,6 @@
                                  Background="White"
                                  Foreground="Black"
                                  Style="{StaticResource WhiteTextBoxStyle}"
-                                 BorderBrush="{StaticResource AccentBrush}"
                                  BorderThickness="1"
                                  FontFamily="Segoe UI" FontWeight="Light"
                                  FontSize="20"
@@ -460,7 +291,7 @@
                             </ListView>
                         </Grid>
                     </Grid>
-                    <Grid x:Name="AlbumsPanel" Background="White" Visibility="Visible" Canvas.ZIndex="50" Margin="11,0,11,0">
+                    <Grid x:Name="AlbumsPanel" Background="White" Visibility="Collapsed" Canvas.ZIndex="50" Margin="11,0,11,0">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="*"/>
@@ -488,7 +319,7 @@
                                            VerticalAlignment="Top"
                                            Margin="10,56,50,0"/>
                         </Grid>
-                        <ListView x:Name="AlbumsList" ItemClick="Album_ItemClick" IsItemClickEnabled="True" Background="Transparent" Visibility="Visible" Margin="0,94,0,0" Grid.RowSpan="2">
+                        <ListView x:Name="AlbumsList" ItemClick="Album_ItemClick" IsItemClickEnabled="True" Background="Transparent" Visibility="Collapsed" Margin="0,94,0,0" Grid.RowSpan="2">
                             <ListView.ItemTemplate>
                                 <DataTemplate>
                                     <StackPanel Orientation="Horizontal" Margin="16,8">

@@ -29,31 +29,13 @@ namespace Decadence
 
         private TrackItem currentTrack;
 
-        private DispatcherTimer _positionTimer;
         private List<TrackItem> _currentPlaylist = new List<TrackItem>();
         private int _currentPlaylistIndex = -1;
-        private bool _userIsSeeking = false;
-        private bool _wasPlayingBeforeSeek = false;
-        private bool _isArtistViewActive = false;
 
-        // 🔹 Панели
-        private bool _isArtistsPanelOpen = false;
-        private bool _isAlbumsPanelOpen = false;
-        private bool _isGenresPanelOpen = false;
-
-        // 🔹 Просмотр списка песен внутри панели
-        private bool _isArtistSongViewActive = false;
-        private bool _isAlbumSongViewActive = false;
-        private bool _isGenreSongViewActive = false;
-
-        private enum RepeatMode { None, One, All }
         private RepeatMode _repeatMode = RepeatMode.None;
 
         private List<string> _phrases = new List<string>();
         private Random _random = new Random();
-
-        private BitmapImage _playIcon;
-        private BitmapImage _pauseIcon;
         public MainPage()
         {
             this.InitializeComponent();
@@ -62,15 +44,6 @@ namespace Decadence
 
             SystemNavigationManager.GetForCurrentView().BackRequested += OnBackRequested;
             Window.Current.CoreWindow.KeyDown += OnKeyDown;
-            MediaPlayerSingleton.Player.MediaEnded += Player_MediaEnded;
-
-            // 🔹 Загружаем иконки ОДИН раз при старте
-            _playIcon = new BitmapImage(new Uri("ms-appx:///Assets/play.png"));
-            _pauseIcon = new BitmapImage(new Uri("ms-appx:///Assets/pause.png"));
-
-            // Устанавливаем начальную иконку
-            if (FullPlayPauseIcon != null)
-                FullPlayPauseIcon.Source = _playIcon;
 
         }
         private void OnBackRequested(object sender, BackRequestedEventArgs e)
@@ -263,199 +236,9 @@ namespace Decadence
             currentTrack = track;
             MediaPlayerSingleton.PlayFile(file);
 
-            // ===== ОБНОВЛЯЕМ UI =====
-            FullTrackTitle.Text = track.Title;
-            FullTrackArtist.Text = track.Artist;
-
-            ProgressSlider.Value = 0;
-            CurrentTimeText.Text = "0:00";
-            _userIsSeeking = false;
-
             var saved = ApplicationData.Current.LocalSettings.Values["SavedVolume"];
             MediaPlayerSingleton.Player.Volume = saved is double v ? v : 1.0;
-
-            try
-            {
-                var thumb = await file.GetThumbnailAsync(
-                    Windows.Storage.FileProperties.ThumbnailMode.MusicView, 256);
-                if (thumb != null && thumb.Size > 0)
-                {
-                    var bitmap = new BitmapImage();
-                    await bitmap.SetSourceAsync(thumb);
-                    FullAlbumArt.Source = bitmap;
-                }
-            }
-            catch { }
-
-            UpdatePlayButtonState();
-
-            if (_positionTimer == null)
-                StartPositionTimer();
-            else
-                _positionTimer.Start();
         }
-        private void Player_MediaEnded(Windows.Media.Playback.MediaPlayer sender, object args)
-        {
-            _ = Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () => PlayNextTrack());
-        }
-        private void ProgressSlider_ManipulationStarted(object sender, Windows.UI.Xaml.Input.ManipulationStartedRoutedEventArgs e)
-        {
-            _userIsSeeking = true;
-            _wasPlayingBeforeSeek = MediaPlayerSingleton.IsPlaying;
-            if (_wasPlayingBeforeSeek)
-            {
-                MediaPlayerSingleton.Player.Pause();
-                UpdatePlayButtonState();
-            }
-        }
-
-        private void UpdatePlayButtonState()
-        {
-            // 🔹 Просто меняем ссылку на УЖЕ загруженную иконку
-            if (FullPlayPauseIcon != null)
-            {
-                FullPlayPauseIcon.Source = MediaPlayerSingleton.IsPlaying
-                    ? _pauseIcon   // Используем предзагруженную
-                    : _playIcon;   // Используем предзагруженную
-            }
-        }
-        private string FormatTime(TimeSpan t) => $"{(int)t.TotalMinutes}:{t.Seconds:D2}";
-        private void StartPositionTimer()
-        {
-            _positionTimer?.Stop();
-            _positionTimer = new DispatcherTimer();
-            _positionTimer.Interval = TimeSpan.FromMilliseconds(500);
-            _positionTimer.Tick += (s, e) =>
-            {
-                var session = MediaPlayerSingleton.Player.PlaybackSession;
-                if (session?.NaturalDuration > TimeSpan.Zero)
-                {
-                    ProgressSlider.Maximum = session.NaturalDuration.TotalSeconds;
-                    TotalTimeText.Text = FormatTime(session.NaturalDuration);
-
-                    if (!_userIsSeeking)
-                    {
-                        ProgressSlider.Value = session.Position.TotalSeconds;
-                        CurrentTimeText.Text = FormatTime(session.Position);
-                    }
-                }
-            };
-            _positionTimer.Start();
-        }
-        private async Task PlayNextTrack()
-        {
-            if (_currentPlaylist.Count == 0) return;
-
-            if (_repeatMode == RepeatMode.One)
-            {
-                var trackFile = await StorageFile.GetFileFromPathAsync(currentTrack.FilePath);
-                await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () => PlayTrack(trackFile));
-                return;
-            }
-
-            int nextIndex = _currentPlaylistIndex + 1;
-
-            if (nextIndex >= _currentPlaylist.Count)
-            {
-                if (_repeatMode == RepeatMode.None)
-                {
-                    MediaPlayerSingleton.Player.Pause();
-                    return;
-                }
-                else if (_repeatMode == RepeatMode.All)
-                {
-                    nextIndex = 0;
-                }
-            }
-
-            var nextTrack = _currentPlaylist[nextIndex];
-            var nextFile = await StorageFile.GetFileFromPathAsync(nextTrack.FilePath);
-            await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () => PlayTrack(nextFile));
-        }
-
-        private void PlayPauseButton_Click(object sender, RoutedEventArgs e)
-        {
-            MediaPlayerSingleton.TogglePlayPause();
-            UpdatePlayButtonState();
-        }
-
-        private void PrevButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (_currentPlaylist.Count == 0) return;
-
-            if (_repeatMode == RepeatMode.One)
-            {
-                var session = MediaPlayerSingleton.Player.PlaybackSession;
-                if (session != null && session.Position.TotalSeconds > 3)
-                {
-                    session.Position = TimeSpan.Zero;
-                    return;
-                }
-            }
-
-            int prevIndex = _currentPlaylistIndex - 1;
-            if (prevIndex < 0)
-            {
-                if (_repeatMode == RepeatMode.All)
-                {
-                    prevIndex = _currentPlaylist.Count - 1;
-                }
-                else
-                {
-                    return;
-                }
-            }
-
-            var prevTrack = _currentPlaylist[prevIndex];
-            var file = StorageFile.GetFileFromPathAsync(prevTrack.FilePath).AsTask().Result;
-            PlayTrack(file);
-        }
-
-        private void NextButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (_currentPlaylist.Count == 0) return;
-
-            int nextIndex = _currentPlaylistIndex + 1;
-            if (nextIndex >= _currentPlaylist.Count)
-            {
-                if (_repeatMode == RepeatMode.All)
-                {
-                    nextIndex = 0;
-                }
-                else
-                {
-                    return;
-                }
-            }
-
-            var nextTrack = _currentPlaylist[nextIndex];
-            var file = StorageFile.GetFileFromPathAsync(nextTrack.FilePath).AsTask().Result;
-            PlayTrack(file);
-        }
-
-        private async void ProgressSlider_ManipulationCompleted(object sender, Windows.UI.Xaml.Input.ManipulationCompletedRoutedEventArgs e)
-        {
-            _userIsSeeking = false;
-            var session = MediaPlayerSingleton.Player.PlaybackSession;
-            if (session == null) return;
-
-            double remainingTime = session.NaturalDuration.TotalSeconds - ProgressSlider.Value;
-
-            if (remainingTime < 2 && ProgressSlider.Value > 0)
-            {
-                await PlayNextTrack();
-            }
-            else
-            {
-                session.Position = TimeSpan.FromSeconds(ProgressSlider.Value);
-                if (_wasPlayingBeforeSeek)
-                {
-                    MediaPlayerSingleton.Player.Play();
-                    UpdatePlayButtonState();
-                }
-            }
-        }
-
 
         private void ArtistsButton_Click(object sender, RoutedEventArgs e)
         {
@@ -517,14 +300,18 @@ namespace Decadence
         {
             if (e.ClickedItem is TrackItem track)
             {
-                // Создаем плейлист из всех треков
                 _currentPlaylist = _tracks.ToList();
                 _currentPlaylistIndex = _tracks.IndexOf(track);
 
-                var file = await StorageFile.GetFileFromPathAsync(track.FilePath);
-                PlayTrack(file);
+                var navigationData = new FullPlayerNavigationData
+                {
+                    Track = track,
+                    Playlist = _currentPlaylist,
+                    PlaylistIndex = _currentPlaylistIndex,
+                    CurrentRepeatMode = _repeatMode
+                };
 
-                MainPivot.SelectedIndex = 0;
+                Frame.Navigate(typeof(PlayerMenu), navigationData);
                 TracksPanel.Visibility = Visibility.Collapsed;
             }
         }
@@ -540,7 +327,7 @@ namespace Decadence
                 var file = await StorageFile.GetFileFromPathAsync(track.FilePath);
                 PlayTrack(file);
 
-                MainPivot.SelectedIndex = 0;
+                Frame.Navigate(typeof(PlayerMenu));
                 SearchPanel.Visibility = Visibility.Collapsed;
             }
         }
@@ -555,7 +342,7 @@ namespace Decadence
                 var file = await StorageFile.GetFileFromPathAsync(track.FilePath);
                 PlayTrack(file);
 
-                MainPivot.SelectedIndex = 0;
+                Frame.Navigate(typeof(PlayerMenu));
                 ArtistsPanel.Visibility = Visibility.Collapsed;
             }
         }
@@ -710,7 +497,6 @@ namespace Decadence
                 }
 
                 _currentPlaylist = artistTracks;
-                _isArtistViewActive = true;
 
                 SelectedArtistName.Text = artist.Name;
                 ArtistSongsList.ItemsSource = artistTracks;
@@ -750,37 +536,7 @@ namespace Decadence
             ArtistSongsPanel.Visibility = Visibility.Collapsed;
 
             _currentPlaylist = _tracks.ToList();
-            _isArtistViewActive = false;
         }
-        private void RepeatButton_Click(object sender, RoutedEventArgs e)
-        {
-            // Переключение режимов: None -> One -> All -> None
-            switch (_repeatMode)
-            {
-                case RepeatMode.None:
-                    _repeatMode = RepeatMode.One;
-                    RepeatButtonImage.Source = new BitmapImage(new Uri("ms-appx:///Assets/repeat_one_white.png"));
-                    break;
-                case RepeatMode.One:
-                    _repeatMode = RepeatMode.All;
-                    RepeatButtonImage.Source = new BitmapImage(new Uri("ms-appx:///Assets/repeat_all_white.png"));
-                    break;
-                case RepeatMode.All:
-                    _repeatMode = RepeatMode.None;
-                    RepeatButtonImage.Source = new BitmapImage(new Uri("ms-appx:///Assets/repeat_none_white.png"));
-                    break;
-            }
-            System.Diagnostics.Debug.WriteLine($"RepeatMode изменен на: {_repeatMode}");
-        }
-        private void MenuToggleButton_Click(object sender, RoutedEventArgs e)
-        {
-            MenuSlidePanel.Visibility = Visibility.Visible;
-        }
-        private void CloseMenuPanel_Click(object sender, RoutedEventArgs e)
-        {
-            MenuSlidePanel.Visibility = Visibility.Collapsed;
-        }
-
         private void Album_ItemClick(object sender, ItemClickEventArgs e)
         {
             if (e.ClickedItem is AlbumItem album)
@@ -823,7 +579,7 @@ namespace Decadence
                     }
 
                     // Переключиться на FullPlayer и закрыть панель
-                    MainPivot.SelectedIndex = 0;
+                    Frame.Navigate(typeof(PlayerMenu));
                     AlbumsPanel.Visibility = Visibility.Collapsed;
                 }
                 catch (Exception ex)

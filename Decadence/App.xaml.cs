@@ -1,5 +1,7 @@
-﻿using System;
+﻿using Decadence.Models;
+using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
@@ -21,6 +23,8 @@ namespace Decadence
 {
     sealed partial class App : Application
     {
+        public static ObservableCollection<TrackItem> _tracks;
+        public static ObservableCollection<TrackItem> Tracks { get; set; }
         public App()
         {
             this.InitializeComponent();
@@ -30,6 +34,7 @@ namespace Decadence
         protected override void OnLaunched(LaunchActivatedEventArgs e)
         {
             Frame rootFrame = Window.Current.Content as Frame;
+            App._tracks = _tracks;
 
             if (rootFrame == null)
             {

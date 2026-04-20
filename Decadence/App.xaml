@@ -6,21 +6,21 @@
     <Application.Resources>
         <ResourceDictionary>
             <!-- Монотонная цветовая схема -->
-            <Color x:Key="AccentColor">#000000</Color>
-            <Color x:Key="BackgroundColor">#000000</Color>
-            <Color x:Key="SurfaceColor">#1A1A1A</Color>
-            <Color x:Key="TextColor">#FFFFFF</Color>
-            <Color x:Key="TextSecondaryColor">#888888</Color>
+            <Color x:Key="AccentColor">#3A332E</Color>
+            <Color x:Key="BackgroundColor">#FAF7F2</Color>
+            <Color x:Key="SurfaceColor">#F1EDE6</Color>
+            <Color x:Key="TextColor">#3A332E</Color>
+            <Color x:Key="TextSecondaryColor">#7A736D</Color>
 
             <!-- Кисти -->
             <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}"/>
             <SolidColorBrush x:Key="BackgroundBrush" Color="{StaticResource BackgroundColor}"/>
             <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource SurfaceColor}"/>
-            <SolidColorBrush x:Key="TextBrush" Color="Black"/>
+            <SolidColorBrush x:Key="TextBrush" Color="{StaticResource TextColor}"/>
             <SolidColorBrush x:Key="TextSecondaryBrush" Color="{StaticResource TextSecondaryColor}"/>
-            <SolidColorBrush x:Key="MiniPlayerBackgroundBrush" Color="#CC000000"/>
+            <SolidColorBrush x:Key="MiniPlayerBackgroundBrush" Color="{StaticResource TextColor}"/>
             <SolidColorBrush x:Key="PlaybackControlBrush" Color="{StaticResource AccentColor}"/>
-            <SolidColorBrush x:Key="PlaybackControlForegroundBrush" Color="White"/>
+            <SolidColorBrush x:Key="PlaybackControlForegroundBrush" Color="{StaticResource TextColor}"/>
             <SolidColorBrush x:Key="AppTitleBrush" Color="{StaticResource AccentColor}"/>
             <SolidColorBrush x:Key="MainBackgroundBrush" Color="{StaticResource BackgroundColor}"/>
 
@@ -55,7 +55,7 @@
             </Style>
 
             <Style x:Key="WhiteTextBoxStyle" TargetType="TextBox">
-                <Setter Property="Foreground" Value="White"/>
+                <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
                 <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
                 <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
                 <Setter Property="BorderThickness" Value="2"/>
