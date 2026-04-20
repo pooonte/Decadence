@@ -1,9 +1,10 @@
 ﻿<UserControl
     x:Class="Decadence.ArtistsPanelControl"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Background="{StaticResource BackgroundBrush}">
 
-    <Grid x:Name="RootGrid" Background="White" Visibility="Visible" Canvas.ZIndex="50" Grid.RowSpan="2">
+    <Grid x:Name="RootGrid" Background="White" Visibility="Collapsed" Canvas.ZIndex="50" Grid.RowSpan="2">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" MinHeight="60"/>
             <RowDefinition/>
@@ -66,7 +67,7 @@
 
         <Grid x:Name="ArtistSongsPanel" 
               Grid.Row="1"
-              Visibility="Collapsed" 
+              Visibility="Visible" 
               HorizontalAlignment="Stretch" 
               VerticalAlignment="Stretch">
             <Grid.RowDefinitions>

@@ -63,28 +63,6 @@
                         <Button Content="genres" FontSize="34" FontFamily="Segoe UI" FontWeight="Light" Padding="0" BorderThickness="0" Background="Transparent" Foreground="{StaticResource TextBrush}" Margin="0,44.667,10,0" Click="GenresButton_Click" HorizontalAlignment="Right" VerticalAlignment="Top" Grid.Row="1"/>-->
 
                         <!-- Выдвижная панель для треков -->
-                        <Grid x:Name="TracksPanel" Background="White" Visibility="Collapsed" Canvas.ZIndex="50" HorizontalAlignment="Stretch" Margin="0,0,0,0" Grid.RowSpan="2" VerticalAlignment="Stretch">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-                            <TextBlock Text="track list" Foreground="Black" FontSize="34" FontFamily="Segoe UI Light" HorizontalAlignment="Stretch" Margin="10,10,0,588" Grid.RowSpan="2" VerticalAlignment="Stretch"/>
-                            <ListView x:Name="TracksList" Grid.Row="1" ItemClick="Track_ItemClick" IsItemClickEnabled="True" Margin="0,56,0,0">
-                                <ListView.ItemTemplate>
-                                    <DataTemplate>
-                                        <Grid Height="50" Margin="0,4">
-                                            <TextBlock TextWrapping="Wrap" Margin="16,0,16,0">
-                                    <Run Text="{Binding Title}" Foreground="Black" FontSize="14"/>
-                                    <LineBreak />
-                                    <Run Text="{Binding Artist}" Foreground="Black" FontSize="12"/>
-                                    <Run Text=" --- " Foreground="Gray" FontSize="12"/>
-                                    <Run Text="{Binding Album}" Foreground="Black" FontSize="12"/>
-                                            </TextBlock>
-                                        </Grid>
-                                    </DataTemplate>
-                                </ListView.ItemTemplate>
-                            </ListView>
-                        </Grid>
                         <Grid x:Name="SettingsPanel"  Background="White" RequestedTheme="Light" Visibility="Collapsed" Canvas.ZIndex="50" HorizontalAlignment="Stretch" Margin="0,0,0,0" Grid.RowSpan="2" VerticalAlignment="Stretch">
                             <TextBlock Text="settings" Foreground="Black" FontSize="34" FontFamily="Segoe UI Light" HorizontalAlignment="Stretch" Margin="10,10,0,588" Grid.RowSpan="2" VerticalAlignment="Stretch"/>
                             <Pivot x:Name="SettingsPivot" Grid.Row="1" Margin="0,56,0,0">
@@ -96,75 +74,6 @@
                                     </Grid>
                                 </PivotItem>
                             </Pivot>
-                        </Grid>
-                        <Grid Margin="0,75,0,0" Grid.RowSpan="2">
-                            <TextBox x:Name="SearchBox" Margin="10,48,0,0"
-                                 PlaceholderText="search, please..."
-                                 TextChanged="SearchBox_TextChanged"
-                                 GotFocus="SearchBox_GotFocus"
-                                 Background="White"
-                                 Foreground="Black"
-                                 Style="{StaticResource WhiteTextBoxStyle}"
-                                 BorderThickness="1"
-                                 FontFamily="Segoe UI" FontWeight="Light"
-                                 FontSize="20"
-                                 Padding="12,4"
-                                 HorizontalAlignment="Left" VerticalAlignment="Top" Width="290" TextAlignment="Left"/>
-                            <Grid Background="White" Visibility="Collapsed" x:Name="SearchPanel" HorizontalAlignment="Stretch" Margin="0,100,0,0" VerticalAlignment="Stretch">
-                                <ListView x:Name="SearchResultsList"
-                                      ItemClick="SearchResult_ItemClick"
-                                      IsItemClickEnabled="True"
-                                      Background="Transparent"
-                                      Margin="0,8,0,0"
-                                      Visibility="Collapsed">
-                                    <ListView.ItemTemplate>
-                                        <DataTemplate>
-                                            <Grid Height="40" Margin="0,4">
-                                                <TextBlock VerticalAlignment="Stretch"
-                                                       TextWrapping="Wrap"
-                                                       MaxWidth="280">
-                                                <Run Text="{Binding Title}"
-                                                     Foreground="{StaticResource TextBrush}"
-                                                     FontSize="14"/>
-                                                <LineBreak />
-                                                <Run Text="{Binding Artist}"
-                                                     Foreground="{StaticResource TextSecondaryBrush}"
-                                                     FontSize="12"/>
-                                                <Run Text=" --- "
-                                                     Foreground="{StaticResource TextSecondaryBrush}"
-                                                     FontSize="12" FontFamily="Segoe UI" FontWeight="Light"/>
-                                                <Run Text="{Binding Album}"
-                                                     Foreground="{StaticResource TextSecondaryBrush}"
-                                                     FontSize="12"/>
-                                                </TextBlock>
-                                            </Grid>
-                                        </DataTemplate>
-                                    </ListView.ItemTemplate>
-                                </ListView>
-
-                                <StackPanel x:Name="EmptyStatePanel"
-                                        VerticalAlignment="Center"
-                                        HorizontalAlignment="Center"
-                                        Visibility="Visible">
-                                    <Image x:Name="SearchImage1"
-                                       Source="ms-appx:///Assets/intelligence.png"
-                                       Width="120" Height="68"
-                                       HorizontalAlignment="Center"
-                                       VerticalAlignment="Center"
-                                       Visibility="Visible">
-                                        <Image.RenderTransform>
-                                            <RotateTransform x:Name="Image1Rotation" Angle="0"/>
-                                        </Image.RenderTransform>
-                                    </Image>
-                                    <TextBlock Text="О, вот и разведданные" 
-                                           Foreground="{StaticResource AppTitleBrush}"
-                                           x:Name="SearchBoxText"
-                                           FontSize="16"
-                                           Margin="0,20,0,0"
-                                           HorizontalAlignment="Center"
-                                               TextWrapping="Wrap"/>
-                                </StackPanel>
-                            </Grid>
                         </Grid>
                     </Grid>
                     <local:FullButtonsPanel x:Name="TracksPanelControl"

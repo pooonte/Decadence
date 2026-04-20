@@ -256,21 +256,6 @@ namespace Decadence
             var dialog = new Windows.UI.Popups.MessageDialog("Decadence\nВерсия 0.1\nМузыкальный плеер", "О программе");
             _ = dialog.ShowAsync();
         }
-
-        private void TracksButton_Click(object sender, RoutedEventArgs e)
-        {
-            System.Diagnostics.Debug.WriteLine($"Треков в _tracks: {_tracks.Count}");
-
-            if (_tracks.Count > 0)
-            {
-                TracksList.ItemsSource = _tracks;
-                TracksPanel.Visibility = Visibility.Visible;
-            }
-            else
-            {
-                System.Diagnostics.Debug.WriteLine("⚠️ _tracks пуст!");
-            }
-        }
         private void ArtistsButton_Click(object sender, RoutedEventArgs e)
         {
             System.Diagnostics.Debug.WriteLine($"Артистов в _artists: {_artists.Count}");
@@ -284,120 +269,6 @@ namespace Decadence
             {
                 System.Diagnostics.Debug.WriteLine("⚠️ _artists пуст!");
             }
-        }
-        private void ClosePanel_Click(object sender, RoutedEventArgs e)
-        {
-            TracksPanel.Visibility = Visibility.Collapsed;
-        }
-
-        // Из TracksPanel
-        private async void Track_ItemClick(object sender, ItemClickEventArgs e)
-        {
-            if (e.ClickedItem is TrackItem track)
-            {
-                _currentPlaylist = _tracks.ToList();
-                _currentPlaylistIndex = _tracks.IndexOf(track);
-
-                var navigationData = new FullPlayerNavigationData
-                {
-                    Track = track,
-                    Playlist = _currentPlaylist,
-                    PlaylistIndex = _currentPlaylistIndex,
-                    CurrentRepeatMode = _repeatMode
-                };
-
-                Frame.Navigate(typeof(PlayerMenu), navigationData);
-                TracksPanel.Visibility = Visibility.Collapsed;
-            }
-        }
-
-        // Из Search
-        private async void SearchResult_ItemClick(object sender, ItemClickEventArgs e)
-        {
-            if (e.ClickedItem is TrackItem track)
-            {
-                _currentPlaylist = _tracks.ToList();
-                _currentPlaylistIndex = _tracks.IndexOf(track);
-
-                var file = await StorageFile.GetFileFromPathAsync(track.FilePath);
-                PlayTrack(file);
-
-                Frame.Navigate(typeof(PlayerMenu));
-                SearchPanel.Visibility = Visibility.Collapsed;
-            }
-        }
-
-        private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            string searchText = SearchBox.Text.ToLower().Trim();
-
-            if (string.IsNullOrWhiteSpace(searchText))
-            {
-                // Нет текста - скрываем панель
-                SearchPanel.Visibility = Visibility.Collapsed;
-            }
-            else
-            {
-                // Есть текст - показываем панель
-                SearchPanel.Visibility = Visibility.Visible;
-
-                // Ищем результаты
-                var results = _tracks.Where(t =>
-                    (t.Title?.ToLower().Contains(searchText) ?? false) ||
-                    (t.Artist?.ToLower().Contains(searchText) ?? false) ||
-                    (t.Album?.ToLower().Contains(searchText) ?? false)
-                ).ToList();
-
-                if (results.Any())
-                {
-                    SearchResultsList.ItemsSource = results;
-                    SearchResultsList.Visibility = Visibility.Visible;
-                    EmptyStatePanel.Visibility = Visibility.Collapsed;
-                }
-                else
-                {
-                    SearchResultsList.Visibility = Visibility.Collapsed;
-                    EmptyStatePanel.Visibility = Visibility.Visible;
-                }
-            }
-        }
-
-        // При получении фокуса - показываем панель (если есть текст)
-        private void SearchBox_GotFocus(object sender, RoutedEventArgs e)
-        {
-            // Открываем панель при клике
-            SearchPanel.Visibility = Visibility.Visible;
-
-            // Если текст есть, показываем результаты
-            if (!string.IsNullOrWhiteSpace(SearchBox.Text))
-            {
-                string searchText = SearchBox.Text.ToLower().Trim();
-                var results = _tracks.Where(t =>
-                    (t.Title?.ToLower().Contains(searchText) ?? false) ||
-                    (t.Artist?.ToLower().Contains(searchText) ?? false) ||
-                    (t.Album?.ToLower().Contains(searchText) ?? false)
-                ).ToList();
-
-                if (results.Any())
-                {
-                    SearchResultsList.ItemsSource = results;
-                    SearchResultsList.Visibility = Visibility.Visible;
-                    EmptyStatePanel.Visibility = Visibility.Collapsed;
-                }
-                else
-                {
-                    SearchResultsList.Visibility = Visibility.Collapsed;
-                    EmptyStatePanel.Visibility = Visibility.Visible;
-                }
-            }
-            else
-            {
-                // Текст пустой - показываем пустое состояние
-                SearchResultsList.Visibility = Visibility.Collapsed;
-                EmptyStatePanel.Visibility = Visibility.Visible;
-            }
-
-            SearchBox.SelectAll();
         }
 
         private async void RefreshLibraryButton_Click(object sender, RoutedEventArgs e)
@@ -498,7 +369,14 @@ namespace Decadence
                 TracksPanelControl.Hide();
             }
         }
-
+        private void TracksButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_tracks.Count > 0)
+            {
+                TracksPanelControl.SetTracks(_tracks);
+                TracksPanelControl.Show();
+            }
+        }
         // Обработчик кнопки назад
         private void TracksPanelControl_BackClicked(object sender, EventArgs e)
         {
