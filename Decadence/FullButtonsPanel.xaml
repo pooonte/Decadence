@@ -9,8 +9,8 @@
             <RowDefinition/>
         </Grid.RowDefinitions>
 
-        <TextBlock Text="track list" 
-                   Foreground="Black" 
+        <TextBlock Text="моя музыка" 
+                   Foreground="{StaticResource TextBrush}" 
                    FontSize="34" 
                    FontFamily="Segoe UI" 
                    FontWeight="Light" 
@@ -22,7 +22,7 @@
                                     Height="50"
                                     Background="Transparent"
                                     Click="BackButton_Click" HorizontalAlignment="Left" Margin="310,0,0,0" VerticalAlignment="Top">
-            <Image Source="ms-appx:///Assets/prev.png" Margin="-10,-16,-20,-7" Width="60" Height="60" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+            <Image Source="ms-appx:///Assets/prev_white.png" Margin="-10,-16,-20,-7" Width="60" Height="60" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
         </Button>
         <ListView x:Name="TracksListView" 
                   Grid.Row="1" 
@@ -31,11 +31,11 @@
                 <DataTemplate>
                     <Grid Height="50" Margin="0,4">
                         <TextBlock TextWrapping="Wrap" Margin="16,0,16,0">
-                            <Run Text="{Binding Title}" Foreground="Black" FontSize="14"/>
+                            <Run Text="{Binding Title}" Foreground="{StaticResource TextBrush}" FontSize="14"/>
                             <LineBreak />
-                            <Run Text="{Binding Artist}" Foreground="Black" FontSize="12"/>
+                            <Run Text="{Binding Artist}" Foreground="{StaticResource TextBrush}" FontSize="12"/>
                             <Run Text=" --- " Foreground="Gray" FontSize="12"/>
-                            <Run Text="{Binding Album}" Foreground="Black" FontSize="12"/>
+                            <Run Text="{Binding Album}" Foreground="{StaticResource TextBrush}" FontSize="12"/>
                         </TextBlock>
                     </Grid>
                 </DataTemplate>
