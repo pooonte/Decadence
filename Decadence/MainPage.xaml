@@ -12,65 +12,64 @@
             <RowDefinition Height="385*"/>
             <RowDefinition Height="383*"/>
         </Grid.RowDefinitions>
-        <Pivot x:Name="MainPivot" Margin="0,0,0,0" HeaderTemplate="{x:Null}" Grid.RowSpan="2" FontFamily="Segoe UI Light">
+        <!--<TextBlock Text="Main Page" FontFamily="Segoe UI" FontWeight="Light" Foreground="{StaticResource AppTitleBrush}" FontSize="50"  HorizontalAlignment="Left"  VerticalAlignment="Top"  Margin="10,10,0,0"/> -->
+
+        <Pivot x:Name="MainPivot" Grid.RowSpan="2" HeaderTemplate="{x:Null}">
             <PivotItem Margin="0,0,0,0">
                 <Grid Margin="0,-46,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                    <TextBlock Text="библиотека" 
+                   FontSize="72" 
+                   FontFamily="Segoe UI Light" 
+                   FontWeight="Light"
+                   Foreground="{StaticResource AppTitleBrush}"
+                   Opacity="0.6"
+                   HorizontalAlignment="Left" 
+                   VerticalAlignment="Top" 
+                   Margin="10,10,0,0"/>
                     <Grid x:Name="MenuTracksLayer" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                        <TextBlock Text="Main Page" FontFamily="Segoe UI" FontWeight="Light" Foreground="{StaticResource AppTitleBrush}" FontSize="50"  HorizontalAlignment="Right"  VerticalAlignment="Top"  Margin="0,10,10,0"/>
-                        <Button Content="tracks" 
+                        <Button Content="моя музыка" 
                     FontSize="34" 
                     FontFamily="Segoe UI" FontWeight="Light"
                     Padding="0" 
                     BorderThickness="0" 
                     Background="Transparent" 
                     Foreground="{StaticResource TextBrush}" 
-                    Margin="0,313,0,0" 
+                    Margin="10,120,0,0" 
                     Click="TracksButton_Click" 
-                    HorizontalAlignment="Right" 
+                    HorizontalAlignment="Left" 
                     VerticalAlignment="Top"/>
 
-                        <Button Content="about" 
+                        <Button Content="о приложении" 
                     FontSize="34" 
                     FontFamily="Segoe UI" FontWeight="Light" 
                     Padding="0" 
                     BorderThickness="0" 
                     Background="Transparent" 
                     Foreground="{StaticResource TextBrush}" 
-                    Margin="0,583,0,0" 
+                    Margin="10,320,0,0" 
                     Click="AboutButton_Click" 
-                    HorizontalAlignment="Right" 
+                    HorizontalAlignment="Left" 
                     VerticalAlignment="Top"/>
 
-                        <Button Content="settings" 
-                    FontSize="34" 
-                    FontFamily="Segoe UI" FontWeight="Light" 
-                    Padding="0" 
-                    BorderThickness="0" 
-                    Background="Transparent" 
-                    Foreground="{StaticResource TextBrush}" 
-                    Margin="0,538,0,0" 
-                    Click="SettingsButton_Click" 
-                    HorizontalAlignment="Right" 
-                    VerticalAlignment="Top"/>
+                        <Button Content="исполнители" FontSize="34" FontFamily="Segoe UI" FontWeight="Light" Padding="0" BorderThickness="0" Background="Transparent" Foreground="{StaticResource TextBrush}" Margin="10,170,0,0" Click="ArtistsButton_Click" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                        <Button Content="альбомы" FontSize="34" FontFamily="Segoe UI" FontWeight="Light" Padding="0" BorderThickness="0" Background="Transparent" Foreground="{StaticResource TextBrush}" Margin="10,220,0,0" Click="AlbumsButton_Click" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                        <Button Content="плейлисты" FontSize="34" FontFamily="Segoe UI" FontWeight="Light" Padding="0" BorderThickness="0" Background="Transparent" Foreground="{StaticResource TextBrush}" Margin="10,270,0,0" Click="PlaylistsButton_Click" HorizontalAlignment="Left" VerticalAlignment="Top"/>
 
-                        <Button Content="artists" FontSize="34" FontFamily="Segoe UI" FontWeight="Light" Padding="0" BorderThickness="0" Background="Transparent" Foreground="{StaticResource TextBrush}" Margin="0,358,0,0" Click="ArtistsButton_Click" HorizontalAlignment="Right" VerticalAlignment="Top"/>
-                        <Button Content="albums" FontSize="34" FontFamily="Segoe UI" FontWeight="Light" Padding="0" BorderThickness="0" Background="Transparent" Foreground="{StaticResource TextBrush}" Margin="0,403,0,0" Click="AlbumsButton_Click" HorizontalAlignment="Right" VerticalAlignment="Top"/>
-                        <Button Content="playlists" FontSize="34" FontFamily="Segoe UI" FontWeight="Light" Padding="0" BorderThickness="0" Background="Transparent" Foreground="{StaticResource TextBrush}" Margin="0,493,0,0" Click="PlaylistsButton_Click" HorizontalAlignment="Right" VerticalAlignment="Top"/>
-                        <Button Content="genres" FontSize="34" FontFamily="Segoe UI" FontWeight="Light" Padding="0" BorderThickness="0" Background="Transparent" Foreground="{StaticResource TextBrush}" Margin="0,448,0,0" Click="GenresButton_Click" HorizontalAlignment="Right" VerticalAlignment="Top"/>
 
-                        <!-- Выдвижная панель для треков -->
-                        <Grid x:Name="SettingsPanel"  Background="White" RequestedTheme="Light" Visibility="Collapsed" Canvas.ZIndex="50" HorizontalAlignment="Stretch" Margin="0,0,0,0" Grid.RowSpan="2" VerticalAlignment="Stretch">
-                            <TextBlock Text="settings" Foreground="Black" FontSize="34" FontFamily="Segoe UI Light" HorizontalAlignment="Stretch" Margin="10,10,0,588" Grid.RowSpan="2" VerticalAlignment="Stretch"/>
-                            <Pivot x:Name="SettingsPivot" Grid.Row="1" Margin="0,56,0,0">
-                                <PivotItem Header="Library">
-                                    <Grid Margin="10">
-                                        <TextBlock Text="Update library" FontSize="20" FontFamily="Segoe UI Light" Foreground="Black" Margin="1,0,-1,20" SelectionChanged="TextBlock_SelectionChanged"/>
-                                        <TextBlock Text="При обновлении библиотеки приложение пересканирует все папки и найдет новые треки. Это может занять некоторое время." TextWrapping="Wrap" FontSize="14" Foreground="Gray" Margin="1,53,-1,-53"/>
-                                        <Button x:Name="RefreshLibraryButton" Content="Update" Click="RefreshLibraryButton_Click" Height="45" Width="120" Background="White" Foreground="Black" BorderThickness="1" BorderBrush="LightGray" FontSize="20" FontFamily="Segoe UI Light" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0,-10,10,0"/>
-                                    </Grid>
-                                </PivotItem>
-                            </Pivot>
-                        </Grid>
+                        <StackPanel HorizontalAlignment="Left" VerticalAlignment="Center" Margin="10,559,0,10" Width="340">
+                            <TextBlock Text="ВАША МУЗЫКА" 
+                       FontSize="12" 
+                       FontFamily="Segoe UI" 
+                       FontWeight="Bold"
+                       Foreground="{StaticResource TextBrush}"/>
+
+                            <!-- Количество треков -->
+                            <TextBlock x:Name="TrackCountText" 
+                       Foreground="{StaticResource TextBrush}">
+                <Run Text="ТРЕКИ: " FontSize="34" FontWeight="Bold"/>
+                <Run x:Name="TrackCountNumber" Text="0" FontSize="34" FontWeight="Bold"/>
+                            </TextBlock>
+                        </StackPanel>
                     </Grid>
                     <local:FullButtonsPanel x:Name="TracksPanelControl"
                                 TrackClicked="TracksPanelControl_TrackClicked"
@@ -83,6 +82,27 @@
                           AlbumClicked="AlbumsPanelControl_AlbumClicked"
                           TrackClicked="AlbumsPanelControl_TrackClicked"
                           BackClicked="AlbumsPanelControl_BackClicked"/>
+                </Grid>
+            </PivotItem>
+            <PivotItem Margin="0">
+                <Grid Margin="0,-46,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                    <TextBlock Text="настройки" 
+                   FontSize="72" 
+                   FontFamily="Segoe UI Light" 
+                   FontWeight="Light"
+                   Foreground="{StaticResource AppTitleBrush}"
+                   Opacity="0.6"
+                   HorizontalAlignment="Left" 
+                   VerticalAlignment="Top" 
+                   Margin="10,10,0,0"/>
+
+                    <Grid>
+                        <TextBlock Text="Библиотеки" FontSize="20" FontFamily="Segoe UI" FontWeight="Light" Foreground="Black" Margin="10,105,211,503"/>
+                        <TextBlock Text="Update library" FontSize="20" FontFamily="Segoe UI" Foreground="Black" Margin="10,147,221,462" SelectionChanged="TextBlock_SelectionChanged"/>
+                        <TextBlock Text="При обновлении библиотеки приложение пересканирует все папки и найдет новые треки. Это может занять некоторое время." TextWrapping="Wrap" FontSize="14" Foreground="Gray" Margin="10,190,10,389"/>
+                        <Button x:Name="RefreshLibraryButton" Content="Update" Click="RefreshLibraryButton_Click" Height="45" Width="120" Background="White" Foreground="Black" BorderThickness="1" BorderBrush="LightGray" FontSize="20" FontFamily="Segoe UI Light" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0,140,10,0"/>
+
+                    </Grid>
                 </Grid>
             </PivotItem>
         </Pivot>

@@ -71,11 +71,6 @@ namespace Decadence
         {
             bool anyPanelClosed = false;
 
-            if (SettingsPanel.Visibility == Visibility.Visible)
-            {
-                SettingsPanel.Visibility = Visibility.Collapsed;
-                anyPanelClosed = true;
-            }
             if (TracksPanelControl.IsVisible)
             {
                 TracksPanelControl.Hide();
@@ -211,48 +206,65 @@ namespace Decadence
                     TrackCount = kvp.Value.Count
                 });
             }
+            UpdateStatistics();
 
 
             System.Diagnostics.Debug.WriteLine($"📊 Показано: {_tracks.Count} треков, {_artists.Count} исполнителей, {_albums.Count} альбомов");
         }
-
+        private void UpdateStatistics()
+        {
+            // Обновляем UI в главном потоке
+            _ = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+            {
+                TrackCountNumber.Text = _tracks.Count.ToString();
+            });
+        }
         private async void PlayTrack(StorageFile file)
         {
-            if (file == null) return;
+            System.Diagnostics.Debug.WriteLine("▶️ PlayTrack ВЫЗВАН");
+
+            if (file == null)
+            {
+                System.Diagnostics.Debug.WriteLine("❌ file == null");
+                return;
+            }
 
             var track = _currentPlaylist.FirstOrDefault(t => t.FilePath == file.Path);
             if (track == null)
             {
+                System.Diagnostics.Debug.WriteLine("🔍 Трек не найден в _currentPlaylist, ищу в _tracks");
                 track = _tracks.FirstOrDefault(t => t.FilePath == file.Path);
-                if (track == null) return;
+                if (track == null)
+                {
+                    System.Diagnostics.Debug.WriteLine("❌ Трек не найден в _tracks");
+                    return;
+                }
 
                 _currentPlaylist = _tracks.ToList();
                 _currentPlaylistIndex = _tracks.IndexOf(track);
+                System.Diagnostics.Debug.WriteLine($"✅ Плейлист создан, индекс: {_currentPlaylistIndex}");
             }
             else
             {
                 _currentPlaylistIndex = _currentPlaylist.IndexOf(track);
             }
 
-            currentTrack = track;  // ← ЭТО ВАЖНО
+            System.Diagnostics.Debug.WriteLine($"🎵 Трек: {track.Title}");
+            currentTrack = track;
+
+            System.Diagnostics.Debug.WriteLine(" Запуск MediaPlayerSingleton.PlayFile");
             MediaPlayerSingleton.PlayFile(file);
+
             var saved = ApplicationData.Current.LocalSettings.Values["SavedVolume"];
             MediaPlayerSingleton.Player.Volume = saved is double v ? v : 1.0;
+
+            System.Diagnostics.Debug.WriteLine("✅ PlayTrack завершён");
         }
         private void PlaylistsButton_Click(object sender, RoutedEventArgs e)
         {
             // Заглушка
-            System.Diagnostics.Debug.WriteLine("Playlists - будет позже");
-        }
-
-        private void GenresButton_Click(object sender, RoutedEventArgs e)
-        {
-            System.Diagnostics.Debug.WriteLine("Genres - будет позже");
-        }
-
-        private void SettingsButton_Click(object sender, RoutedEventArgs e)
-        {
-            SettingsPanel.Visibility = Visibility.Visible;
+            var dialog = new Windows.UI.Popups.MessageDialog("Придется подождать чуть чуть!\nПока что во мне не так много функций. \nИзвините! :(", "Упс!");
+            _ = dialog.ShowAsync();
         }
 
         private void AboutButton_Click(object sender, RoutedEventArgs e)

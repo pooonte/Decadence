@@ -54,7 +54,6 @@ namespace Decadence
         {
             AlbumsList.Visibility = Visibility.Visible;
             AlbumSongsPanel.Visibility = Visibility.Collapsed;
-            BackButton.Visibility = Visibility.Collapsed;
             SelectedAlbumName.Visibility = Visibility.Collapsed;
         }
 
@@ -62,7 +61,6 @@ namespace Decadence
         {
             AlbumsList.Visibility = Visibility.Collapsed;
             AlbumSongsPanel.Visibility = Visibility.Visible;
-            BackButton.Visibility = Visibility.Visible;
             SelectedAlbumName.Visibility = Visibility.Visible;
         }
 

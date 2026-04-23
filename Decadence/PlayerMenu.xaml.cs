@@ -371,8 +371,8 @@ namespace Decadence
         private async void AddToPlaylist_Click(object sender, RoutedEventArgs e)
         {
             var dialog = new Windows.UI.Popups.MessageDialog(
-                "Эта функция будет доступна в следующей версии",
-                "Добавление в плейлист"
+                "Пардон! \nЭта функция будет добавлена в ближайшее время",
+                "Плейлисты"
             );
             await dialog.ShowAsync();
         }
