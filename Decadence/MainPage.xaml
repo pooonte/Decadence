@@ -5,20 +5,24 @@
     xmlns:local="using:Decadence"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    mc:Ignorable="d"
-    Background="{StaticResource BackgroundBrush}">
+    mc:Ignorable="d">
+    
+    <Page.Background>
+        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#0C1610" Offset="0.0"/>
+            <GradientStop Color="#15241C" Offset="1.0"/>
+        </LinearGradientBrush>
+    </Page.Background>
     <Grid x:Name="MainContainer">
         <Grid.RowDefinitions>
             <RowDefinition Height="385*"/>
             <RowDefinition Height="383*"/>
         </Grid.RowDefinitions>
-        <!--<TextBlock Text="Main Page" FontFamily="Segoe UI" FontWeight="Light" Foreground="{StaticResource AppTitleBrush}" FontSize="50"  HorizontalAlignment="Left"  VerticalAlignment="Top"  Margin="10,10,0,0"/> -->
-
         <Pivot x:Name="MainPivot" Grid.RowSpan="2" HeaderTemplate="{x:Null}">
             <PivotItem Margin="0,0,0,0">
                 <Grid Margin="0,-46,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                     <TextBlock Text="библиотека" 
-                   FontSize="72" 
+                   FontSize="68" 
                    FontFamily="Segoe UI Light" 
                    FontWeight="Light"
                    Foreground="{StaticResource AppTitleBrush}"
@@ -87,7 +91,7 @@
             <PivotItem Margin="0">
                 <Grid Margin="0,-46,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                     <TextBlock Text="настройки" 
-                   FontSize="72" 
+                   FontSize="68" 
                    FontFamily="Segoe UI Light" 
                    FontWeight="Light"
                    Foreground="{StaticResource AppTitleBrush}"

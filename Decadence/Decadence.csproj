@@ -158,10 +158,14 @@
   <ItemGroup>
     <Content Include="Assets\intelligence.png" />
     <Content Include="Assets\menu.png" />
+    <Content Include="Assets\menu_white.png" />
     <Content Include="Assets\next.png" />
+    <Content Include="Assets\next_white.png" />
     <Content Include="Assets\pause.png" />
     <Content Include="Assets\more.png" />
+    <Content Include="Assets\pause_white.png" />
     <Content Include="Assets\play.png" />
+    <Content Include="Assets\play_white.png" />
     <Content Include="Assets\prev.png" />
     <Content Include="Assets\bar.png" />
     <Content Include="Assets\prev_white.png" />

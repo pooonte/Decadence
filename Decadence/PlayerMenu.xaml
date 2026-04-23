@@ -5,63 +5,37 @@
     xmlns:local="using:Decadence"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    mc:Ignorable="d"
-    Background="{StaticResource BackgroundBrush}">
-
+    mc:Ignorable="d">
+    
+    <Page.Background>
+        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#15241C" Offset="0.0"/>
+            <GradientStop Color="#0C1610" Offset="1.0"/>
+        </LinearGradientBrush>
+        
+        
+    </Page.Background>
     <Grid>
         <Grid>
-            <TextBlock Text="now playing" FontFamily="Segoe UI" FontWeight="Light" Foreground="{StaticResource AppTitleBrush}" FontSize="50"  HorizontalAlignment="Left"  VerticalAlignment="Top"  Margin="10,10,0,0"/>
+            <TextBlock Text="now playing" FontFamily="Segoe UI" FontWeight="Light" Foreground="{StaticResource AccentBrush}" FontSize="50"  HorizontalAlignment="Left"  VerticalAlignment="Top"  Margin="10,10,0,0"/>
             <Button x:Name="BackToArtistsButton"
                                     Width="50"
                                     Height="50"
                                     Background="Transparent"
                                     Click="BackButton_Click" HorizontalAlignment="Left" Margin="310,0,0,0" VerticalAlignment="Top">
-                <Image Source="ms-appx:///Assets/prev.png" Margin="-10,-16,-20,-7" Width="60" Height="60" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+                <Image Source="ms-appx:///Assets/prev_white.png" Margin="-10,-16,-20,-7" Width="60" Height="60" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
             </Button>
             <Grid HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,100,0,0">
-                <Border BorderBrush="Black"  BorderThickness="2"  Width="276"  Height="276">
+                <Border BorderBrush="{StaticResource SecondBackgroundBrush}" BorderThickness="4" Width="300" Height="300">
                     <Grid>
-                        <Image x:Name="FullAlbumArt" Width="272" Height="272" Stretch="UniformToFill"/>
+                        <Image x:Name="FullAlbumArt" Stretch="UniformToFill"/>
 
-                        <Border Height="6" VerticalAlignment="Top">
-                            <Border.Background>
-                                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                    <GradientStop Color="#FF000000" Offset="0"/>
-                                    <GradientStop Color="#00000000" Offset="1"/>
-                                </LinearGradientBrush>
-                            </Border.Background>
-                        </Border>
-                        <Border Height="6" VerticalAlignment="Bottom">
-                            <Border.Background>
-                                <LinearGradientBrush StartPoint="0,1" EndPoint="0,0">
-                                    <GradientStop Color="#FF000000" Offset="0"/>
-                                    <GradientStop Color="#00000000" Offset="1"/>
-                                </LinearGradientBrush>
-                            </Border.Background>
-                        </Border>
-                        <Border Width="6" HorizontalAlignment="Left">
-                            <Border.Background>
-                                <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                                    <GradientStop Color="#FF000000" Offset="0"/>
-                                    <GradientStop Color="#00000000" Offset="1"/>
-                                </LinearGradientBrush>
-                            </Border.Background>
-                        </Border>
-                        <Border Width="6" HorizontalAlignment="Right">
-                            <Border.Background>
-                                <LinearGradientBrush StartPoint="1,0" EndPoint="0,0">
-                                    <GradientStop Color="#FF000000" Offset="0"/>
-                                    <GradientStop Color="#00000000" Offset="1"/>
-                                </LinearGradientBrush>
-                            </Border.Background>
-                        </Border>
                     </Grid>
                 </Border>
-
-                <Grid VerticalAlignment="Bottom" Background="Black" Margin="-62,6,10,16" Padding="10,8" MaxWidth="200">
+                <Grid VerticalAlignment="Bottom" Background="{StaticResource SecondBackgroundBrush}" Margin="-62,0,30,16" Padding="10,8" MaxWidth="200">
                     <StackPanel>
-                        <TextBlock x:Name="FullTrackTitle" Foreground="White" FontSize="18" FontFamily="Segoe UI" FontWeight="Light" TextWrapping="Wrap" MaxWidth="250"/>
-                        <TextBlock x:Name="FullTrackArtist" Foreground="Gray" FontSize="13" FontFamily="Segoe UI" FontWeight="Light" Margin="0,5,0,0"/>
+                        <TextBlock x:Name="FullTrackTitle" Foreground="{StaticResource TextBrush}" FontSize="18" FontFamily="Segoe UI" FontWeight="Light" TextWrapping="Wrap" MaxWidth="250"/>
+                        <TextBlock x:Name="FullTrackArtist" Foreground="{StaticResource TextBrush}" FontSize="13" FontFamily="Segoe UI" FontWeight="Light" Margin="0,5,0,0"/>
                     </StackPanel>
                 </Grid>
             </Grid>
@@ -75,7 +49,7 @@
                 <Slider Grid.Column="1" x:Name="ProgressSlider" Height="30" Margin="5,0,5,0" VerticalAlignment="Center" ManipulationMode="TranslateX" ManipulationStarted="ProgressSlider_ManipulationStarted" ManipulationCompleted="ProgressSlider_ManipulationCompleted">
                     <Slider.Background>
                         <LinearGradientBrush EndPoint="1,0.5" StartPoint="0,0.5">
-                            <GradientStop Color="#E0E0E0" Offset="0"/>
+                            <GradientStop Color="#15241C" Offset="0"/>
                             <GradientStop Color="#E0E0E0" Offset="1"/>
                         </LinearGradientBrush>
                     </Slider.Background>
@@ -160,29 +134,17 @@
             </Grid>
             <Grid HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Height="103">
                 <Button x:Name="PrevButton" Click="PrevButton_Click" Background="Transparent"  Foreground="{StaticResource AccentBrush}" FontSize="24" HorizontalAlignment="Left" Margin="-8,0,0,0" VerticalAlignment="Bottom" Height="76" Width="100" >
-                    <Image x:Name="PrevButtonImage" Width="100" Height="100" Source="ms-appx:///Assets/prev.png" Margin="-10,-6,-10,-7"/>
+                    <Image x:Name="PrevButtonImage" Width="100" Height="100" Source="ms-appx:///Assets/prev_white.png" Margin="-10,-6,-10,-7"/>
                 </Button>
                 <Button x:Name="PlayPauseButton" Click="PlayPauseButton_Click" Background="Transparent" Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Top" Height="70" Width="80" Margin="177,0,103,0" >
-                    <Image x:Name="FullPlayPauseIcon" Source="ms-appx:///Assets/play.png" Stretch="Uniform" Width="70" Height="70" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    <Image x:Name="FullPlayPauseIcon" Source="ms-appx:///Assets/play_white.png" Stretch="Uniform" Width="70" Height="70" HorizontalAlignment="Center" VerticalAlignment="Center" />
                 </Button>
                 <Button x:Name="NextButton" Click="NextButton_Click" Background="Transparent" Foreground="{StaticResource AccentBrush}" FontSize="24" HorizontalAlignment="Right" Margin="0" VerticalAlignment="Bottom" Height="76" Width="92">
-                    <Image x:Name="NextButtonImage" Height="100" Width="100" Source="ms-appx:///Assets/next.png" Margin="-10,-6,-10,-7"/>
+                    <Image x:Name="NextButtonImage" Height="100" Width="100" Source="ms-appx:///Assets/next_white.png" Margin="-10,-6,-10,-7"/>
                 </Button>
                 <Button x:Name="MenuToggleButton" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="97,0,0,0" Width="80" Height="70" Click="MenuToggleButton_Click" Foreground="{StaticResource AccentBrush}" BorderThickness="0">
-                    <Image x:Name="MenuToggleImage" Source="ms-appx:///Assets/menu.png" Stretch="Uniform" Width="70" Height="70" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    <Image x:Name="MenuToggleImage" Source="ms-appx:///Assets/menu_white.png" Stretch="Uniform" Width="70" Height="70" HorizontalAlignment="Center" VerticalAlignment="Center" />
                 </Button>
-                <!--<Button x:Name="MenuButton" Foreground="Transparent" HorizontalAlignment="Left" Margin="222,104,0,0" VerticalAlignment="Top" Height="40" Width="40">
-                                <Button.Flyout>
-                                    <MenuFlyout>
-                                        <MenuFlyoutItem Text="О треке" Click="TrackInfo_Click"/>
-                                        <MenuFlyoutItem Text="Добавить в..." Click="AddToPlaylist_Click"/>
-                                    </MenuFlyout>
-                                </Button.Flyout>
-                                <Image Source="ms-appx:///Assets/more.png" Height="40" Width="40" Margin="-10,-6,-10,-7" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
-                            </Button>
-                            <Button x:Name="RepeatButton" Click="RepeatButton_Click" Background="Transparent" Height="40" Width="40" HorizontalAlignment="Left" Margin="97,104,0,0" VerticalAlignment="Top">
-                                <Image x:Name="RepeatButtonImage" Source="ms-appx:///Assets/repeat_none.png" Height="40" Width="40" HorizontalAlignment="Stretch" Margin="-10,-6,-10,-7" VerticalAlignment="Stretch"/>
-                            </Button>-->
             </Grid>
 
         </Grid>

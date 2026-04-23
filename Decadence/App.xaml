@@ -11,7 +11,50 @@
             <Color x:Key="TextColor">#E0F0E8</Color>
             <Color x:Key="TextSecondaryColor">#6B8E7E</Color>
             <Color x:Key="AccentColor">#2D8B6E</Color>
-
+            <Color x:Key="SecondBackgroundColor">#080C0A</Color>
+            <SolidColorBrush x:Key="SecondBackgroundBrush" Color="{StaticResource SecondBackgroundColor}"/>
+            
+            <Style x:Key="DecadenceTextButton" TargetType="Button">
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+                <!-- 🔹 Привязка к динамической кисти -->
+                <Setter Property="FontFamily" Value="Segoe UI Light"/>
+                <Setter Property="FontSize" Value="34"/>
+                <Setter Property="Padding" Value="0"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="HorizontalContentAlignment" Value="Left"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Grid Background="Transparent">
+                                <ContentPresenter x:Name="Content" 
+                                      Content="{TemplateBinding Content}"
+                                      Margin="{TemplateBinding Padding}"
+                                      HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"/>
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup x:Name="CommonStates">
+                                        <VisualState x:Name="Normal"/>
+                                        <VisualState x:Name="PointerOver">
+                                            <Storyboard>
+                                                <DoubleAnimation Storyboard.TargetName="Content" 
+                                                     Storyboard.TargetProperty="Opacity" 
+                                                     To="0.75" Duration="0:0:0.1"/>
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Pressed">
+                                            <Storyboard>
+                                                <DoubleAnimation Storyboard.TargetName="Content" 
+                                                     Storyboard.TargetProperty="Opacity" 
+                                                     To="0.5" Duration="0:0:0.05"/>
+                                            </Storyboard>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
             <!-- Полуночный париж
             <Color x:Key="BackgroundColor">#0F0F1E</Color>
             <Color x:Key="TextColor">#F0F0F5</Color>
