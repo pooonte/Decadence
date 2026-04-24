@@ -5,6 +5,7 @@ using System.Linq;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Decadence.Models;
+using Windows.UI.Xaml.Media;
 
 namespace Decadence
 {
@@ -22,12 +23,24 @@ namespace Decadence
         public void Show()
         {
             RootGrid.Visibility = Visibility.Visible;
-            ShowAlbumsList();
+            RootGrid.Opacity = 0; // Начальное состояние
+            PanelOpenAnimation.Begin();
         }
 
+        // 🔹 ЗАКРЫТИЕ
         public void Hide()
         {
+            // Отписываемся от прошлого completed, чтобы не было утечек
+            PanelCloseAnimation.Completed -= PanelCloseAnimation_Completed;
+            PanelCloseAnimation.Completed += PanelCloseAnimation_Completed;
+            PanelCloseAnimation.Begin();
+        }
+
+        private void PanelCloseAnimation_Completed(object sender, object e)
+        {
             RootGrid.Visibility = Visibility.Collapsed;
+            // Сбрасываем Transform на случай повторного открытия
+            ((CompositeTransform)RootGrid.RenderTransform).TranslateY = 0;
         }
 
         public bool IsVisible => RootGrid.Visibility == Visibility.Visible;

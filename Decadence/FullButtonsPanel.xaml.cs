@@ -4,6 +4,7 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Decadence.Models;
 using System;
+using Windows.UI.Xaml.Media;
 
 namespace Decadence
 {
@@ -27,15 +28,28 @@ namespace Decadence
         }
 
         // Показать панель
+        // 🔹 ОТКРЫТИЕ
         public void Show()
         {
             RootGrid.Visibility = Visibility.Visible;
+            RootGrid.Opacity = 0; // Начальное состояние
+            PanelOpenAnimation.Begin();
         }
 
-        // Скрыть панель
+        // 🔹 ЗАКРЫТИЕ
         public void Hide()
         {
+            // Отписываемся от прошлого completed, чтобы не было утечек
+            PanelCloseAnimation.Completed -= PanelCloseAnimation_Completed;
+            PanelCloseAnimation.Completed += PanelCloseAnimation_Completed;
+            PanelCloseAnimation.Begin();
+        }
+
+        private void PanelCloseAnimation_Completed(object sender, object e)
+        {
             RootGrid.Visibility = Visibility.Collapsed;
+            // Сбрасываем Transform на случай повторного открытия
+            ((CompositeTransform)RootGrid.RenderTransform).TranslateY = 0;
         }
 
         private void TracksListView_ItemClick(object sender, ItemClickEventArgs e)
