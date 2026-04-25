@@ -29,6 +29,7 @@ namespace Decadence
         public static List<TrackItem> CurrentPlaylist { get; set; }
         public static int CurrentPlaylistIndex { get; set; }
         public static RepeatMode CurrentRepeatMode { get; set; }
+        public static PlayerMenu PlayerMenuInstance { get; set; }
         public App()
         {
             this.InitializeComponent();

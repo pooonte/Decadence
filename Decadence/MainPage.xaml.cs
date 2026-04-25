@@ -495,15 +495,23 @@ namespace Decadence
         // Переход в PlayerMenu
         private void StatsButton_Click(object sender, RoutedEventArgs e)
         {
-            var navData = new FullPlayerNavigationData
+            if (App.PlayerMenuInstance != null)
             {
-                Track = App.CurrentTrack,
-                Playlist = App.CurrentPlaylist,
-                PlaylistIndex = App.CurrentPlaylistIndex,
-                CurrentRepeatMode = App.CurrentRepeatMode
-            };
-
-            Frame.Navigate(typeof(PlayerMenu), navData);
+                // Обновляем данные в существующем экземпляре
+                App.PlayerMenuInstance.UpdateData(App.CurrentTrack, App.CurrentPlaylist, App.CurrentPlaylistIndex, App.CurrentRepeatMode);
+                Frame.Navigate(typeof(PlayerMenu));
+            }
+            else
+            {
+                var navData = new FullPlayerNavigationData
+                {
+                    Track = App.CurrentTrack,
+                    Playlist = App.CurrentPlaylist,
+                    PlaylistIndex = App.CurrentPlaylistIndex,
+                    CurrentRepeatMode = App.CurrentRepeatMode
+                };
+                Frame.Navigate(typeof(PlayerMenu), navData);
+            }
         }
     }
 }

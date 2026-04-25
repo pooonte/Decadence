@@ -48,62 +48,78 @@ namespace Decadence
         {
             base.OnNavigatedTo(e);
             _isActive = true;
+            App.PlayerMenuInstance = this;
 
-            if (e.Parameter is FullPlayerNavigationData data)
+            // Загружаем данные
+            if (App.CurrentTrack != null && (e.Parameter == null || !(e.Parameter is FullPlayerNavigationData)))
             {
-                if (data.Track != null)
-                {
-                    // Используем переданные данные
-                    currentTrack = data.Track;
-                    _currentPlaylist = data.Playlist ?? new List<TrackItem>();
-                    _currentPlaylistIndex = data.PlaylistIndex;
-                    _repeatMode = data.CurrentRepeatMode;
+                currentTrack = App.CurrentTrack;
+                _currentPlaylist = App.CurrentPlaylist ?? new List<TrackItem>();
+                _currentPlaylistIndex = App.CurrentPlaylistIndex;
+                _repeatMode = App.CurrentRepeatMode;
 
-                    FullTrackTitle.Text = currentTrack.Title;
-                    FullTrackArtist.Text = currentTrack.Artist;
+                FullTrackTitle.Text = currentTrack.Title;
+                FullTrackArtist.Text = currentTrack.Artist;
+                await LoadAlbumArt(currentTrack.FilePath);
+                UpdatePlayPauseButton();
+            }
+            else if (e.Parameter is FullPlayerNavigationData data && data.Track != null)
+            {
+                currentTrack = data.Track;
+                _currentPlaylist = data.Playlist ?? new List<TrackItem>();
+                _currentPlaylistIndex = data.PlaylistIndex;
+                _repeatMode = data.CurrentRepeatMode;
 
-                    // НЕ ЗАПУСКАЕМ ТРЕК ЗАНОВО, а просто обновляем UI
-                    await LoadAlbumArt(currentTrack.FilePath);
-                    UpdatePlayPauseButton();
-
-                    // Обновляем позицию слайдера
-                    var session = MediaPlayerSingleton.Player?.PlaybackSession;
-                    if (session != null && session.NaturalDuration > TimeSpan.Zero)
-                    {
-                        ProgressSlider.Maximum = session.NaturalDuration.TotalSeconds;
-                        ProgressSlider.Value = session.Position.TotalSeconds;
-                        CurrentTimeText.Text = FormatTime(session.Position);
-                        TotalTimeText.Text = FormatTime(session.NaturalDuration);
-                    }
-                }
-                else
-                {
-                    FullTrackTitle.Text = "Нет трека";
-                    FullTrackArtist.Text = "Выберите трек в библиотеке";
-                }
+                FullTrackTitle.Text = currentTrack.Title;
+                FullTrackArtist.Text = currentTrack.Artist;
+                await LoadAlbumArt(currentTrack.FilePath);
+                UpdatePlayPauseButton();
             }
             else
             {
                 FullTrackTitle.Text = "Нет трека";
                 FullTrackArtist.Text = "Выберите трек в библиотеке";
             }
-            if (_globalTimer == null)
-            {
-                _globalTimer = new DispatcherTimer();
-                _globalTimer.Interval = TimeSpan.FromMilliseconds(500);
-                _globalTimer.Tick += (s, args) =>
-                {
-                    // Обновляем UI только если страница активна
-                    if (_isActive)
-                    {
-                        UpdatePlaybackPosition();
-                    }
-                };
-                _globalTimer.Start();
-            }
-            UpdatePlaybackPosition();
-        }
 
+            if (_globalTimer != null)
+            {
+                _globalTimer.Stop();
+                _globalTimer = null;
+            }
+
+            _globalTimer = new DispatcherTimer();
+            _globalTimer.Interval = TimeSpan.FromMilliseconds(500);
+            _globalTimer.Tick += (s, args) =>
+            {
+                if (_isActive)
+                {
+                    UpdatePlaybackPosition();
+                }
+            };
+            _globalTimer.Start();
+
+            // Принудительно обновляем позицию
+            ForceUpdatePosition();
+        }
+        // Добавь этот метод в класс PlayerMenu
+        private void ForceUpdatePosition()
+        {
+            var session = MediaPlayerSingleton.Player?.PlaybackSession;
+            if (session != null && session.NaturalDuration > TimeSpan.Zero)
+            {
+                ProgressSlider.Maximum = session.NaturalDuration.TotalSeconds;
+                ProgressSlider.Value = session.Position.TotalSeconds;
+                CurrentTimeText.Text = FormatTime(session.Position);
+                TotalTimeText.Text = FormatTime(session.NaturalDuration);
+                System.Diagnostics.Debug.WriteLine($"ForceUpdatePosition: {session.Position.TotalSeconds}/{session.NaturalDuration.TotalSeconds}");
+            }
+            else if (currentTrack?.Duration != null && currentTrack.Duration > TimeSpan.Zero)
+            {
+                ProgressSlider.Maximum = currentTrack.Duration.TotalSeconds;
+                TotalTimeText.Text = FormatTime(currentTrack.Duration);
+                System.Diagnostics.Debug.WriteLine($"ForceUpdatePosition from track info: {currentTrack.Duration.TotalSeconds}");
+            }
+        }
         private void UpdatePlaybackPosition()
         {
             var session = MediaPlayerSingleton.Player?.PlaybackSession;
@@ -114,7 +130,12 @@ namespace Decadence
 
                 if (!_userIsSeeking)
                 {
-                    ProgressSlider.Value = session.Position.TotalSeconds;
+                    var newValue = session.Position.TotalSeconds;
+                    if (Math.Abs(ProgressSlider.Value - newValue) > 0.1) // Отладка
+                    {
+                        System.Diagnostics.Debug.WriteLine($"UpdatePlaybackPosition: {newValue}/{session.NaturalDuration.TotalSeconds}");
+                    }
+                    ProgressSlider.Value = newValue;
                     CurrentTimeText.Text = FormatTime(session.Position);
                 }
             }
@@ -148,7 +169,11 @@ namespace Decadence
         {
             base.OnNavigatingFrom(e);
             _isActive = false;
-            // НЕ ОСТАНАВЛИВАЕМ таймер, он нужен для фоновой синхронизации
+            if (_globalTimer != null)
+            {
+                _globalTimer.Stop();
+                _globalTimer = null;
+            }
         }
 
         private async void PlayTrack(StorageFile file)
@@ -440,6 +465,19 @@ namespace Decadence
             Clicked?.Invoke(this, EventArgs.Empty);
         }
 
+        public void UpdateData(TrackItem track, List<TrackItem> playlist, int playlistIndex, RepeatMode repeatMode)
+        {
+            currentTrack = track;
+            _currentPlaylist = playlist ?? new List<TrackItem>();
+            _currentPlaylistIndex = playlistIndex;
+            _repeatMode = repeatMode;
 
+            FullTrackTitle.Text = track.Title;
+            FullTrackArtist.Text = track.Artist;
+
+            _ = LoadAlbumArt(track.FilePath);
+            UpdatePlayPauseButton();
+            ForceUpdatePosition();
+        }
     }
 }
