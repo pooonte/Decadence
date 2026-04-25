@@ -17,53 +17,57 @@
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="Button">
-                            <Grid x:Name="RootGrid" Background="{TemplateBinding Background}" RenderTransformOrigin="0.5,0.5">
+                            <Grid x:Name="RootGrid" 
+                      Background="{TemplateBinding Background}" 
+                      RenderTransformOrigin="0.5,0.5"
+                      Width="{TemplateBinding Width}"
+                      Height="{TemplateBinding Height}">
+
                                 <Grid.RenderTransform>
                                     <CompositeTransform ScaleX="1" ScaleY="1"/>
                                 </Grid.RenderTransform>
 
                                 <ContentPresenter x:Name="ContentPresenter"
-                                              Content="{TemplateBinding Content}"
-                                              Foreground="{TemplateBinding Foreground}"
-                                              FontSize="{TemplateBinding FontSize}"
-                                              FontFamily="{TemplateBinding FontFamily}"
-                                              FontWeight="{TemplateBinding FontWeight}"
-                                              Padding="{TemplateBinding Padding}"
-                                              HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"/>
+                                      Content="{TemplateBinding Content}"
+                                      Foreground="{TemplateBinding Foreground}"
+                                      FontSize="{TemplateBinding FontSize}"
+                                      FontFamily="{TemplateBinding FontFamily}"
+                                      FontWeight="{TemplateBinding FontWeight}"
+                                      Padding="{TemplateBinding Padding}"
+                                      HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                      VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
 
                                 <VisualStateManager.VisualStateGroups>
                                     <VisualStateGroup x:Name="CommonStates">
                                         <VisualState x:Name="Normal"/>
 
-                                        <!-- 🔹 НАВЕДЕНИЕ (мышь) -->
                                         <VisualState x:Name="PointerOver">
                                             <Storyboard>
                                                 <DoubleAnimation Storyboard.TargetName="ContentPresenter"
-                                                             Storyboard.TargetProperty="Opacity"
-                                                             To="0.75" Duration="0:0:0.1"/>
+                                                     Storyboard.TargetProperty="Opacity"
+                                                     To="0.75" Duration="0:0:0.1"/>
                                             </Storyboard>
                                         </VisualState>
 
-                                        <!-- 🔹 НАЖАТИЕ (мышь/тач) -->
                                         <VisualState x:Name="Pressed">
                                             <Storyboard>
                                                 <DoubleAnimation Storyboard.TargetName="ContentPresenter"
-                                                             Storyboard.TargetProperty="Opacity"
-                                                             To="0.5" Duration="0:0:0.05"/>
+                                                     Storyboard.TargetProperty="Opacity"
+                                                     To="0.5" Duration="0:0:0.05"/>
                                                 <DoubleAnimation Storyboard.TargetName="RootGrid"
-                                                             Storyboard.TargetProperty="(UIElement.RenderTransform).(CompositeTransform.ScaleX)"
-                                                             To="0.96" Duration="0:0:0.05"/>
+                                                     Storyboard.TargetProperty="(UIElement.RenderTransform).(CompositeTransform.ScaleX)"
+                                                     To="0.96" Duration="0:0:0.05"/>
                                                 <DoubleAnimation Storyboard.TargetName="RootGrid"
-                                                             Storyboard.TargetProperty="(UIElement.RenderTransform).(CompositeTransform.ScaleY)"
-                                                             To="0.96" Duration="0:0:0.05"/>
+                                                     Storyboard.TargetProperty="(UIElement.RenderTransform).(CompositeTransform.ScaleY)"
+                                                     To="0.96" Duration="0:0:0.05"/>
                                             </Storyboard>
                                         </VisualState>
 
                                         <VisualState x:Name="Disabled">
                                             <Storyboard>
                                                 <DoubleAnimation Storyboard.TargetName="ContentPresenter"
-                                                             Storyboard.TargetProperty="Opacity"
-                                                             To="0.3" Duration="0"/>
+                                                     Storyboard.TargetProperty="Opacity"
+                                                     To="0.3" Duration="0"/>
                                             </Storyboard>
                                         </VisualState>
                                     </VisualStateGroup>
@@ -74,6 +78,47 @@
                 </Setter>
             </Style>
 
+            <Style x:Key="ImageButtonStyle" TargetType="Button">
+                <Setter Property="Background" Value="Transparent"/>
+                <Setter Property="BorderThickness" Value="0"/>
+                <Setter Property="Padding" Value="0"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <Grid x:Name="RootGrid" 
+                      Background="{TemplateBinding Background}"
+                      Width="{TemplateBinding Width}"
+                      Height="{TemplateBinding Height}">
+
+                                <ContentPresenter x:Name="ContentPresenter"
+                                      Content="{TemplateBinding Content}"
+                                      HorizontalAlignment="Center"
+                                      VerticalAlignment="Center"/>
+
+                                <VisualStateManager.VisualStateGroups>
+                                    <VisualStateGroup x:Name="CommonStates">
+                                        <VisualState x:Name="Normal"/>
+                                        <VisualState x:Name="PointerOver">
+                                            <Storyboard>
+                                                <DoubleAnimation Storyboard.TargetName="ContentPresenter"
+                                                     Storyboard.TargetProperty="Opacity"
+                                                     To="0.7" Duration="0:0:0.1"/>
+                                            </Storyboard>
+                                        </VisualState>
+                                        <VisualState x:Name="Pressed">
+                                            <Storyboard>
+                                                <DoubleAnimation Storyboard.TargetName="ContentPresenter"
+                                                     Storyboard.TargetProperty="Opacity"
+                                                     To="0.4" Duration="0:0:0.05"/>
+                                            </Storyboard>
+                                        </VisualState>
+                                    </VisualStateGroup>
+                                </VisualStateManager.VisualStateGroups>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
             <!-- Монотонная цветовая схема -->
             <Color x:Key="SurfaceColor">#F1EDE6</Color>
             <Color x:Key="BackgroundColor">#0F1A14</Color>

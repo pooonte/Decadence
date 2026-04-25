@@ -59,12 +59,7 @@
                         <Button Content="плейлисты" FontSize="34" FontFamily="Segoe UI" FontWeight="Light" Padding="0" BorderThickness="0" Background="Transparent" Foreground="{StaticResource TextBrush}" Margin="10,270,0,0" Click="PlaylistsButton_Click" HorizontalAlignment="Left" VerticalAlignment="Top"/>
 
                         <!-- 🔹 БЛОК СТАТИСТИКИ (Он же кнопка перехода в плеер) -->
-                        <Button x:Name="StatsButton" 
-        HorizontalAlignment="Left" 
-        VerticalAlignment="Bottom" 
-        Margin="10,0,0,10" 
-        Click="StatsButton_Click"
-        Background="Transparent">
+                        <Button x:Name="StatsButton" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="10,0,0,10" Click="StatsButton_Click" Background="Transparent">
 
                             <StackPanel>
                                 <TextBlock Text="ВАША МУЗЫКА" 

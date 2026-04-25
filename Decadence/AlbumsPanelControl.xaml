@@ -55,7 +55,7 @@
                        VerticalAlignment="Top"
                        Margin="10,56,50,0"
                        Visibility="Collapsed"/>
-        <Button x:Name="BackButton"
+        <Button x:Name="BackButton" Style="{StaticResource ImageButtonStyle}"
                                     Width="50"
                                     Height="50"
                                     Background="Transparent"
@@ -68,7 +68,7 @@
                   IsItemClickEnabled="True" 
                   Background="Transparent"
                   Visibility="Visible" 
-                  Margin="0,1,0,0">
+                  Margin="0,10,0,0">
             <ListView.ItemTemplate>
                 <DataTemplate>
                     <StackPanel Margin="16,8">

@@ -47,7 +47,7 @@
                    HorizontalAlignment="Stretch" 
                    Margin="10,10,0,4" 
                    VerticalAlignment="Stretch"/>
-        <Button x:Name="BackButton"
+        <Button x:Name="BackButton" Style="{StaticResource ImageButtonStyle}"
                                     Width="50"
                                     Height="50"
                                     Background="Transparent"
@@ -56,7 +56,7 @@
         </Button>
         <ListView x:Name="TracksListView" 
                   Grid.Row="1" 
-                  IsItemClickEnabled="True">
+                  IsItemClickEnabled="True" Margin="0,10,0,0">
             <ListView.ItemTemplate>
                 <DataTemplate>
                     <Grid Height="50" Margin="0,4">
