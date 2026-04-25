@@ -25,6 +25,10 @@ namespace Decadence
     {
         public static ObservableCollection<TrackItem> _tracks;
         public static ObservableCollection<TrackItem> Tracks { get; set; }
+        public static TrackItem CurrentTrack { get; set; }
+        public static List<TrackItem> CurrentPlaylist { get; set; }
+        public static int CurrentPlaylistIndex { get; set; }
+        public static RepeatMode CurrentRepeatMode { get; set; }
         public App()
         {
             this.InitializeComponent();

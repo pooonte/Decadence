@@ -25,7 +25,7 @@ namespace Decadence
         private TrackItem _currentTrack;
 
         public event EventHandler Clicked;
-
+        private TrackItem currentTrack;
         private DispatcherTimer _positionTimer;
         private bool _userIsSeeking = false;
         private bool _wasPlayingBeforeSeek = false;
@@ -49,35 +49,70 @@ namespace Decadence
         {
             base.OnNavigatedTo(e);
 
-            System.Diagnostics.Debug.WriteLine("=== PlayerMenu OnNavigatedTo ===");
-
             if (e.Parameter is FullPlayerNavigationData data)
             {
-                System.Diagnostics.Debug.WriteLine($"Получен трек: {data.Track?.Title}");
-                System.Diagnostics.Debug.WriteLine($"Плейлист: {data.Playlist?.Count} треков");
-
-                _currentPlaylist = data.Playlist;
-                _currentPlaylistIndex = data.PlaylistIndex;
-                _repeatMode = data.CurrentRepeatMode;
-
-                UpdateRepeatButtonIcon();
-
                 if (data.Track != null)
                 {
-                    var file = await StorageFile.GetFileFromPathAsync(data.Track.FilePath);
-                    PlayTrack(file);
+                    // Используем переданные данные
+                    currentTrack = data.Track;
+                    _currentPlaylist = data.Playlist ?? new List<TrackItem>();
+                    _currentPlaylistIndex = data.PlaylistIndex;
+                    _repeatMode = data.CurrentRepeatMode;
+
+                    FullTrackTitle.Text = currentTrack.Title;
+                    FullTrackArtist.Text = currentTrack.Artist;
+
+                    // НЕ ЗАПУСКАЕМ ТРЕК ЗАНОВО, а просто обновляем UI
+                    await LoadAlbumArt(currentTrack.FilePath);
+                    UpdatePlayPauseButton();
+
+                    // Обновляем позицию слайдера
+                    var session = MediaPlayerSingleton.Player?.PlaybackSession;
+                    if (session != null && session.NaturalDuration > TimeSpan.Zero)
+                    {
+                        ProgressSlider.Maximum = session.NaturalDuration.TotalSeconds;
+                        ProgressSlider.Value = session.Position.TotalSeconds;
+                        CurrentTimeText.Text = FormatTime(session.Position);
+                        TotalTimeText.Text = FormatTime(session.NaturalDuration);
+                    }
                 }
                 else
                 {
-                    System.Diagnostics.Debug.WriteLine("Ошибка: data.Track == null");
+                    FullTrackTitle.Text = "Нет трека";
+                    FullTrackArtist.Text = "Выберите трек в библиотеке";
                 }
             }
             else
             {
-                System.Diagnostics.Debug.WriteLine("Ошибка: e.Parameter не FullPlayerNavigationData");
+                FullTrackTitle.Text = "Нет трека";
+                FullTrackArtist.Text = "Выберите трек в библиотеке";
             }
         }
+        private async Task LoadAlbumArt(string filePath)
+        {
+            try
+            {
+                var file = await StorageFile.GetFileFromPathAsync(filePath);
+                var thumb = await file.GetThumbnailAsync(Windows.Storage.FileProperties.ThumbnailMode.MusicView, 256);
+                if (thumb != null && thumb.Size > 0)
+                {
+                    var bitmap = new BitmapImage();
+                    await bitmap.SetSourceAsync(thumb);
+                    FullAlbumArt.Source = bitmap;
+                }
+            }
+            catch { }
+        }
 
+        private void UpdatePlayPauseButton()
+        {
+            if (FullPlayPauseIcon != null)
+            {
+                bool isPlaying = MediaPlayerSingleton.IsPlaying;
+                string iconName = isPlaying ? "pause.png" : "play.png";
+                FullPlayPauseIcon.Source = new BitmapImage(new Uri($"ms-appx:///Assets/{iconName}"));
+            }
+        }
         protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)
         {
             base.OnNavigatingFrom(e);
@@ -112,6 +147,11 @@ namespace Decadence
             FullTrackTitle.Text = track.Title;
             FullTrackArtist.Text = track.Artist;
             System.Diagnostics.Debug.WriteLine($"UI обновлен: {track.Title} - {track.Artist}");
+
+            App.CurrentTrack = currentTrack;
+            App.CurrentPlaylist = _currentPlaylist;
+            App.CurrentPlaylistIndex = _currentPlaylistIndex;
+            App.CurrentRepeatMode = _repeatMode;
 
             ProgressSlider.Value = 0;
             CurrentTimeText.Text = "0:00";

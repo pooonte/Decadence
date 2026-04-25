@@ -207,7 +207,7 @@ namespace Decadence
                 });
             }
             UpdateStatistics();
-
+            UpdateTrackCount();
 
             System.Diagnostics.Debug.WriteLine($"📊 Показано: {_tracks.Count} треков, {_artists.Count} исполнителей, {_albums.Count} альбомов");
         }
@@ -251,6 +251,11 @@ namespace Decadence
 
             System.Diagnostics.Debug.WriteLine($"🎵 Трек: {track.Title}");
             currentTrack = track;
+
+            App.CurrentTrack = currentTrack;
+            App.CurrentPlaylist = _currentPlaylist;
+            App.CurrentPlaylistIndex = _currentPlaylistIndex;
+            App.CurrentRepeatMode = _repeatMode;
 
             System.Diagnostics.Debug.WriteLine(" Запуск MediaPlayerSingleton.PlayFile");
             MediaPlayerSingleton.PlayFile(file);
@@ -477,35 +482,29 @@ namespace Decadence
                 AlbumsPanelControl.Hide();
             }
         }
-
-        // Закрыть панель
         private void AlbumsPanelControl_BackClicked(object sender, EventArgs e)
         {
             AlbumsPanelControl.Hide();
         }
 
-        // 🔹 ТОЛЬКО ПЕРЕХОД (без запуска, без плейлистов)
-        private void TrackCounterButton_Tapped(object sender, TappedRoutedEventArgs e)
+        // Обновление счетчика (вызывай после загрузки треков)
+        private void UpdateTrackCount()
         {
-            Frame.Navigate(typeof(PlayerMenu));
+            TrackCountNumber.Text = _tracks.Count.ToString();
         }
 
-        // 🔹 ЭФФЕКТ НАВЕДЕНИЯ (опционально, для ПК)
-        private void TrackCounterButton_PointerEntered(object sender, PointerRoutedEventArgs e)
+        // Переход в PlayerMenu
+        private void StatsButton_Click(object sender, RoutedEventArgs e)
         {
-            TrackCounterButton.Opacity = 0.8;
-        }
+            var navData = new FullPlayerNavigationData
+            {
+                Track = App.CurrentTrack,
+                Playlist = App.CurrentPlaylist,
+                PlaylistIndex = App.CurrentPlaylistIndex,
+                CurrentRepeatMode = App.CurrentRepeatMode
+            };
 
-        private void TrackCounterButton_PointerExited(object sender, PointerRoutedEventArgs e)
-        {
-            TrackCounterButton.Opacity = 1.0;
-        }
-
-        // 🔹 ОБНОВЛЕНИЕ ЦИФРЫ (вызывай 1 раз после загрузки библиотеки)
-        public void UpdateTrackCountDisplay()
-        {
-            if (TrackCountNumber != null)
-                TrackCountNumber.Text = _tracks.Count.ToString();
+            Frame.Navigate(typeof(PlayerMenu), navData);
         }
     }
 }

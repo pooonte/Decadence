@@ -59,41 +59,31 @@
                         <Button Content="плейлисты" FontSize="34" FontFamily="Segoe UI" FontWeight="Light" Padding="0" BorderThickness="0" Background="Transparent" Foreground="{StaticResource TextBrush}" Margin="10,270,0,0" Click="PlaylistsButton_Click" HorizontalAlignment="Left" VerticalAlignment="Top"/>
 
                         <!-- 🔹 БЛОК СТАТИСТИКИ (Он же кнопка перехода в плеер) -->
-                        <Grid x:Name="TrackCounterButton" 
-      HorizontalAlignment="Left" 
-      VerticalAlignment="Center" 
-      Margin="10,559,0,10" 
-      Width="340" 
-      Height="100"
-      Background="Transparent"
-      Tapped="TrackCounterButton_Tapped"
-      PointerEntered="TrackCounterButton_PointerEntered"
-      PointerExited="TrackCounterButton_PointerExited">
+                        <Button x:Name="StatsButton" 
+        HorizontalAlignment="Left" 
+        VerticalAlignment="Bottom" 
+        Margin="10,0,0,10" 
+        Click="StatsButton_Click"
+        Background="Transparent">
 
-                            <StackPanel VerticalAlignment="Center">
+                            <StackPanel>
                                 <TextBlock Text="ВАША МУЗЫКА" 
                    FontSize="12" 
-                   FontFamily="Segoe UI" 
                    FontWeight="Bold"
-                   Foreground="{StaticResource TextBrush}"
-                   Opacity="0.6"/>
-
+                   Foreground="{StaticResource TextBrush}"/>
                                 <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
-                                    <TextBlock Foreground="{StaticResource TextBrush}">
-                <Run Text="ТРЕКИ: " FontSize="34" FontWeight="Bold"/>
-                <Run x:Name="TrackCountNumber" Text="0" FontSize="34" FontWeight="Bold"/>
-                                    </TextBlock>
-
-                                    <TextBlock Text=" &lt;-- можно кликнуть" 
-                       FontSize="16" 
-                       FontFamily="Segoe UI Light" 
-                       Foreground="{StaticResource TextSecondaryBrush}"
-                       VerticalAlignment="Bottom"
-                       Margin="10,0,0,8"
-                       Opacity="0.8"/>
+                                    <TextBlock Text="ТРЕКИ: " 
+                       FontSize="28" 
+                       FontWeight="Bold"
+                       Foreground="{StaticResource TextBrush}"/>
+                                    <TextBlock x:Name="TrackCountNumber" 
+                       Text="0" 
+                       FontSize="28" 
+                       FontWeight="Bold"
+                       Foreground="{StaticResource TextBrush}"/>
                                 </StackPanel>
                             </StackPanel>
-                        </Grid>
+                        </Button>
                     </Grid>
                     <local:FullButtonsPanel x:Name="TracksPanelControl"
                                 TrackClicked="TracksPanelControl_TrackClicked"
