@@ -262,7 +262,6 @@ namespace Decadence
 
             var saved = ApplicationData.Current.LocalSettings.Values["SavedVolume"];
             MediaPlayerSingleton.Player.Volume = saved is double v ? v : 1.0;
-
             System.Diagnostics.Debug.WriteLine("✅ PlayTrack завершён");
         }
         private void PlaylistsButton_Click(object sender, RoutedEventArgs e)

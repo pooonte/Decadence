@@ -22,15 +22,14 @@ namespace Decadence
     {
         private List<TrackItem> _currentPlaylist = new List<TrackItem>();
         private int _currentPlaylistIndex = -1;
-        private TrackItem _currentTrack;
 
         public event EventHandler Clicked;
         private TrackItem currentTrack;
-        private DispatcherTimer _positionTimer;
         private bool _userIsSeeking = false;
         private bool _wasPlayingBeforeSeek = false;
         private RepeatMode _repeatMode = RepeatMode.None;
-
+        private static DispatcherTimer _globalTimer;
+        private bool _isActive = false;
         private BitmapImage _playIcon;
         private BitmapImage _pauseIcon;
 
@@ -48,6 +47,7 @@ namespace Decadence
         protected override async void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
+            _isActive = true;
 
             if (e.Parameter is FullPlayerNavigationData data)
             {
@@ -87,6 +87,37 @@ namespace Decadence
                 FullTrackTitle.Text = "Нет трека";
                 FullTrackArtist.Text = "Выберите трек в библиотеке";
             }
+            if (_globalTimer == null)
+            {
+                _globalTimer = new DispatcherTimer();
+                _globalTimer.Interval = TimeSpan.FromMilliseconds(500);
+                _globalTimer.Tick += (s, args) =>
+                {
+                    // Обновляем UI только если страница активна
+                    if (_isActive)
+                    {
+                        UpdatePlaybackPosition();
+                    }
+                };
+                _globalTimer.Start();
+            }
+            UpdatePlaybackPosition();
+        }
+
+        private void UpdatePlaybackPosition()
+        {
+            var session = MediaPlayerSingleton.Player?.PlaybackSession;
+            if (session != null && session.NaturalDuration > TimeSpan.Zero && FullTrackTitle != null)
+            {
+                ProgressSlider.Maximum = session.NaturalDuration.TotalSeconds;
+                TotalTimeText.Text = FormatTime(session.NaturalDuration);
+
+                if (!_userIsSeeking)
+                {
+                    ProgressSlider.Value = session.Position.TotalSeconds;
+                    CurrentTimeText.Text = FormatTime(session.Position);
+                }
+            }
         }
         private async Task LoadAlbumArt(string filePath)
         {
@@ -116,8 +147,8 @@ namespace Decadence
         protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)
         {
             base.OnNavigatingFrom(e);
-            _positionTimer?.Stop();
-            MediaPlayerSingleton.Player.MediaEnded -= Player_MediaEnded;
+            _isActive = false;
+            // НЕ ОСТАНАВЛИВАЕМ таймер, он нужен для фоновой синхронизации
         }
 
         private async void PlayTrack(StorageFile file)
@@ -140,7 +171,7 @@ namespace Decadence
                 _currentPlaylistIndex = _currentPlaylist.IndexOf(track);
             }
 
-            _currentTrack = track;
+            currentTrack = track;
             MediaPlayerSingleton.PlayFile(file);
 
             // Обновляем UI
@@ -174,11 +205,6 @@ namespace Decadence
             catch { }
 
             UpdatePlayButtonState();
-
-            if (_positionTimer == null)
-                StartPositionTimer();
-            else
-                _positionTimer.Start();
         }
 
         private void UpdatePlayButtonState()
@@ -207,29 +233,6 @@ namespace Decadence
 
         private string FormatTime(TimeSpan t) => $"{(int)t.TotalMinutes}:{t.Seconds:D2}";
 
-        private void StartPositionTimer()
-        {
-            _positionTimer?.Stop();
-            _positionTimer = new DispatcherTimer();
-            _positionTimer.Interval = TimeSpan.FromMilliseconds(500);
-            _positionTimer.Tick += (s, e) =>
-            {
-                var session = MediaPlayerSingleton.Player.PlaybackSession;
-                if (session?.NaturalDuration > TimeSpan.Zero)
-                {
-                    ProgressSlider.Maximum = session.NaturalDuration.TotalSeconds;
-                    TotalTimeText.Text = FormatTime(session.NaturalDuration);
-
-                    if (!_userIsSeeking)
-                    {
-                        ProgressSlider.Value = session.Position.TotalSeconds;
-                        CurrentTimeText.Text = FormatTime(session.Position);
-                    }
-                }
-            };
-            _positionTimer.Start();
-        }
-
         private async Task PlayNextTrack()
         {
             System.Diagnostics.Debug.WriteLine($"PlayNextTrack вызван. CurrentPlaylistIndex: {_currentPlaylistIndex}, Playlist.Count: {_currentPlaylist.Count}");
@@ -238,9 +241,9 @@ namespace Decadence
 
             if (_repeatMode == RepeatMode.One)
             {
-                if (_currentTrack != null)
+                if (currentTrack != null)
                 {
-                    var trackFile = await StorageFile.GetFileFromPathAsync(_currentTrack.FilePath);
+                    var trackFile = await StorageFile.GetFileFromPathAsync(currentTrack.FilePath);
                     await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () => PlayTrack(trackFile));
                 }
                 return;
@@ -394,14 +397,14 @@ namespace Decadence
 
         private async void TrackInfo_Click(object sender, RoutedEventArgs e)
         {
-            if (_currentTrack == null) return;
+            if (currentTrack == null) return;
 
             var dialog = new Windows.UI.Popups.MessageDialog(
-                $"Название: {_currentTrack.Title}\n" +
-                $"Исполнитель: {_currentTrack.Artist}\n" +
-                $"Альбом: {_currentTrack.Album}\n" +
-                $"Длительность: {_currentTrack.Duration.ToString(@"mm\:ss")}\n" +
-                $"Путь: {_currentTrack.FilePath}",
+                $"Название: {currentTrack.Title}\n" +
+                $"Исполнитель: {currentTrack.Artist}\n" +
+                $"Альбом: {currentTrack.Album}\n" +
+                $"Длительность: {currentTrack.Duration.ToString(@"mm\:ss")}\n" +
+                $"Путь: {currentTrack.FilePath}",
                 "Информация о треке"
             );
 

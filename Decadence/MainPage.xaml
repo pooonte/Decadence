@@ -7,10 +7,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
     <Page.Background>
-        <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-            <GradientStop Color="#0C1610" Offset="0.0"/>
-            <GradientStop Color="#15241C" Offset="1.0"/>
-        </LinearGradientBrush>
+        <StaticResource ResourceKey="CosmosBackgroundGradient"/>
     </Page.Background>
     <Grid x:Name="MainContainer">
         <Grid.RowDefinitions>

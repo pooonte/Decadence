@@ -119,13 +119,31 @@
                     </Setter.Value>
                 </Setter>
             </Style>
-            <!-- Монотонная цветовая схема -->
-            <Color x:Key="SurfaceColor">#F1EDE6</Color>
-            <Color x:Key="BackgroundColor">#0F1A14</Color>
-            <Color x:Key="TextColor">#E0F0E8</Color>
-            <Color x:Key="TextSecondaryColor">#6B8E7E</Color>
-            <Color x:Key="AccentColor">#2D8B6E</Color>
-            <Color x:Key="SecondBackgroundColor">#080C0A</Color>
+            <!-- градиент для фона-->
+            <Color x:Key="BgGradientStart">#0C1610</Color>
+            <Color x:Key="BgGradientEnd">#15241C</Color>
+
+            <!-- 🔹 ГРАДИЕНТ КАК РЕСУРС -->
+            <LinearGradientBrush x:Key="PageBackgroundGradient" StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#0C1610" Offset="0.0"/>
+                <GradientStop Color="#15241C" Offset="1.0"/>
+            </LinearGradientBrush>
+
+            <!-- Или для космической темы -->
+            <LinearGradientBrush x:Key="CosmosBackgroundGradient" StartPoint="0,0" EndPoint="0,1">
+                <GradientStop Color="#06070A" Offset="0.0"/>
+                <GradientStop Color="#0B0C10" Offset="0.5"/>
+                <GradientStop Color="#0F111A" Offset="1.0"/>
+            </LinearGradientBrush>
+            <!-- градиент для фона-->
+
+            <Color x:Key="SurfaceColor">#15171E</Color>
+            <Color x:Key="BackgroundColor">#0B0C10</Color>
+            <Color x:Key="TextColor">#C5D1E8</Color>
+            <Color x:Key="TextSecondaryColor">#5A6A8A</Color>
+            <Color x:Key="AccentColor">#4A90E2</Color>
+            <Color x:Key="SecondBackgroundColor">#06070A</Color>
+            
             <SolidColorBrush x:Key="SecondBackgroundBrush" Color="{StaticResource SecondBackgroundColor}"/>
             
             <Style x:Key="DecadenceTextButton" TargetType="Button">
@@ -191,10 +209,12 @@
             -->
 
             <!-- Зеленый слоник
+            <Color x:Key="SurfaceColor">#F1EDE6</Color>
             <Color x:Key="BackgroundColor">#0F1A14</Color>
             <Color x:Key="TextColor">#E0F0E8</Color>
             <Color x:Key="TextSecondaryColor">#6B8E7E</Color>
             <Color x:Key="AccentColor">#2D8B6E</Color>
+            <Color x:Key="SecondBackgroundColor">#080C0A</Color>
             -->
 
             <!-- Кобальт и медь
