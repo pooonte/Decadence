@@ -483,6 +483,30 @@ namespace Decadence
         {
             AlbumsPanelControl.Hide();
         }
+
+        // 🔹 ТОЛЬКО ПЕРЕХОД (без запуска, без плейлистов)
+        private void TrackCounterButton_Tapped(object sender, TappedRoutedEventArgs e)
+        {
+            Frame.Navigate(typeof(PlayerMenu));
+        }
+
+        // 🔹 ЭФФЕКТ НАВЕДЕНИЯ (опционально, для ПК)
+        private void TrackCounterButton_PointerEntered(object sender, PointerRoutedEventArgs e)
+        {
+            TrackCounterButton.Opacity = 0.8;
+        }
+
+        private void TrackCounterButton_PointerExited(object sender, PointerRoutedEventArgs e)
+        {
+            TrackCounterButton.Opacity = 1.0;
+        }
+
+        // 🔹 ОБНОВЛЕНИЕ ЦИФРЫ (вызывай 1 раз после загрузки библиотеки)
+        public void UpdateTrackCountDisplay()
+        {
+            if (TrackCountNumber != null)
+                TrackCountNumber.Text = _tracks.Count.ToString();
+        }
     }
 }
 
