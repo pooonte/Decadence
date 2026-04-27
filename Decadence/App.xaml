@@ -129,6 +129,11 @@
                 <GradientStop Color="#15241C" Offset="1.0"/>
             </LinearGradientBrush>
 
+            <LinearGradientBrush x:Key="OrangePageBackground" StartPoint="1,0" EndPoint="0,1">
+                <GradientStop Color="#9A421A" Offset="1.0"/>
+                <GradientStop Color="#5E240E" Offset="0.5"/>
+                <GradientStop Color="#2F1107" Offset="0.0"/>
+            </LinearGradientBrush>
             <!-- Или для космической темы -->
             <LinearGradientBrush x:Key="CosmosBackgroundGradient" StartPoint="0,0" EndPoint="0,1">
                 <GradientStop Color="#06070A" Offset="0.0"/>
@@ -137,13 +142,13 @@
             </LinearGradientBrush>
             <!-- градиент для фона-->
 
-            <Color x:Key="SurfaceColor">#15171E</Color>
-            <Color x:Key="BackgroundColor">#0B0C10</Color>
-            <Color x:Key="TextColor">#C5D1E8</Color>
-            <Color x:Key="TextSecondaryColor">#5A6A8A</Color>
-            <Color x:Key="AccentColor">#4A90E2</Color>
-            <Color x:Key="SecondBackgroundColor">#06070A</Color>
-            
+            <Color x:Key="SurfaceColor">#2C1E16</Color>
+            <Color x:Key="BackgroundColor">#241810</Color>
+            <Color x:Key="TextColor">#F2E8DC</Color>
+            <Color x:Key="TextSecondaryColor">#917A65</Color>
+            <Color x:Key="AccentColor">#D24726</Color>
+            <Color x:Key="SecondBackgroundColor">#1A120D</Color>
+
             <SolidColorBrush x:Key="SecondBackgroundBrush" Color="{StaticResource SecondBackgroundColor}"/>
             
             <Style x:Key="DecadenceTextButton" TargetType="Button">

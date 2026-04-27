@@ -467,13 +467,21 @@ namespace Decadence
 
         public void UpdateData(TrackItem track, List<TrackItem> playlist, int playlistIndex, RepeatMode repeatMode)
         {
+            if (track == null)
+            {
+                System.Diagnostics.Debug.WriteLine("UpdateData: track is NULL");
+                return;
+            }
+
             currentTrack = track;
             _currentPlaylist = playlist ?? new List<TrackItem>();
             _currentPlaylistIndex = playlistIndex;
             _repeatMode = repeatMode;
 
-            FullTrackTitle.Text = track.Title;
-            FullTrackArtist.Text = track.Artist;
+            if (FullTrackTitle != null)
+                FullTrackTitle.Text = track.Title;
+            if (FullTrackArtist != null)
+                FullTrackArtist.Text = track.Artist;
 
             _ = LoadAlbumArt(track.FilePath);
             UpdatePlayPauseButton();
