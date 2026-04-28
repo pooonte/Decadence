@@ -79,15 +79,15 @@
                     </Grid>
                     <local:FullButtonsPanel x:Name="TracksPanelControl"
                                 TrackClicked="TracksPanelControl_TrackClicked"
-                                BackClicked="TracksPanelControl_BackClicked"/>
+                                BackClicked="TracksPanelControl_BackClicked" Margin="0,-2,0,0"/>
                     <local:ArtistsPanelControl x:Name="ArtistsPanelControl"
                            ArtistClicked="ArtistsPanelControl_ArtistClicked"
                            TrackClicked="ArtistsPanelControl_TrackClicked"
-                           BackClicked="ArtistsPanelControl_BackClicked"/>
+                           BackClicked="ArtistsPanelControl_BackClicked" Margin="0,-2,0,0"/>
                     <local:AlbumsPanelControl x:Name="AlbumsPanelControl"
                           AlbumClicked="AlbumsPanelControl_AlbumClicked"
                           TrackClicked="AlbumsPanelControl_TrackClicked"
-                          BackClicked="AlbumsPanelControl_BackClicked"/>
+                          BackClicked="AlbumsPanelControl_BackClicked" Margin="0,-2,0,0"/>
                 </Grid>
             </PivotItem>
             <PivotItem Margin="0">
