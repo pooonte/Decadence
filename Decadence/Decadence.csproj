@@ -44,7 +44,7 @@
   </PropertyGroup>
   <PropertyGroup>
     <UseLegacyXamlDesigner>true</UseLegacyXamlDesigner>
-	</PropertyGroup>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|ARM'">
     <DebugSymbols>true</DebugSymbols>
     <OutputPath>bin\ARM\Debug\</OutputPath>
@@ -128,6 +128,7 @@
     <Compile Include="ArtistsPanelControl.xaml.cs">
       <DependentUpon>ArtistsPanelControl.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Converters\BoolToVisibilityConverter.cs" />
     <Compile Include="FullButtonsPanel.xaml.cs">
       <DependentUpon>FullButtonsPanel.xaml</DependentUpon>
     </Compile>
@@ -141,6 +142,7 @@
     <Compile Include="Models\CachedTrack.cs" />
     <Compile Include="Models\GenreItem.cs" />
     <Compile Include="Models\MusicTagHelper.cs" />
+    <Compile Include="Models\QueueItem.cs" />
     <Compile Include="Models\TrackItem.cs" />
     <Compile Include="PlayerMenu.xaml.cs">
       <DependentUpon>PlayerMenu.xaml</DependentUpon>

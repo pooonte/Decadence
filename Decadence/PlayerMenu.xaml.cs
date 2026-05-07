@@ -98,6 +98,7 @@ namespace Decadence
             };
             _globalTimer.Start();
 
+            UpdateQueue();
             // Принудительно обновляем позицию
             ForceUpdatePosition();
         }
@@ -486,6 +487,37 @@ namespace Decadence
             _ = LoadAlbumArt(track.FilePath);
             UpdatePlayPauseButton();
             ForceUpdatePosition();
+        }
+
+        // Методы
+        private void UpdateQueue()
+        {
+            var items = new List<QueueItem>();
+            for (int i = 0; i < _currentPlaylist.Count; i++)
+            {
+                items.Add(new QueueItem
+                {
+                    Index = i + 1,
+                    Title = _currentPlaylist[i].Title,
+                    Artist = _currentPlaylist[i].Artist
+                });
+            }
+            QueueListView.ItemsSource = items;
+        }
+
+        private async void QueueListView_ItemClick(object sender, ItemClickEventArgs e)
+        {
+            var item = e.ClickedItem as QueueItem;
+            if (item != null)
+            {
+                int newIndex = item.Index - 1;
+                if (newIndex >= 0 && newIndex < _currentPlaylist.Count)
+                {
+                    var track = _currentPlaylist[newIndex];
+                    var file = await StorageFile.GetFileFromPathAsync(track.FilePath);
+                    PlayTrack(file);
+                }
+            }
         }
     }
 }

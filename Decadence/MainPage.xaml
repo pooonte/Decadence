@@ -105,7 +105,7 @@
                     <Grid>
                         <TextBlock Text="Библиотеки" FontSize="20" FontFamily="Segoe UI" FontWeight="Light" Foreground="{StaticResource TextBrush}" Margin="10,105,211,503"/>
                         <TextBlock Text="При обновлении библиотеки приложение пересканирует все папки и найдет новые треки. Это может занять некоторое время." TextWrapping="Wrap" FontSize="14" Foreground="{StaticResource TextBrush}" Margin="10,190,10,389"/>
-                        <Button x:Name="RefreshLibraryButton" Content="Обновление библиотеки" Click="RefreshLibraryButton_Click" Height="45" Width="237" Padding="0" BorderThickness="0" Background="Transparent" Foreground="{StaticResource TextBrush}" BorderBrush="LightGray" FontSize="20" FontFamily="Segoe UI Light" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0,140,94,0"/>
+                        <Button x:Name="RefreshLibraryButton" Content="Обновление библиотеки" Click="RefreshLibraryButton_Click" Height="45" Width="237" Padding="0" BorderThickness="0" Background="Transparent" Foreground="{StaticResource TextBrush}" BorderBrush="LightGray" FontSize="20" FontFamily="Segoe UI Light" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0,140,113,0"/>
 
                     </Grid>
                 </Grid>

@@ -51,7 +51,7 @@
                                     Width="50"
                                     Height="50"
                                     Background="Transparent"
-                                    Click="BackButton_Click" HorizontalAlignment="Left" Margin="310,0,0,0" VerticalAlignment="Top">
+                                    Click="BackButton_Click" HorizontalAlignment="Right" VerticalAlignment="Top">
             <Image Source="ms-appx:///Assets/prev_white.png" Margin="-10,-16,-20,-7" Width="60" Height="60" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
         </Button>
         <ListView x:Name="TracksListView" 
