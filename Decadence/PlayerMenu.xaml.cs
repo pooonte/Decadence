@@ -439,11 +439,65 @@ namespace Decadence
 
         private async void AddToPlaylist_Click(object sender, RoutedEventArgs e)
         {
-            var dialog = new Windows.UI.Popups.MessageDialog(
-                "Пардон! \nЭта функция будет добавлена в ближайшее время",
-                "Плейлисты"
-            );
-            await dialog.ShowAsync();
+            if (currentTrack == null)
+            {
+                var dialog = new Windows.UI.Popups.MessageDialog("Нет активного трека");
+                await dialog.ShowAsync();
+                return;
+            }
+
+            // Получаем список плейлистов из MainPage через App
+            var playlists = App.CurrentPlaylists;
+
+            if (playlists == null || playlists.Count == 0)
+            {
+                var dialog = new Windows.UI.Popups.MessageDialog("Нет плейлистов. Создайте первый.");
+                await dialog.ShowAsync();
+                return;
+            }
+
+            // Выбираем плейлист
+            var options = playlists.Select(p => p.Name).ToArray();
+            var selectedIndex = await ShowPlaylistPicker(options);
+
+            if (selectedIndex >= 0)
+            {
+                var playlist = playlists[selectedIndex];
+                if (!playlist.Tracks.Any(t => t.FilePath == currentTrack.FilePath))
+                {
+                    playlist.Tracks.Add(currentTrack);
+                    await PlaylistStorage.SavePlaylistsAsync(playlists);
+
+                    var dialog = new Windows.UI.Popups.MessageDialog($"Трек добавлен в плейлист \"{playlist.Name}\"");
+                    await dialog.ShowAsync();
+                }
+                else
+                {
+                    var dialog = new Windows.UI.Popups.MessageDialog("Трек уже есть в этом плейлисте");
+                    await dialog.ShowAsync();
+                }
+            }
+        }
+
+        private async Task<int> ShowPlaylistPicker(string[] options)
+        {
+            var dialog = new ContentDialog
+            {
+                Title = "Выберите плейлист",
+                PrimaryButtonText = "Добавить",
+                SecondaryButtonText = "Отмена"
+            };
+
+            var listBox = new ListBox();
+            foreach (var opt in options)
+                listBox.Items.Add(opt);
+            listBox.SelectedIndex = 0;
+            dialog.Content = listBox;
+
+            var result = await dialog.ShowAsync();
+            if (result == ContentDialogResult.Primary && listBox.SelectedItem != null)
+                return Array.IndexOf(options, listBox.SelectedItem.ToString());
+            return -1;
         }
 
         private void MenuToggleButton_Click(object sender, RoutedEventArgs e)

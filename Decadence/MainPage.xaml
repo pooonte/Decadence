@@ -88,6 +88,9 @@
                           AlbumClicked="AlbumsPanelControl_AlbumClicked"
                           TrackClicked="AlbumsPanelControl_TrackClicked"
                           BackClicked="AlbumsPanelControl_BackClicked" Margin="0,-2,0,0"/>
+                    <local:PlaylistsPanelControl x:Name="PlaylistsPanelControl"
+                             PlaylistSelected="PlaylistsPanelControl_PlaylistSelected"
+                             PlaylistEditRequested="PlaylistsPanelControl_PlaylistEditRequested"/>
                 </Grid>
             </PivotItem>
             <PivotItem Margin="0">

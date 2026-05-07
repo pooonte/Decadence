@@ -30,6 +30,7 @@ namespace Decadence
         public static int CurrentPlaylistIndex { get; set; }
         public static RepeatMode CurrentRepeatMode { get; set; }
         public static PlayerMenu PlayerMenuInstance { get; set; }
+        public static List<Playlist> CurrentPlaylists { get; set; }
         public App()
         {
             this.InitializeComponent();

@@ -44,8 +44,16 @@ namespace Decadence
 
             _ = InitializeLibraryAsync();
 
+            _ = LoadPlaylists();
+
             SystemNavigationManager.GetForCurrentView().BackRequested += OnBackRequested;
             Window.Current.CoreWindow.KeyDown += OnKeyDown;
+
+            PlaylistsPanelControl.CreatePlaylist += (s, name) => CreatePlaylist(name);
+
+            TracksPanelControl.AddToPlaylistRequested += TracksPanelControl_AddToPlaylistRequested;
+
+    PlaylistsPanelControl.RemoveTrackRequested += PlaylistsPanelControl_RemoveTrackRequested;
         }
         private void OnBackRequested(object sender, BackRequestedEventArgs e)
         {
@@ -263,12 +271,6 @@ namespace Decadence
             var saved = ApplicationData.Current.LocalSettings.Values["SavedVolume"];
             MediaPlayerSingleton.Player.Volume = saved is double v ? v : 1.0;
             System.Diagnostics.Debug.WriteLine("✅ PlayTrack завершён");
-        }
-        private void PlaylistsButton_Click(object sender, RoutedEventArgs e)
-        {
-            // Заглушка
-            var dialog = new Windows.UI.Popups.MessageDialog("Придется подождать чуть чуть!\nПока что во мне не так много функций. \nИзвините! :(", "Упс!");
-            _ = dialog.ShowAsync();
         }
 
         private void AboutButton_Click(object sender, RoutedEventArgs e)
@@ -512,6 +514,130 @@ namespace Decadence
                 };
                 Frame.Navigate(typeof(PlayerMenu), navData);
             }
+        }
+
+        private void PlaylistsButton_Click(object sender, RoutedEventArgs e)
+        {
+            PlaylistsPanelControl.SetPlaylists(_playlists);
+            PlaylistsPanelControl.Show();
+        }
+
+        private async void PlaylistsPanelControl_PlaylistSelected(object sender, Playlist playlist)
+        {
+            // Воспроизвести плейлист
+            _currentPlaylist = playlist.Tracks.ToList();
+            _currentPlaylistIndex = 0;
+            if (_currentPlaylist.Count > 0)
+            {
+                var track = _currentPlaylist[0];
+                var file = await StorageFile.GetFileFromPathAsync(track.FilePath);
+                PlayTrack(file);
+            }
+        }
+
+        private void PlaylistsPanelControl_PlaylistEditRequested(object sender, Playlist playlist)
+        {
+            // Меню редактирования (пока заглушка)
+            var dialog = new Windows.UI.Popups.MessageDialog(
+                $"Плейлист: {playlist.Name}\nТреков: {playlist.TrackCount}",
+                "Редактирование");
+            _ = dialog.ShowAsync();
+        }
+
+
+        private List<Playlist> _playlists = new List<Playlist>();
+
+        // Загрузка при старте
+        private async Task LoadPlaylists()
+        {
+            _playlists = await PlaylistStorage.LoadPlaylistsAsync();
+        }
+
+        // Создание плейлиста
+        private async void CreatePlaylist(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return;
+
+            _playlists.Add(new Playlist { Name = name, Tracks = new List<TrackItem>() });
+            await PlaylistStorage.SavePlaylistsAsync(_playlists);
+            PlaylistsPanelControl.SetPlaylists(_playlists);
+        }
+
+        // Добавление трека в плейлист
+        private async void AddCurrentTrackToPlaylist(Playlist playlist)
+        {
+            if (currentTrack == null) return;
+
+            if (!playlist.Tracks.Any(t => t.FilePath == currentTrack.FilePath))
+            {
+                playlist.Tracks.Add(currentTrack);
+                await PlaylistStorage.SavePlaylistsAsync(_playlists);
+            }
+        }
+
+        // Удаление трека из плейлиста
+        private async void RemoveTrackFromPlaylist(Playlist playlist, TrackItem track)
+        {
+            playlist.Tracks.Remove(track);
+            await PlaylistStorage.SavePlaylistsAsync(_playlists);
+        }
+
+        // Удаление плейлиста
+        private async void DeletePlaylist(Playlist playlist)
+        {
+            _playlists.Remove(playlist);
+            await PlaylistStorage.SavePlaylistsAsync(_playlists);
+            PlaylistsPanelControl.SetPlaylists(_playlists);
+        }
+
+        private async void TracksPanelControl_AddToPlaylistRequested(object sender, TrackItem track)
+        {
+            if (_playlists.Count == 0)
+            {
+                var dialog = new Windows.UI.Popups.MessageDialog("Нет плейлистов. Создайте первый.");
+                await dialog.ShowAsync();
+                return;
+            }
+
+            var options = _playlists.Select(p => p.Name).ToArray();
+            var choice = await ShowPlaylistPicker(options);
+            if (choice >= 0)
+            {
+                var playlist = _playlists[choice];
+                if (!playlist.Tracks.Any(t => t.FilePath == track.FilePath))
+                {
+                    playlist.Tracks.Add(track);
+                    await PlaylistStorage.SavePlaylistsAsync(_playlists);
+                }
+            }
+        }
+
+        private async Task<int> ShowPlaylistPicker(string[] options)
+        {
+            var dialog = new ContentDialog
+            {
+                Title = "Добавить в плейлист",
+                PrimaryButtonText = "Добавить",
+                SecondaryButtonText = "Отмена"
+            };
+
+            var listBox = new ListBox();
+            foreach (var opt in options)
+                listBox.Items.Add(opt);
+            listBox.SelectedIndex = 0;
+            dialog.Content = listBox;
+
+            var result = await dialog.ShowAsync();
+            if (result == ContentDialogResult.Primary && listBox.SelectedItem != null)
+                return Array.IndexOf(options, listBox.SelectedItem.ToString());
+            return -1;
+        }
+
+        private async void PlaylistsPanelControl_RemoveTrackRequested(object sender, PlaylistTrackEventArgs e)
+        {
+            e.Playlist.Tracks.Remove(e.Track);
+            await PlaylistStorage.SavePlaylistsAsync(_playlists);
+            PlaylistsPanelControl.SetPlaylists(_playlists);
         }
     }
 }

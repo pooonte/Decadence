@@ -5,6 +5,7 @@ using Windows.UI.Xaml.Controls;
 using Decadence.Models;
 using System;
 using Windows.UI.Xaml.Media;
+using Windows.UI.Xaml.Input;
 
 namespace Decadence
 {
@@ -60,6 +61,21 @@ namespace Decadence
         {
             Hide();
             BackClicked?.Invoke(this, EventArgs.Empty);  // ← уведомляем MainPage
+        }
+
+        public event EventHandler<TrackItem> AddToPlaylistRequested;
+
+        private void TracksListView_RightTapped(object sender, RightTappedRoutedEventArgs e)
+        {
+            var item = (e.OriginalSource as FrameworkElement)?.DataContext as TrackItem;
+            if (item != null)
+            {
+                var menu = new MenuFlyout();
+                var addItem = new MenuFlyoutItem { Text = "Добавить в плейлист" };
+                addItem.Click += (s, args) => AddToPlaylistRequested?.Invoke(this, item);
+                menu.Items.Add(addItem);
+                menu.ShowAt(sender as UIElement, e.GetPosition(sender as UIElement));
+            }
         }
     }
 }
