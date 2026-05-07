@@ -29,7 +29,7 @@
                          From="1" To="0" Duration="0:0:0.2"/>
         </Storyboard>
     </UserControl.Resources>
-    
+
     <Grid Background="{StaticResource BackgroundBrush}" x:Name="RootGrid" Visibility="Collapsed" Canvas.ZIndex="50" Grid.RowSpan="2">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" MinHeight="60"/>
@@ -54,10 +54,30 @@
                                     Click="BackButton_Click" HorizontalAlignment="Right" VerticalAlignment="Top">
             <Image Source="ms-appx:///Assets/prev_white.png" Margin="-10,-16,-20,-7" Width="60" Height="60" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
         </Button>
+
+        <TextBlock Text="Сотрировка" 
+                   Foreground="{StaticResource TextBrush}" 
+                   FontSize="24" 
+                   FontFamily="Segoe UI" 
+                   FontWeight="Light" 
+                   HorizontalAlignment="Stretch" 
+                   Margin="10,1,218,547" 
+                   VerticalAlignment="Stretch" Grid.Row="1"/>
+        <ComboBox x:Name="SortCombo"
+              SelectedIndex="0"
+              SelectionChanged="SortCombo_SelectionChanged"
+              Background="Transparent"
+              Foreground="{StaticResource TextBrush}"
+              Width="172" Margin="178,1,0,0" Grid.Row="1">
+            <ComboBoxItem Content="По названию"/>
+            <ComboBoxItem Content="По исполнителю"/>
+            <ComboBoxItem Content="По альбому"/>
+            <ComboBoxItem Content="По длительности"/>
+        </ComboBox>
         <ListView x:Name="TracksListView" 
                   RightTapped="TracksListView_RightTapped"
                   Grid.Row="1" 
-                  IsItemClickEnabled="True" Margin="0,10,0,0">
+                  IsItemClickEnabled="True" Margin="0,38,0,0">
             <ListView.ItemTemplate>
                 <DataTemplate>
                     <Grid Height="50" Margin="0,4">

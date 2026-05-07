@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Decadence.Models;
@@ -12,35 +13,70 @@ namespace Decadence
     public sealed partial class FullButtonsPanel : UserControl
     {
         public bool IsVisible => RootGrid.Visibility == Visibility.Visible;
-        // Событие при клике на трек
         public event ItemClickEventHandler TrackClicked;
         public event EventHandler BackClicked;
+        public event EventHandler<TrackItem> AddToPlaylistRequested;
+
+        private ObservableCollection<TrackItem> _allTracks;
+        private string _currentSort = "По названию";
 
         public FullButtonsPanel()
         {
             this.InitializeComponent();
             TracksListView.ItemClick += TracksListView_ItemClick;
+
+            if (SortCombo != null)
+                SortCombo.SelectionChanged += SortCombo_SelectionChanged;
         }
 
-        // Установить список треков
         public void SetTracks(ObservableCollection<TrackItem> tracks)
         {
-            TracksListView.ItemsSource = tracks;
+            _allTracks = tracks;
+            ApplySorting();
         }
 
-        // Показать панель
-        // 🔹 ОТКРЫТИЕ
+        private void ApplySorting()
+        {
+            if (_allTracks == null) return;
+
+            IEnumerable<TrackItem> sorted;
+            switch (_currentSort)
+            {
+                case "По исполнителю":
+                    sorted = _allTracks.OrderBy(t => t.Artist).ThenBy(t => t.Title);
+                    break;
+                case "По альбому":
+                    sorted = _allTracks.OrderBy(t => t.Album).ThenBy(t => t.TrackNumber).ThenBy(t => t.Title);
+                    break;
+                case "По длительности":
+                    sorted = _allTracks.OrderBy(t => t.Duration);
+                    break;
+                default:
+                    sorted = _allTracks.OrderBy(t => t.Title);
+                    break;
+            }
+
+            TracksListView.ItemsSource = new ObservableCollection<TrackItem>(sorted);
+        }
+
+        private void SortCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (SortCombo.SelectedItem is ComboBoxItem item)
+            {
+                _currentSort = item.Content.ToString();
+                ApplySorting();
+            }
+        }
+
         public void Show()
         {
             RootGrid.Visibility = Visibility.Visible;
-            RootGrid.Opacity = 0; // Начальное состояние
+            RootGrid.Opacity = 0;
             PanelOpenAnimation.Begin();
         }
 
-        // 🔹 ЗАКРЫТИЕ
         public void Hide()
         {
-            // Отписываемся от прошлого completed, чтобы не было утечек
             PanelCloseAnimation.Completed -= PanelCloseAnimation_Completed;
             PanelCloseAnimation.Completed += PanelCloseAnimation_Completed;
             PanelCloseAnimation.Begin();
@@ -49,7 +85,6 @@ namespace Decadence
         private void PanelCloseAnimation_Completed(object sender, object e)
         {
             RootGrid.Visibility = Visibility.Collapsed;
-            // Сбрасываем Transform на случай повторного открытия
             ((CompositeTransform)RootGrid.RenderTransform).TranslateY = 0;
         }
 
@@ -57,13 +92,12 @@ namespace Decadence
         {
             TrackClicked?.Invoke(this, e);
         }
+
         private void BackButton_Click(object sender, RoutedEventArgs e)
         {
             Hide();
-            BackClicked?.Invoke(this, EventArgs.Empty);  // ← уведомляем MainPage
+            BackClicked?.Invoke(this, EventArgs.Empty);
         }
-
-        public event EventHandler<TrackItem> AddToPlaylistRequested;
 
         private void TracksListView_RightTapped(object sender, RightTappedRoutedEventArgs e)
         {

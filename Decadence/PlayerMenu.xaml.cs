@@ -110,7 +110,6 @@ namespace Decadence
             UpdateQueue();
             // Принудительно обновляем позицию
             ForceUpdatePosition();
-            LoadVisualizationSettings();
         }
         // Добавь этот метод в класс PlayerMenu
         private void ForceUpdatePosition()
