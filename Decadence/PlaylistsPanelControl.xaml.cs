@@ -47,7 +47,8 @@ namespace Decadence
         public void SetPlaylists(List<Playlist> playlists)
         {
             _playlists = playlists;
-            PlaylistsList.ItemsSource = playlists;
+            PlaylistsList.ItemsSource = null;      // сброс
+            PlaylistsList.ItemsSource = playlists; // установка
         }
 
         private void Playlist_Click(object sender, ItemClickEventArgs e)

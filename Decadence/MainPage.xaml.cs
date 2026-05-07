@@ -66,7 +66,11 @@ namespace Decadence
                 e.Handled = false; // Панелей нет, можно закрыть приложение
             }
         }
-
+        public void RefreshPlaylistsUI()
+        {
+            // Вызываем метод контрола, а не напрямую
+            PlaylistsPanelControl.SetPlaylists(_playlists);
+        }
         private void OnKeyDown(CoreWindow sender, KeyEventArgs args)
         {
             if (args.VirtualKey == Windows.System.VirtualKey.Escape)
@@ -551,16 +555,8 @@ namespace Decadence
         private async Task LoadPlaylists()
         {
             _playlists = await PlaylistStorage.LoadPlaylistsAsync();
-        }
-
-        // Создание плейлиста
-        private async void CreatePlaylist(string name)
-        {
-            if (string.IsNullOrWhiteSpace(name)) return;
-
-            _playlists.Add(new Playlist { Name = name, Tracks = new List<TrackItem>() });
-            await PlaylistStorage.SavePlaylistsAsync(_playlists);
-            PlaylistsPanelControl.SetPlaylists(_playlists);
+            App.CurrentPlaylists = _playlists;
+            System.Diagnostics.Debug.WriteLine($"Загружено плейлистов: {_playlists.Count}");
         }
 
         // Добавление трека в плейлист
@@ -637,6 +633,18 @@ namespace Decadence
         {
             e.Playlist.Tracks.Remove(e.Track);
             await PlaylistStorage.SavePlaylistsAsync(_playlists);
+            PlaylistsPanelControl.SetPlaylists(_playlists);
+        }
+
+        private async void CreatePlaylist(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return;
+
+            _playlists.Add(new Playlist { Name = name, Tracks = new List<TrackItem>() });
+            await PlaylistStorage.SavePlaylistsAsync(_playlists);
+            App.CurrentPlaylists = _playlists;
+
+            // Обновляем UI панели плейлистов
             PlaylistsPanelControl.SetPlaylists(_playlists);
         }
     }
