@@ -17,13 +17,12 @@
                 <TextBlock Text="сейчас играет" FontFamily="Segoe UI" FontWeight="Light" Foreground="{StaticResource AccentBrush}" FontSize="46"  HorizontalAlignment="Left"  VerticalAlignment="Top"  Margin="10,10,0,0"/>
                 <Grid HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,100,0,0" Height="300">
                     <!-- Обложка -->
-                    <Border BorderBrush="{StaticResource SecondBackgroundBrush}" 
+                        <Border BorderBrush="{StaticResource SecondBackgroundBrush}" 
             BorderThickness="4" 
             Width="300" Height="300">
-                        <Image x:Name="FullAlbumArt" Stretch="UniformToFill"/>
-                    </Border>
-
-                    <!-- Инфо-блок (привязан к низу обложки) -->
+                            <Image x:Name="FullAlbumArt" Stretch="UniformToFill"/>
+                        </Border>
+                        <!-- Инфо-блок (привязан к низу обложки) -->
                     <Grid HorizontalAlignment="Left" VerticalAlignment="Bottom" Background="{StaticResource SecondBackgroundBrush}" Padding="16,12" MaxWidth="280" Margin="0,0,0,12">
                         <StackPanel>
                             <TextBlock x:Name="FullTrackTitle" 

@@ -7,6 +7,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using Windows.Storage;
+using Windows.UI;
 using Windows.UI.Core;
 using Windows.UI.Popups;
 using Windows.UI.Xaml;
@@ -16,6 +17,7 @@ using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Media.Animation;
 using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
+using Windows.UI.Xaml.Shapes;
 
 namespace Decadence
 {
@@ -33,6 +35,12 @@ namespace Decadence
         private bool _isActive = false;
         private BitmapImage _playIcon;
         private BitmapImage _pauseIcon;
+        private int _currentVisualization = 0;
+        private DispatcherTimer _visTimer;
+
+        private int _visType = 0;
+        private Random _random = new Random();
+
 
         public PlayerMenu()
         {
@@ -102,6 +110,7 @@ namespace Decadence
             UpdateQueue();
             // Принудительно обновляем позицию
             ForceUpdatePosition();
+            LoadVisualizationSettings();
         }
         // Добавь этот метод в класс PlayerMenu
         private void ForceUpdatePosition()

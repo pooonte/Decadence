@@ -651,6 +651,72 @@ namespace Decadence
             App.CurrentPlaylists = _playlists;
             PlaylistsPanelControl.SetPlaylists(_playlists);
         }
+
+        private void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            string query = SearchBox.Text.Trim();
+
+            if (string.IsNullOrEmpty(query))
+            {
+                // Показываем кнопки, скрываем результаты
+                MainButtonsPanel.Visibility = Visibility.Visible;
+                SearchResults.Visibility = Visibility.Collapsed;
+                return;
+            }
+
+            // Ищем
+            var results = _tracks.Where(t =>
+                t.Title.ToLower().Contains(query.ToLower()) ||
+                t.Artist.ToLower().Contains(query.ToLower()) ||
+                t.Album.ToLower().Contains(query.ToLower())
+            ).ToList();
+
+            // Скрываем кнопки, показываем результаты
+            MainButtonsPanel.Visibility = Visibility.Collapsed;
+            SearchResults.Visibility = Visibility.Visible;
+            SearchResults.ItemsSource = results;
+        }
+        private void ShowMainButtons()
+        {
+            var stack = SearchResults.Parent as StackPanel;
+            if (stack != null && stack.Children.Count > 1)
+            {
+                (stack.Children[1] as StackPanel).Visibility = Visibility.Visible;
+            }
+        }
+
+        private void HideMainButtons()
+        {
+            var stack = SearchResults.Parent as StackPanel;
+            if (stack != null && stack.Children.Count > 1)
+            {
+                (stack.Children[1] as StackPanel).Visibility = Visibility.Collapsed;
+            }
+        }
+        private async void SearchResult_Click(object sender, ItemClickEventArgs e)
+        {
+            if (e.ClickedItem is TrackItem track)
+            {
+                _currentPlaylist = _tracks.ToList();
+                _currentPlaylistIndex = _tracks.IndexOf(track);
+
+                var file = await StorageFile.GetFileFromPathAsync(track.FilePath);
+                PlayTrack(file);
+
+                var navigationData = new FullPlayerNavigationData
+                {
+                    Track = track,
+                    Playlist = _currentPlaylist,
+                    PlaylistIndex = _currentPlaylistIndex,
+                    CurrentRepeatMode = _repeatMode
+                };
+                Frame.Navigate(typeof(PlayerMenu), navigationData);
+
+                // Очищаем поиск
+                SearchBox.Text = "";
+                SearchResults.Visibility = Visibility.Collapsed;
+                MainButtonsPanel.Visibility = Visibility.Visible;
+            }
+        }
     }
 }
-
