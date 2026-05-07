@@ -31,6 +31,9 @@ namespace Decadence
         public static RepeatMode CurrentRepeatMode { get; set; }
         public static PlayerMenu PlayerMenuInstance { get; set; }
         public static List<Playlist> CurrentPlaylists { get; set; }
+
+        public static event Action PlaylistsUpdated;
+
         public App()
         {
             this.InitializeComponent();
@@ -97,6 +100,11 @@ namespace Decadence
             var deferral = e.SuspendingOperation.GetDeferral();
             // TODO: Сохранить состояние приложения
             deferral.Complete();
+        }
+
+        public static void NotifyPlaylistsUpdated()
+        {
+            PlaylistsUpdated?.Invoke();
         }
     }
 }

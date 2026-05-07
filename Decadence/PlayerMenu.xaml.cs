@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Windows.Storage;
 using Windows.UI.Core;
+using Windows.UI.Popups;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
@@ -441,45 +442,44 @@ namespace Decadence
         {
             if (currentTrack == null)
             {
-                var dialog = new Windows.UI.Popups.MessageDialog("Нет активного трека");
+                var dialog = new MessageDialog("Нет активного трека");
                 await dialog.ShowAsync();
                 return;
             }
 
-            // Получаем список плейлистов из MainPage через App
             var playlists = App.CurrentPlaylists;
-
             if (playlists == null || playlists.Count == 0)
             {
-                var dialog = new Windows.UI.Popups.MessageDialog("Нет плейлистов. Создайте первый.");
+                var dialog = new MessageDialog("Нет плейлистов. Создайте первый в главном меню.");
                 await dialog.ShowAsync();
                 return;
             }
 
-            // Выбираем плейлист
             var options = playlists.Select(p => p.Name).ToArray();
-            var selectedIndex = await ShowPlaylistPicker(options);
+            var selectedName = await ShowPlaylistPicker(options);
 
-            if (selectedIndex >= 0)
+            if (selectedName != null)
             {
-                var playlist = playlists[selectedIndex];
+                var playlist = playlists.First(p => p.Name == selectedName);
                 if (!playlist.Tracks.Any(t => t.FilePath == currentTrack.FilePath))
                 {
                     playlist.Tracks.Add(currentTrack);
                     await PlaylistStorage.SavePlaylistsAsync(playlists);
 
-                    var dialog = new Windows.UI.Popups.MessageDialog($"Трек добавлен в плейлист \"{playlist.Name}\"");
+                    var dialog = new MessageDialog($"Трек добавлен в плейлист \"{playlist.Name}\"");
                     await dialog.ShowAsync();
+
+                    App.NotifyPlaylistsUpdated();
                 }
                 else
                 {
-                    var dialog = new Windows.UI.Popups.MessageDialog("Трек уже есть в этом плейлисте");
+                    var dialog = new MessageDialog("Трек уже есть в этом плейлисте");
                     await dialog.ShowAsync();
                 }
             }
         }
 
-        private async Task<int> ShowPlaylistPicker(string[] options)
+        private async Task<string> ShowPlaylistPicker(string[] options)
         {
             var dialog = new ContentDialog
             {
@@ -489,15 +489,14 @@ namespace Decadence
             };
 
             var listBox = new ListBox();
-            foreach (var opt in options)
-                listBox.Items.Add(opt);
-            listBox.SelectedIndex = 0;
+            foreach (var opt in options) listBox.Items.Add(opt);
+            if (listBox.Items.Count > 0) listBox.SelectedIndex = 0;
             dialog.Content = listBox;
 
             var result = await dialog.ShowAsync();
             if (result == ContentDialogResult.Primary && listBox.SelectedItem != null)
-                return Array.IndexOf(options, listBox.SelectedItem.ToString());
-            return -1;
+                return listBox.SelectedItem.ToString();
+            return null;
         }
 
         private void MenuToggleButton_Click(object sender, RoutedEventArgs e)

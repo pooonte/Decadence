@@ -53,7 +53,9 @@ namespace Decadence
 
             TracksPanelControl.AddToPlaylistRequested += TracksPanelControl_AddToPlaylistRequested;
 
-    PlaylistsPanelControl.RemoveTrackRequested += PlaylistsPanelControl_RemoveTrackRequested;
+            PlaylistsPanelControl.RemoveTrackRequested += PlaylistsPanelControl_RemoveTrackRequested;
+
+            App.PlaylistsUpdated += OnPlaylistsUpdated;
         }
         private void OnBackRequested(object sender, BackRequestedEventArgs e)
         {
@@ -69,6 +71,10 @@ namespace Decadence
         public void RefreshPlaylistsUI()
         {
             // Вызываем метод контрола, а не напрямую
+            PlaylistsPanelControl.SetPlaylists(_playlists);
+        }
+        private void OnPlaylistsUpdated()
+        {
             PlaylistsPanelControl.SetPlaylists(_playlists);
         }
         private void OnKeyDown(CoreWindow sender, KeyEventArgs args)
@@ -643,8 +649,6 @@ namespace Decadence
             _playlists.Add(new Playlist { Name = name, Tracks = new List<TrackItem>() });
             await PlaylistStorage.SavePlaylistsAsync(_playlists);
             App.CurrentPlaylists = _playlists;
-
-            // Обновляем UI панели плейлистов
             PlaylistsPanelControl.SetPlaylists(_playlists);
         }
     }
