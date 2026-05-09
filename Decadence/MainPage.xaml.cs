@@ -5,8 +5,10 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using System.Numerics;
 using System.Threading.Tasks;
 using Windows.Storage;
+using Windows.UI;
 using Windows.UI.Core;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
@@ -15,6 +17,11 @@ using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Media.Animation;
 using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
+using Microsoft.Graphics.Canvas;
+using Microsoft.Graphics.Canvas.UI.Xaml;
+using Microsoft.Graphics.Canvas.Geometry;
+using System.Numerics;
+using Microsoft.Graphics.Canvas.UI;
 
 namespace Decadence
 {
@@ -38,6 +45,12 @@ namespace Decadence
 
         private List<string> _phrases = new List<string>();
         private Random _random = new Random();
+
+        private List<CanvasGeometry> _triangleGeometries = new List<CanvasGeometry>();
+        private List<Vector2> _points = new List<Vector2>();
+        private List<int> _indices = new List<int>();
+        private Random _rnd = new Random();
+        private bool _geometryReady = false;
         public MainPage()
         {
             this.InitializeComponent();
@@ -57,6 +70,7 @@ namespace Decadence
 
             App.PlaylistsUpdated += OnPlaylistsUpdated;
         }
+
         private void OnBackRequested(object sender, BackRequestedEventArgs e)
         {
             if (CloseAnyOpenPanel())
@@ -718,5 +732,129 @@ namespace Decadence
                 MainButtonsPanel.Visibility = Visibility.Visible;
             }
         }
+
+        private void LowPolyCanvas_CreateResources(CanvasControl sender, CanvasCreateResourcesEventArgs args)
+        {
+            args.TrackAsyncAction(GenerateGeometryAsync((float)sender.ActualWidth, (float)sender.ActualHeight).AsAsyncAction());
+        }
+
+        private async System.Threading.Tasks.Task GenerateGeometryAsync(float width, float height)
+        {
+            _rnd = new Random(Guid.NewGuid().GetHashCode());
+            // Очищаем старую геометрию
+            foreach (var geo in _triangleGeometries)
+            {
+                geo.Dispose();
+            }
+            _triangleGeometries.Clear();
+            _points.Clear();
+            _indices.Clear();
+
+            if (width < 10 || height < 10) return;
+
+            float cellSize = 80f;
+            float jitter = 70f;
+
+            int cols = (int)(width / cellSize) + 2;
+            int rows = (int)(height / cellSize) + 2;
+
+            // Создаем точки
+            for (int y = 0; y < rows; y++)
+            {
+                for (int x = 0; x < cols; x++)
+                {
+                    float px = (x * cellSize) + (float)(_rnd.NextDouble() * jitter * 2 - jitter);
+                    float py = (y * cellSize) + (float)(_rnd.NextDouble() * jitter * 2 - jitter);
+                    _points.Add(new Vector2(px, py));
+                }
+            }
+
+            // Соединяем в индексы
+            for (int y = 0; y < rows - 1; y++)
+            {
+                for (int x = 0; x < cols - 1; x++)
+                {
+                    int p1 = y * cols + x;
+                    int p2 = p1 + 1;
+                    int p3 = (y + 1) * cols + x;
+                    int p4 = p3 + 1;
+
+                    _indices.Add(p1); _indices.Add(p2); _indices.Add(p3);
+                    _indices.Add(p2); _indices.Add(p4); _indices.Add(p3);
+                }
+            }
+
+            // 🔹 Создаем CanvasGeometry через CanvasDevice.GetSharedDevice()
+            var device = CanvasDevice.GetSharedDevice();
+
+            for (int i = 0; i < _indices.Count; i += 3)
+            {
+                var p1 = _points[_indices[i]];
+                var p2 = _points[_indices[i + 1]];
+                var p3 = _points[_indices[i + 2]];
+
+                using (var builder = new CanvasPathBuilder(device))
+                {
+                    builder.BeginFigure(p1);
+                    builder.AddLine(p2);
+                    builder.AddLine(p3);
+                    builder.EndFigure(CanvasFigureLoop.Closed);
+
+                    var geometry = CanvasGeometry.CreatePath(builder);
+                    _triangleGeometries.Add(geometry);
+                }
+            }
+
+            _geometryReady = true;
+        }
+
+        // 🔹 2. ОТРИСОВКА
+        private void LowPolyCanvas_Draw(CanvasControl sender, CanvasDrawEventArgs args)
+        {
+            if (!_geometryReady || _triangleGeometries.Count == 0) return;
+
+            var accentBrush = App.Current.Resources["AccentBrush"] as Windows.UI.Xaml.Media.SolidColorBrush;
+            Color baseColor = accentBrush?.Color ?? Colors.Red;
+
+            using (var ds = args.DrawingSession)
+            {
+                ds.Clear(Color.FromArgb(255, 10, 10, 10));
+
+                foreach (var geometry in _triangleGeometries)
+                {
+                    float brightness = 0.2f + (float)(_rnd.NextDouble() * 0.8f);
+
+                    Color triColor = Color.FromArgb(
+                        255,
+                        (byte)(baseColor.R * brightness),
+                        (byte)(baseColor.G * brightness),
+                        (byte)(baseColor.B * brightness)
+                    );
+
+                    ds.FillGeometry(geometry, triColor);
+                    ds.DrawGeometry(geometry, Colors.Black, 0.5f);
+                }
+            }
+        }
+
+        // 🔹 3. Очистка при выгрузке
+        private void LowPolyCanvas_Unloaded(object sender, object e)
+        {
+            foreach (var geo in _triangleGeometries)
+            {
+                geo.Dispose();
+            }
+            _triangleGeometries.Clear();
+            _geometryReady = false;
+        }
+
+        // 🔹 4. При изменении размера
+        private void LowPolyCanvas_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            _geometryReady = false;
+            // Пересоздаем ресурсы
+            LowPolyCanvas.Invalidate();
+        }
     }
+
 }

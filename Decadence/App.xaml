@@ -191,7 +191,6 @@
             <Color x:Key="TextColor">#C5C0B8</Color>
             <Color x:Key="TextSecondaryColor">#6A6560</Color>
             <Color x:Key="AccentColor">#8A6B5A</Color>
-            <!-- Окисленная бронза -->
             <Color x:Key="SecondBackgroundColor">#040506</Color>
             
             <!-- Benzin2Gradient
