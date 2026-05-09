@@ -51,6 +51,18 @@ namespace Decadence
         private List<int> _indices = new List<int>();
         private Random _rnd = new Random();
         private bool _geometryReady = false;
+
+        private readonly Color[] _decayColors = new Color[]
+{
+    Color.FromArgb(255, 0x3A, 0x28, 0x20), // Тёмная ржавчина
+    Color.FromArgb(255, 0x4A, 0x38, 0x30), // Пыльный бархат
+    Color.FromArgb(255, 0x5A, 0x48, 0x40), // Окисленная бронза
+    Color.FromArgb(255, 0x3A, 0x3A, 0x4A), // Холодный свинец
+    Color.FromArgb(255, 0x4A, 0x3A, 0x4A), // Тусклая маджента
+    Color.FromArgb(255, 0x2A, 0x3A, 0x3A), // Болотная сталь
+    Color.FromArgb(255, 0x3A, 0x2A, 0x3A), // Засохшее вино
+    Color.FromArgb(255, 0x2A, 0x2A, 0x3A)  // Глубокий индиго
+};
         public MainPage()
         {
             this.InitializeComponent();
@@ -741,11 +753,7 @@ namespace Decadence
         private async System.Threading.Tasks.Task GenerateGeometryAsync(float width, float height)
         {
             _rnd = new Random(Guid.NewGuid().GetHashCode());
-            // Очищаем старую геометрию
-            foreach (var geo in _triangleGeometries)
-            {
-                geo.Dispose();
-            }
+            foreach (var geo in _triangleGeometries) geo.Dispose();
             _triangleGeometries.Clear();
             _points.Clear();
             _indices.Clear();
@@ -755,21 +763,25 @@ namespace Decadence
             float cellSize = 80f;
             float jitter = 70f;
 
-            int cols = (int)(width / cellSize) + 2;
-            int rows = (int)(height / cellSize) + 2;
+            // 🔹 ИСПРАВЛЕНИЕ: Добавляем запас (margin), чтобы треугольники выходили за экран
+            float margin = 100f;
 
-            // Создаем точки
+            // Увеличиваем количество колонок и строк с учетом margin
+            int cols = (int)((width + margin * 2) / cellSize) + 2;
+            int rows = (int)((height + margin * 2) / cellSize) + 2;
+
+            // Создаем точки, начиная со смещением -margin (за левый/верхний край)
             for (int y = 0; y < rows; y++)
             {
                 for (int x = 0; x < cols; x++)
                 {
-                    float px = (x * cellSize) + (float)(_rnd.NextDouble() * jitter * 2 - jitter);
-                    float py = (y * cellSize) + (float)(_rnd.NextDouble() * jitter * 2 - jitter);
+                    float px = (x * cellSize) - margin + (float)(_rnd.NextDouble() * jitter * 2 - jitter);
+                    float py = (y * cellSize) - margin + (float)(_rnd.NextDouble() * jitter * 2 - jitter);
                     _points.Add(new Vector2(px, py));
                 }
             }
 
-            // Соединяем в индексы
+            // Соединяем в индексы (твоя логика)
             for (int y = 0; y < rows - 1; y++)
             {
                 for (int x = 0; x < cols - 1; x++)
@@ -784,9 +796,8 @@ namespace Decadence
                 }
             }
 
-            // 🔹 Создаем CanvasGeometry через CanvasDevice.GetSharedDevice()
+            // Создание CanvasGeometry
             var device = CanvasDevice.GetSharedDevice();
-
             for (int i = 0; i < _indices.Count; i += 3)
             {
                 var p1 = _points[_indices[i]];
@@ -799,36 +810,31 @@ namespace Decadence
                     builder.AddLine(p2);
                     builder.AddLine(p3);
                     builder.EndFigure(CanvasFigureLoop.Closed);
-
-                    var geometry = CanvasGeometry.CreatePath(builder);
-                    _triangleGeometries.Add(geometry);
+                    _triangleGeometries.Add(CanvasGeometry.CreatePath(builder));
                 }
             }
 
             _geometryReady = true;
         }
-
         // 🔹 2. ОТРИСОВКА
         private void LowPolyCanvas_Draw(CanvasControl sender, CanvasDrawEventArgs args)
         {
             if (!_geometryReady || _triangleGeometries.Count == 0) return;
 
-            var accentBrush = App.Current.Resources["AccentBrush"] as Windows.UI.Xaml.Media.SolidColorBrush;
-            Color baseColor = accentBrush?.Color ?? Colors.Red;
-
             using (var ds = args.DrawingSession)
             {
-                ds.Clear(Color.FromArgb(255, 10, 10, 10));
+                ds.Clear(Color.FromArgb(255, 26, 26, 42));
 
                 foreach (var geometry in _triangleGeometries)
                 {
-                    float brightness = 0.2f + (float)(_rnd.NextDouble() * 0.8f);
-
+                    // 🔹 ЕДИНСТВЕННОЕ ИЗМЕНЕНИЕ: цвет из палитры "Decadence"
+                    Color baseDecayColor = _decayColors[_rnd.Next(_decayColors.Length)];
+                    float variation = 0.85f + (float)(_rnd.NextDouble() * 0.3f);
                     Color triColor = Color.FromArgb(
                         255,
-                        (byte)(baseColor.R * brightness),
-                        (byte)(baseColor.G * brightness),
-                        (byte)(baseColor.B * brightness)
+                        (byte)(baseDecayColor.R * variation),
+                        (byte)(baseDecayColor.G * variation),
+                        (byte)(baseDecayColor.B * variation)
                     );
 
                     ds.FillGeometry(geometry, triColor);
@@ -836,7 +842,6 @@ namespace Decadence
                 }
             }
         }
-
         // 🔹 3. Очистка при выгрузке
         private void LowPolyCanvas_Unloaded(object sender, object e)
         {
