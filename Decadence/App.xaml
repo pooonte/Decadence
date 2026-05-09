@@ -141,14 +141,80 @@
                 <GradientStop Color="#0B0C10" Offset="0.5"/>
                 <GradientStop Color="#0F111A" Offset="1.0"/>
             </LinearGradientBrush>
-            <!-- градиент для фона-->
 
-            <Color x:Key="SurfaceColor">#2C1E16</Color>
+            <!--<LinearGradientBrush x:Key="BenzinGradient" StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#020204" Offset="0.00"/>
+                Глубокая пустота
+                <GradientStop Color="#060410" Offset="0.11"/>
+                Полночный индиго
+                <GradientStop Color="#100416" Offset="0.22"/>
+                Тёмный фиолет
+                <GradientStop Color="#160412" Offset="0.33"/>
+                Спектральная маджента
+                <GradientStop Color="#160806" Offset="0.44"/>
+                Ржавый янтарь
+                <GradientStop Color="#121206" Offset="0.55"/>
+                Окисленное золото
+                <GradientStop Color="#06160E" Offset="0.66"/>
+                Глубокий изумруд
+                <GradientStop Color="#041614" Offset="0.77"/>
+                Стальной циан
+                <GradientStop Color="#040A14" Offset="0.88"/>
+                Холодная сталь
+                <GradientStop Color="#000000" Offset="1.00"/>
+            </LinearGradientBrush> -->
+
+            <LinearGradientBrush x:Key="MetroMagentaGradient" StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="#020508" Offset="0.00"/>
+                <!-- Ледяная тьма -->
+                <GradientStop Color="#040A14" Offset="0.11"/>
+                <!-- Глубокий синий -->
+                <GradientStop Color="#061420" Offset="0.22"/>
+                <!-- Ночное море -->
+                <GradientStop Color="#081A24" Offset="0.33"/>
+                <!-- Стальной синий -->
+                <GradientStop Color="#061A20" Offset="0.44"/>
+                <!-- Циан в тени -->
+                <GradientStop Color="#041616" Offset="0.55"/>
+                <!-- Темный изумруд -->
+                <GradientStop Color="#04120E" Offset="0.66"/>
+                <!-- Глубокий зеленый -->
+                <GradientStop Color="#020E08" Offset="0.77"/>
+                <!-- Мох -->
+                <GradientStop Color="#020604" Offset="0.88"/>
+                <!-- Почти черный -->
+                <GradientStop Color="#000000" Offset="1.00"/>
+            </LinearGradientBrush>
+            <!-- градиент для фона-->
+            <Color x:Key="SurfaceColor">#16181C</Color>
+            <Color x:Key="BackgroundColor">#0B0C0E</Color>
+            <Color x:Key="TextColor">#C5C0B8</Color>
+            <Color x:Key="TextSecondaryColor">#6A6560</Color>
+            <Color x:Key="AccentColor">#8A6B5A</Color>
+            <!-- Окисленная бронза -->
+            <Color x:Key="SecondBackgroundColor">#040506</Color>
+            
+            <!-- Benzin2Gradient
+            <GradientStop Color="#080C14" Offset="0.0"/>
+            <GradientStop Color="#0F1A16" Offset="0.2"/>
+            <GradientStop Color="#1A0E12" Offset="0.4"/>
+            <GradientStop Color="#12181E" Offset="0.6"/>
+            <GradientStop Color="#1A1510" Offset="0.8"/>
+            <GradientStop Color="#050607" Offset="1.0"/> -->
+
+            <!--             <Color x:Key="SurfaceColor">#141A24</Color>
+            <Color x:Key="BackgroundColor">#0A0E14</Color>
+            <Color x:Key="TextColor">#C8D4E8</Color>
+            <Color x:Key="TextSecondaryColor">#5A6A8A</Color>
+            <Color x:Key="AccentColor">#4A90E2</Color>
+            <Color x:Key="SecondBackgroundColor">#05070A</Color>-->
+            
+            <!--<Color x:Key="SurfaceColor">#2C1E16</Color>
             <Color x:Key="BackgroundColor">#241810</Color>
             <Color x:Key="TextColor">#F2E8DC</Color>
             <Color x:Key="TextSecondaryColor">#917A65</Color>
             <Color x:Key="AccentColor">#D24726</Color>
-            <Color x:Key="SecondBackgroundColor">#1A120D</Color>
+            <Color x:Key="SecondBackgroundColor">#1A120D</Color>-->
 
             <SolidColorBrush x:Key="SecondBackgroundBrush" Color="{StaticResource SecondBackgroundColor}"/>
             
