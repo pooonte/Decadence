@@ -215,6 +215,61 @@ namespace Decadence.Experimental
 
                     return Color.FromArgb(255, r, g, b);
 
+                /*case 1: // 🔹 ВЫСОКОКОНТРАСТНЫЙ ШАХМАТНЫЙ ГЛИТЧ (как на скрине)
+                    {
+                        // Размер клетки шахматки (адаптивный)
+                        int cellSize = Math.Max(36, Math.Min(width, height) / 9);
+                        int cx = x / cellSize;
+                        int cy = y / cellSize;
+
+                        // 🔹 ШАХМАТНЫЙ ПОРЯДОК: чётные клетки = тёмные, нечётные = шум
+                        if (((cx + cy) & 1) == 0)
+                        {
+                            // Тёмная клетка (почти чёрная, слегка фиолетовая)
+                            return Color.FromArgb(255, 12, 10, 16);
+                        }
+
+                        // === ШУМОВАЯ КЛЕТКА ===
+                        int t = (int)(animationTime * 12.0f); // Скорость пульсации/дрожания
+                        int shift = t * 23;
+
+                        // Искажение координат для эффекта "дрожания" контента внутри клетки
+                        int gx = x + ((y ^ (t & 3)) & 3) - 2;
+                        int gy = y + ((x ^ ((t + 1) & 3)) & 3) - 2;
+
+                        // Псевдо-шум через мультипликативный хеш (быстро, без Math.Sin)
+                        int hash = (gx ^ gy ^ shift) & 0xFF;
+                        hash = (int)(((uint)hash * 0x9E3779B9u) >> 24);
+
+                        // Базовый цвет шумовой клетки (тёмно-серо-фиолетовая палитра)
+                        byte r = (byte)(0x2A + (hash & 0x1F));
+                        byte g = (byte)(0x2A + ((hash >> 2) & 0x1F));
+                        byte b = (byte)(0x3A + ((hash >> 4) & 0x1F));
+
+                        // Скан-линии (чётные строки темнее → эффект ЭЛТ/VHS)
+                        if ((y & 1) == 0) { r >>= 1; g >>= 1; b >>= 1; }
+
+                        // Глитч-артефакты строго у границ клеток
+                        int edgeX = x % cellSize;
+                        int edgeY = y % cellSize;
+                        bool isEdge = edgeX < 3 || edgeX > cellSize - 4 ||
+                                      edgeY < 3 || edgeY > cellSize - 4;
+
+                        if (isEdge)
+                        {
+                            // RGB-сдвиг по краям (хроматическая аберрация)
+                            int rp = ((gx + 3) ^ gy ^ shift) & 0xFF;
+                            int gp = (gx ^ (gy + 3) ^ shift) & 0xFF;
+                            int bp = (gx ^ gy ^ (shift + 3)) & 0xFF;
+
+                            r = (byte)((r + rp) >> 1);
+                            g = (byte)((g + gp) >> 1);
+                            b = (byte)((b + bp) >> 1);
+                        }
+
+                        return Color.FromArgb(255, r, g, b);
+                    } // 🔹 Закрывающая скобка для изоляции области видимости
+                    */
                 default: // Случайный шум
                     return colors[_random.Next(colors.Length)];
             }
