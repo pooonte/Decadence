@@ -1,5 +1,6 @@
 ﻿using Decadence.Models;
 using Decadence.Services;
+using Decadence.Experimental;
 using Singleton;
 using System;
 using System.Collections.Generic;
@@ -17,10 +18,6 @@ using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Media.Animation;
 using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
-using Microsoft.Graphics.Canvas;
-using Microsoft.Graphics.Canvas.UI.Xaml;
-using Microsoft.Graphics.Canvas.Geometry;
-using Microsoft.Graphics.Canvas.UI;
 using System.Threading;
 
 namespace Decadence
@@ -49,26 +46,6 @@ namespace Decadence
         private List<string> _phrases = new List<string>();
         private Random _random = new Random();
 
-        private List<CanvasGeometry> _triangleGeometries = new List<CanvasGeometry>();
-        private List<Vector2> _points = new List<Vector2>();
-        private List<int> _indices = new List<int>();
-        private Random _rnd = new Random();
-        private bool _geometryReady = false;
-
-        public static List<CanvasGeometry> _staticGeometryCache;
-        public static bool _cacheInitialized = false;
-
-        private readonly Color[] _decayColors = new Color[]
-{
-    Color.FromArgb(255, 0x3A, 0x28, 0x20), // Тёмная ржавчина
-    Color.FromArgb(255, 0x4A, 0x38, 0x30), // Пыльный бархат
-    Color.FromArgb(255, 0x5A, 0x48, 0x40), // Окисленная бронза
-    Color.FromArgb(255, 0x3A, 0x3A, 0x4A), // Холодный свинец
-    Color.FromArgb(255, 0x4A, 0x3A, 0x4A), // Тусклая маджента
-    Color.FromArgb(255, 0x2A, 0x3A, 0x3A), // Болотная сталь
-    Color.FromArgb(255, 0x3A, 0x2A, 0x3A), // Засохшее вино
-    Color.FromArgb(255, 0x2A, 0x2A, 0x3A)  // Глубокий индиго
-};
         public MainPage()
         {
             this.InitializeComponent();
@@ -150,7 +127,7 @@ namespace Decadence
             return anyPanelClosed;
         }
 
-        protected override void OnNavigatedTo(NavigationEventArgs e)
+        protected override async void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
 
@@ -159,19 +136,21 @@ namespace Decadence
             Window.Current.CoreWindow.KeyDown += OnKeyDown;
             App.PlaylistsUpdated += OnPlaylistsUpdated;
 
-            // 🔹 ВОССТАНОВЛЕНИЕ ФОНА ИЗ СТАТИЧЕСКОГО КЭША
-            if (!_geometryReady && _cacheInitialized && _staticGeometryCache != null)
+            if (ExpBgToggle != null)
             {
-                // Восстанавливаем ссылку на геометрию
-                _triangleGeometries = _staticGeometryCache;
-                _geometryReady = true;
-                // Принудительно перерисовываем
-                LowPolyCanvas.Invalidate();
-            }
-            else if (!_geometryReady)
-            {
-                // Кэша нет — пересоздаём
-                LowPolyCanvas.Invalidate();
+                ExpBgToggle.IsOn = App.UseExperimentalBackground;
+
+                // Если включен экспериментальный режим — перегенерируем фон
+                if (App.UseExperimentalBackground)
+                {
+                    // Небольшая задержка, чтобы контрол получил размеры
+                    await Task.Delay(50);
+                    ApplyBackgroundSetting(true);
+                }
+                else
+                {
+                    ApplyBackgroundSetting(false);
+                }
             }
         }
 
@@ -812,129 +791,55 @@ namespace Decadence
             }
         }
 
-        private void LowPolyCanvas_CreateResources(CanvasControl sender, CanvasCreateResourcesEventArgs args)
+        private void ExpBgToggle_Toggled(object sender, RoutedEventArgs e)
         {
-            args.TrackAsyncAction(GenerateGeometryAsync(
-                (float)sender.ActualWidth,
-                (float)sender.ActualHeight
-            ).AsAsyncAction());
+            bool isOn = ExpBgToggle.IsOn;
+
+            // 1. Сохраняем выбор
+            App.UseExperimentalBackground = isOn;
+
+            // 2. Применяем визуально
+            ApplyBackgroundSetting(isOn);
         }
 
-        private async System.Threading.Tasks.Task GenerateGeometryAsync(float width, float height)
+        private async void ApplyBackgroundSetting(bool isOn)
         {
-            // 1. Проверка кэша — если есть, просто используем
-            if (_cacheInitialized && _staticGeometryCache != null)
+            if (isOn)
             {
-                _triangleGeometries = _staticGeometryCache;
-                _geometryReady = true;
-                return;
-            }
+                // 🔹 ВКЛЮЧАЕМ ЭКСПЕРИМЕНТАЛЬНЫЙ ФОН
+                StaticBackground.Visibility = Visibility.Collapsed;
+                PatternImage.Visibility = Visibility.Visible;
 
-            // 2. Создаём НОВЫЙ список для новой геометрии
-            var newGeometries = new List<CanvasGeometry>();
+                // Генерируем новый паттерн асинхронно
+                // Размер берем с запасом или реальный, WriteableBitmap это любит
+                int w = (int)PatternImage.ActualWidth;
+                int h = (int)PatternImage.ActualHeight;
 
-            _rnd = new Random(Guid.NewGuid().GetHashCode());
+                // Если размер еще не известен (при старте), ставим дефолтный
+                if (w < 10) w = 360;
+                if (h < 10) h = 640;
 
-            // Очищаем старые списки координат (не геометрию!)
-            _points.Clear();
-            _indices.Clear();
-
-            if (width < 10 || height < 10) return;
-
-            float cellSize = 80f;
-            float jitter = 70f;
-            float margin = 100f;
-
-            int cols = (int)((width + margin * 2) / cellSize) + 2;
-            int rows = (int)((height + margin * 2) / cellSize) + 2;
-
-            for (int y = 0; y < rows; y++)
-            {
-                for (int x = 0; x < cols; x++)
+                try
                 {
-                    float px = (x * cellSize) - margin + (float)(_rnd.NextDouble() * jitter * 2 - jitter);
-                    float py = (y * cellSize) - margin + (float)(_rnd.NextDouble() * jitter * 2 - jitter);
-                    _points.Add(new Vector2(px, py));
+                    // Вызываем твой новый класс
+                    var bitmap = await PatternGenerator.GeneratePatternAsync(w, h);
+                    PatternImage.Source = bitmap;
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"PatternGen Error: {ex.Message}");
+                    // В случае ошибки можно показать заглушку или вернуть статический фон
                 }
             }
-
-            for (int y = 0; y < rows - 1; y++)
+            else
             {
-                for (int x = 0; x < cols - 1; x++)
-                {
-                    int p1 = y * cols + x;
-                    int p2 = p1 + 1;
-                    int p3 = (y + 1) * cols + x;
-                    int p4 = p3 + 1;
+                // 🔹 ВЫКЛЮЧАЕМ (возвращаем статику)
+                PatternImage.Visibility = Visibility.Collapsed;
+                StaticBackground.Visibility = Visibility.Visible;
 
-                    _indices.Add(p1); _indices.Add(p2); _indices.Add(p3);
-                    _indices.Add(p2); _indices.Add(p4); _indices.Add(p3);
-                }
+                // Очищаем память: сбрасываем источник изображения
+                PatternImage.Source = null;
             }
-
-            var device = CanvasDevice.GetSharedDevice();
-            for (int i = 0; i < _indices.Count; i += 3)
-            {
-                var p1 = _points[_indices[i]];
-                var p2 = _points[_indices[i + 1]];
-                var p3 = _points[_indices[i + 2]];
-
-                using (var builder = new CanvasPathBuilder(device))
-                {
-                    builder.BeginFigure(p1);
-                    builder.AddLine(p2);
-                    builder.AddLine(p3);
-                    builder.EndFigure(CanvasFigureLoop.Closed);
-                    newGeometries.Add(CanvasGeometry.CreatePath(builder));
-                }
-            }
-
-            // 3. Уничтожаем СТАРЫЕ геометрии (если они были)
-            foreach (var geo in _triangleGeometries)
-            {
-                try { geo.Dispose(); } catch { }
-            }
-
-            // 4. Присваиваем новый список
-            _triangleGeometries = newGeometries;
-
-            // 5. Сохраняем в статический кэш
-            _staticGeometryCache = _triangleGeometries;
-            _cacheInitialized = true;
-            _geometryReady = true;
-        }
-        private void LowPolyCanvas_Draw(CanvasControl sender, CanvasDrawEventArgs args)
-        {
-            if (!_geometryReady || _triangleGeometries.Count == 0) return;
-
-            using (var ds = args.DrawingSession)
-            {
-                ds.Clear(Color.FromArgb(255, 26, 26, 42));
-
-                foreach (var geometry in _triangleGeometries)
-                {
-                    Color baseDecayColor = _decayColors[_rnd.Next(_decayColors.Length)];
-                    float variation = 0.85f + (float)(_rnd.NextDouble() * 0.3f);
-                    Color triColor = Color.FromArgb(
-                        255,
-                        (byte)(baseDecayColor.R * variation),
-                        (byte)(baseDecayColor.G * variation),
-                        (byte)(baseDecayColor.B * variation)
-                    );
-
-                    ds.FillGeometry(geometry, triColor);
-                    ds.DrawGeometry(geometry, Colors.Black, 0.5f);
-                }
-            }
-        }
-        private void LowPolyCanvas_Unloaded(object sender, object e)
-        {
-            _geometryReady = false;
-        }
-        private void LowPolyCanvas_SizeChanged(object sender, SizeChangedEventArgs e)
-        {
-            _geometryReady = false;
-            LowPolyCanvas.Invalidate();
         }
     }
 

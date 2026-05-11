@@ -96,16 +96,6 @@ namespace Decadence
         {
             var deferral = e.SuspendingOperation.GetDeferral();
 
-            // Очищаем статический кэш только при закрытии
-            if (MainPage._staticGeometryCache != null)
-            {
-                foreach (var geo in MainPage._staticGeometryCache)
-                {
-                    try { geo.Dispose(); } catch { }
-                }
-                MainPage._staticGeometryCache = null;
-                MainPage._cacheInitialized = false;
-            }
 
             GC.Collect();
             GC.WaitForPendingFinalizers();
@@ -114,5 +104,11 @@ namespace Decadence
         }
 
         public static void NotifyPlaylistsUpdated() => PlaylistsUpdated?.Invoke();
+
+        public static bool UseExperimentalBackground
+        {
+            get => (bool)(Windows.Storage.ApplicationData.Current.LocalSettings.Values["ExpBg"] ?? false);
+            set => Windows.Storage.ApplicationData.Current.LocalSettings.Values["ExpBg"] = value;
+        }
     }
 }
