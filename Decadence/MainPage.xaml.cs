@@ -46,6 +46,11 @@ namespace Decadence
         private List<string> _phrases = new List<string>();
         private Random _random = new Random();
 
+        private DispatcherTimer _animationTimer;
+        private DateTime _animationStartTime;
+
+        private WriteableBitmap _amimBitmap;
+
         public MainPage()
         {
             this.InitializeComponent();
@@ -66,6 +71,37 @@ namespace Decadence
             PlaylistsPanelControl.CreatePlaylist += (s, name) => CreatePlaylist(name);
             TracksPanelControl.AddToPlaylistRequested += TracksPanelControl_AddToPlaylistRequested;
             PlaylistsPanelControl.RemoveTrackRequested += PlaylistsPanelControl_RemoveTrackRequested;
+
+            _animationTimer = new DispatcherTimer();
+            _animationTimer.Interval = TimeSpan.FromMilliseconds(33); // ~30 FPS
+            _animationTimer.Tick += async (s, e) =>
+            {
+                if (App.UseExperimentalBackground && ExpBgToggle.IsOn)
+                {
+                    // 🔹 ПРОВЕРКА: ждем пока контрол получит реальные размеры
+                    int w = (int)PatternImage.ActualWidth;
+                    int h = (int)PatternImage.ActualHeight;
+
+                    if (w < 10 || h < 10)
+                    {
+                        // Размеры еще не известны — пропускаем этот кадр
+                        return;
+                    }
+
+                    try
+                    {
+                        var elapsed = (DateTime.Now - _animationStartTime).TotalSeconds;
+                        var bitmap = await PatternGenerator.GeneratePatternAsync(w, h, elapsed);
+                        PatternImage.Source = bitmap;
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"PatternGen Error: {ex.Message}");
+                        // Останавливаем таймер при ошибке
+                        _animationTimer.Stop();
+                    }
+                }
+            };
         }
         private void OnBackRequested(object sender, BackRequestedEventArgs e)
         {
@@ -814,10 +850,11 @@ namespace Decadence
                 // Размер берем с запасом или реальный, WriteableBitmap это любит
                 int w = (int)PatternImage.ActualWidth;
                 int h = (int)PatternImage.ActualHeight;
+                if (w < 10) w = (int)ActualWidth;
+                if (h < 10) h = (int)ActualHeight;
 
-                // Если размер еще не известен (при старте), ставим дефолтный
-                if (w < 10) w = 360;
-                if (h < 10) h = 640;
+                _animationStartTime = DateTime.Now;
+                _animationTimer.Start();
 
                 try
                 {
@@ -839,6 +876,8 @@ namespace Decadence
 
                 // Очищаем память: сбрасываем источник изображения
                 PatternImage.Source = null;
+
+                _animationTimer.Stop();
             }
         }
     }

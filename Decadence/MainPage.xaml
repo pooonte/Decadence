@@ -17,16 +17,12 @@
                 </LinearGradientBrush>
             </Grid.Background>
             <!-- Декоративные пятна для глубины (опционально) -->
-            <Ellipse Width="250" Height="250" Fill="#1A000000" 
-                 HorizontalAlignment="Left" VerticalAlignment="Top" Margin="220,-44,-110,0"/>
-            <Ellipse Width="180" Height="180" Fill="#1A000000" 
-                 HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="-119,0,299,268"/>
         </Grid>
         <Image x:Name="PatternImage" 
-       Stretch="UniformToFill" 
-       HorizontalAlignment="Stretch" 
-       VerticalAlignment="Stretch"
-       Visibility="Collapsed"/>
+           Stretch="UniformToFill"
+           HorizontalAlignment="Stretch" 
+           VerticalAlignment="Stretch"
+           Visibility="Collapsed"/>
         <Grid x:Name="MainContainer">
             <Grid.RowDefinitions>
                 <RowDefinition Height="385*"/>

@@ -36,20 +36,15 @@ namespace Decadence
         private bool _isActive = false;
         private BitmapImage _playIcon;
         private BitmapImage _pauseIcon;
-        private int _currentVisualization = 0;
-        private DispatcherTimer _visTimer;
 
-        private int _visType = 0;
         private Random _random = new Random();
 
 
         public PlayerMenu()
         {
             this.InitializeComponent();
-
-            // 🔹 Создаём иконки ОДИН РАЗ. Больше не будем плодить BitmapImage
             _playIcon = new BitmapImage(new Uri("ms-appx:///Assets/play_white.png"));
-            _pauseIcon = new BitmapImage(new Uri("ms-appx:///Assets/pause-white.png"));
+            _pauseIcon = new BitmapImage(new Uri("ms-appx:///Assets/pause_white.png"));
 
             MediaPlayerSingleton.Player.MediaEnded += Player_MediaEnded;
         }
