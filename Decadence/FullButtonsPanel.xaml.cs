@@ -81,7 +81,14 @@ namespace Decadence
             PanelCloseAnimation.Completed += PanelCloseAnimation_Completed;
             PanelCloseAnimation.Begin();
         }
-
+        public void Clear()
+        {
+            if (TracksListView != null)
+            {
+                TracksListView.ItemsSource = null;
+            }
+            this.DataContext = null;
+        }
         private void PanelCloseAnimation_Completed(object sender, object e)
         {
             RootGrid.Visibility = Visibility.Collapsed;

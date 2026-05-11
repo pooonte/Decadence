@@ -25,13 +25,14 @@ namespace Decadence
     {
         private List<TrackItem> _currentPlaylist = new List<TrackItem>();
         private int _currentPlaylistIndex = -1;
+        private readonly List<QueueItem> _queueCache = new List<QueueItem>();
 
         public event EventHandler Clicked;
         private TrackItem currentTrack;
         private bool _userIsSeeking = false;
         private bool _wasPlayingBeforeSeek = false;
         private RepeatMode _repeatMode = RepeatMode.None;
-        private static DispatcherTimer _globalTimer;
+        private DispatcherTimer _globalTimer;
         private bool _isActive = false;
         private BitmapImage _playIcon;
         private BitmapImage _pauseIcon;
@@ -46,18 +47,18 @@ namespace Decadence
         {
             this.InitializeComponent();
 
-            _playIcon = new BitmapImage(new Uri("ms-appx:///Assets/play.png"));
-            _pauseIcon = new BitmapImage(new Uri("ms-appx:///Assets/pause.png"));
+            // 🔹 Создаём иконки ОДИН РАЗ. Больше не будем плодить BitmapImage
+            _playIcon = new BitmapImage(new Uri("ms-appx:///Assets/play_white.png"));
+            _pauseIcon = new BitmapImage(new Uri("ms-appx:///Assets/pause-white.png"));
 
             MediaPlayerSingleton.Player.MediaEnded += Player_MediaEnded;
-
         }
 
+        private string FormatTime(TimeSpan t) => $"{(int)t.TotalMinutes}:{t.Seconds:D2}";
         protected override async void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
             _isActive = true;
-            App.PlayerMenuInstance = this;
 
             // Загружаем данные
             if (App.CurrentTrack != null && (e.Parameter == null || !(e.Parameter is FullPlayerNavigationData)))
@@ -70,7 +71,7 @@ namespace Decadence
                 FullTrackTitle.Text = currentTrack.Title;
                 FullTrackArtist.Text = currentTrack.Artist;
                 await LoadAlbumArt(currentTrack.FilePath);
-                UpdatePlayPauseButton();
+                UpdatePlayButtonState();
             }
             else if (e.Parameter is FullPlayerNavigationData data && data.Track != null)
             {
@@ -82,7 +83,7 @@ namespace Decadence
                 FullTrackTitle.Text = currentTrack.Title;
                 FullTrackArtist.Text = currentTrack.Artist;
                 await LoadAlbumArt(currentTrack.FilePath);
-                UpdatePlayPauseButton();
+                UpdatePlayButtonState();
             }
             else
             {
@@ -154,65 +155,71 @@ namespace Decadence
         {
             try
             {
+                // 🔹 Разрываем ссылку на старое изображение (критично для RAM)
+                FullAlbumArt.Source = null;
+
                 var file = await StorageFile.GetFileFromPathAsync(filePath);
-                var thumb = await file.GetThumbnailAsync(Windows.Storage.FileProperties.ThumbnailMode.MusicView, 256);
-                if (thumb != null && thumb.Size > 0)
+                using (var thumb = await file.GetThumbnailAsync(
+                    Windows.Storage.FileProperties.ThumbnailMode.MusicView, 128))
                 {
-                    var bitmap = new BitmapImage();
-                    await bitmap.SetSourceAsync(thumb);
-                    FullAlbumArt.Source = bitmap;
+                    if (thumb != null && thumb.Size > 0)
+                    {
+                        var bitmap = new BitmapImage { CreateOptions = BitmapCreateOptions.IgnoreImageCache };
+                        await bitmap.SetSourceAsync(thumb);
+                        FullAlbumArt.Source = bitmap;
+                    }
                 }
             }
             catch { }
         }
 
-        private void UpdatePlayPauseButton()
-        {
-            if (FullPlayPauseIcon != null)
-            {
-                bool isPlaying = MediaPlayerSingleton.IsPlaying;
-                string iconName = isPlaying ? "pause.png" : "play.png";
-                FullPlayPauseIcon.Source = new BitmapImage(new Uri($"ms-appx:///Assets/{iconName}"));
-            }
-        }
         protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)
         {
-            base.OnNavigatingFrom(e);
+            // 1. Останавливаем всё, что держит ссылки
             _isActive = false;
-            if (_globalTimer != null)
-            {
-                _globalTimer.Stop();
-                _globalTimer = null;
-            }
+            _globalTimer?.Stop();
+            _globalTimer = null;
+
+            // 2. Отписываемся от вечных объектов
+            MediaPlayerSingleton.Player.MediaEnded -= Player_MediaEnded;
+
+            // 3. Разрываем привязки (критично для UWP Mobile)
+            this.DataContext = null;
+            if (QueueListView != null) QueueListView.ItemsSource = null;
+            if (FullAlbumArt != null) FullAlbumArt.Source = null;
+
+            // 4. Только потом вызываем базовый метод
+            base.OnNavigatingFrom(e);
+        }
+        // 🔹 Unloaded вызывается ПОСЛЕ выгрузки из визуального дерева
+        private void PlayerMenu_Unloaded(object sender, RoutedEventArgs e)
+        {
+            // Финальная зачистка UI-элементов
+            ProgressSlider.Value = 0;
+            FullTrackTitle.Text = string.Empty;
+            FullTrackArtist.Text = string.Empty;
         }
 
         private async void PlayTrack(StorageFile file)
         {
             if (file == null) return;
 
-            System.Diagnostics.Debug.WriteLine($"PlayTrack: {file.Path}");
+            // 🔹 Очищаем старую обложку перед загрузкой новой
+            FullAlbumArt.Source = null;
 
+            // 🔹 Находим трек ПО ФАЙЛУ (не по индексу!)
             var track = _currentPlaylist.FirstOrDefault(t => t.FilePath == file.Path);
-            if (track == null)
-            {
-                track = App.Tracks?.FirstOrDefault(t => t.FilePath == file.Path);
-                if (track == null) return;
+            if (track == null) return;
 
-                _currentPlaylist = App.Tracks.ToList();
-                _currentPlaylistIndex = _currentPlaylist.IndexOf(track);
-            }
-            else
-            {
-                _currentPlaylistIndex = _currentPlaylist.IndexOf(track);
-            }
+            // 🔹 Обновляем индекс ПОСЛЕ того, как нашли трек
+            _currentPlaylistIndex = _currentPlaylist.IndexOf(track);
 
             currentTrack = track;
             MediaPlayerSingleton.PlayFile(file);
 
-            // Обновляем UI
+            // 🔹 Обновляем UI
             FullTrackTitle.Text = track.Title;
             FullTrackArtist.Text = track.Artist;
-            System.Diagnostics.Debug.WriteLine($"UI обновлен: {track.Title} - {track.Artist}");
 
             App.CurrentTrack = currentTrack;
             App.CurrentPlaylist = _currentPlaylist;
@@ -226,22 +233,9 @@ namespace Decadence
             var saved = ApplicationData.Current.LocalSettings.Values["SavedVolume"];
             MediaPlayerSingleton.Player.Volume = saved is double v ? v : 1.0;
 
-            try
-            {
-                var thumb = await file.GetThumbnailAsync(
-                    Windows.Storage.FileProperties.ThumbnailMode.MusicView, 256);
-                if (thumb != null && thumb.Size > 0)
-                {
-                    var bitmap = new BitmapImage();
-                    await bitmap.SetSourceAsync(thumb);
-                    FullAlbumArt.Source = bitmap;
-                }
-            }
-            catch { }
-
+            await LoadAlbumArt(file.Path);
             UpdatePlayButtonState();
         }
-
         private void UpdatePlayButtonState()
         {
             if (FullPlayPauseIcon != null)
@@ -266,7 +260,12 @@ namespace Decadence
             }
         }
 
-        private string FormatTime(TimeSpan t) => $"{(int)t.TotalMinutes}:{t.Seconds:D2}";
+        private void UpdateTimeDisplay(TimeSpan position, TimeSpan duration)
+        {
+            // Обновляй Text напрямую, без создания промежуточных строк
+            CurrentTimeText.Text = $"{(int)position.TotalMinutes}:{position.Seconds:D2}";
+            TotalTimeText.Text = $"{(int)duration.TotalMinutes}:{duration.Seconds:D2}";
+        }
 
         private async Task PlayNextTrack()
         {
@@ -320,10 +319,8 @@ namespace Decadence
             UpdatePlayButtonState();
         }
 
-        private void PrevButton_Click(object sender, RoutedEventArgs e)
+        private async void PrevButton_Click(object sender, RoutedEventArgs e)
         {
-            System.Diagnostics.Debug.WriteLine($"PrevButton_Click. CurrentPlaylistIndex: {_currentPlaylistIndex}");
-
             if (_currentPlaylist.Count == 0) return;
 
             if (_repeatMode == RepeatMode.One)
@@ -339,41 +336,28 @@ namespace Decadence
             int prevIndex = _currentPlaylistIndex - 1;
             if (prevIndex < 0)
             {
-                if (_repeatMode == RepeatMode.All)
-                {
-                    prevIndex = _currentPlaylist.Count - 1;
-                }
-                else
-                {
-                    return;
-                }
+                prevIndex = (_repeatMode == RepeatMode.All) ? _currentPlaylist.Count - 1 : -1;
+                if (prevIndex < 0) return;
             }
 
             var prevTrack = _currentPlaylist[prevIndex];
-            System.Diagnostics.Debug.WriteLine($"Предыдущий трек: {prevTrack.Title}");
-
-            var file = StorageFile.GetFileFromPathAsync(prevTrack.FilePath).AsTask().Result;
+            var file = await StorageFile.GetFileFromPathAsync(prevTrack.FilePath); // 🔹 await вместо .Result
             PlayTrack(file);
         }
-        private void NextButton_Click(object sender, RoutedEventArgs e)
+
+        private async void NextButton_Click(object sender, RoutedEventArgs e)
         {
             if (_currentPlaylist.Count == 0) return;
 
             int nextIndex = _currentPlaylistIndex + 1;
             if (nextIndex >= _currentPlaylist.Count)
             {
-                if (_repeatMode == RepeatMode.All)
-                {
-                    nextIndex = 0;
-                }
-                else
-                {
-                    return;
-                }
+                nextIndex = (_repeatMode == RepeatMode.All) ? 0 : -1;
+                if (nextIndex < 0) return;
             }
 
             var nextTrack = _currentPlaylist[nextIndex];
-            var file = StorageFile.GetFileFromPathAsync(nextTrack.FilePath).AsTask().Result;
+            var file = await StorageFile.GetFileFromPathAsync(nextTrack.FilePath); // 🔹 await вместо .Result
             PlayTrack(file);
         }
 
@@ -546,24 +530,27 @@ namespace Decadence
                 FullTrackArtist.Text = track.Artist;
 
             _ = LoadAlbumArt(track.FilePath);
-            UpdatePlayPauseButton();
+            UpdatePlayButtonState();
             ForceUpdatePosition();
         }
 
         // Методы
         private void UpdateQueue()
         {
-            var items = new List<QueueItem>();
+            _queueCache.Clear();
             for (int i = 0; i < _currentPlaylist.Count; i++)
             {
-                items.Add(new QueueItem
+                _queueCache.Add(new QueueItem
                 {
                     Index = i + 1,
                     Title = _currentPlaylist[i].Title,
                     Artist = _currentPlaylist[i].Artist
                 });
             }
-            QueueListView.ItemsSource = items;
+
+            // 🔹 Разрываем старую привязку перед назначением новой
+            QueueListView.ItemsSource = null;
+            QueueListView.ItemsSource = _queueCache;
         }
 
         private async void QueueListView_ItemClick(object sender, ItemClickEventArgs e)

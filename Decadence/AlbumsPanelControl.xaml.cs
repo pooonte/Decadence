@@ -36,6 +36,14 @@ namespace Decadence
             PanelCloseAnimation.Begin();
         }
 
+        public void Clear()
+        {
+            if (AlbumsList != null)
+            {
+                AlbumsList.ItemsSource = null;
+            }
+            this.DataContext = null;
+        }
         private void PanelCloseAnimation_Completed(object sender, object e)
         {
             RootGrid.Visibility = Visibility.Collapsed;

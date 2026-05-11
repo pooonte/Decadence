@@ -20,13 +20,16 @@ using Windows.UI.Xaml.Navigation;
 using Microsoft.Graphics.Canvas;
 using Microsoft.Graphics.Canvas.UI.Xaml;
 using Microsoft.Graphics.Canvas.Geometry;
-using System.Numerics;
 using Microsoft.Graphics.Canvas.UI;
+using System.Threading;
 
 namespace Decadence
 {
     public sealed partial class MainPage : Page
     {
+        private static bool _libraryInitialized = false;
+        private CancellationTokenSource _bgCheckCts;
+
         private ObservableCollection<TrackItem> _tracks = new ObservableCollection<TrackItem>();
         private ObservableCollection<ArtistItem> _artists = new ObservableCollection<ArtistItem>();
         private ObservableCollection<AlbumItem> _albums = new ObservableCollection<AlbumItem>();
@@ -52,6 +55,9 @@ namespace Decadence
         private Random _rnd = new Random();
         private bool _geometryReady = false;
 
+        public static List<CanvasGeometry> _staticGeometryCache;
+        public static bool _cacheInitialized = false;
+
         private readonly Color[] _decayColors = new Color[]
 {
     Color.FromArgb(255, 0x3A, 0x28, 0x20), // Тёмная ржавчина
@@ -67,22 +73,23 @@ namespace Decadence
         {
             this.InitializeComponent();
 
-            _ = InitializeLibraryAsync();
+            // 🔹 ВКЛЮЧАЕМ КЭШИРОВАНИЕ СТРАНИЦЫ (ОБЯЗАТЕЛЬНО)
+            this.NavigationCacheMode = NavigationCacheMode.Required;
+
+            // 🔹 Загружаем библиотеку ТОЛЬКО ОДИН РАЗ за сессию
+            if (!_libraryInitialized && _tracks.Count == 0)
+            {
+                _ = InitializeLibraryAsync();
+                _libraryInitialized = true;
+            }
 
             _ = LoadPlaylists();
 
-            SystemNavigationManager.GetForCurrentView().BackRequested += OnBackRequested;
-            Window.Current.CoreWindow.KeyDown += OnKeyDown;
-
+            // Твои подписки на контролы (оставь как было)
             PlaylistsPanelControl.CreatePlaylist += (s, name) => CreatePlaylist(name);
-
             TracksPanelControl.AddToPlaylistRequested += TracksPanelControl_AddToPlaylistRequested;
-
             PlaylistsPanelControl.RemoveTrackRequested += PlaylistsPanelControl_RemoveTrackRequested;
-
-            App.PlaylistsUpdated += OnPlaylistsUpdated;
         }
-
         private void OnBackRequested(object sender, BackRequestedEventArgs e)
         {
             if (CloseAnyOpenPanel())
@@ -118,25 +125,75 @@ namespace Decadence
             if (TracksPanelControl.IsVisible)
             {
                 TracksPanelControl.Hide();
+                TracksPanelControl.Clear(); // 🔹 Очищаем контрол
                 anyPanelClosed = true;
             }
             if (ArtistsPanelControl.IsVisible)
             {
                 ArtistsPanelControl.Hide();
+                ArtistsPanelControl.Clear(); // 🔹
                 anyPanelClosed = true;
             }
             if (AlbumsPanelControl.IsVisible)
             {
                 AlbumsPanelControl.Hide();
+                AlbumsPanelControl.Clear(); // 🔹
                 anyPanelClosed = true;
             }
-            //нужно добавлять панели сюда
+            if (PlaylistsPanelControl.IsVisible)
+            {
+                PlaylistsPanelControl.Hide();
+                PlaylistsPanelControl.Clear(); // 🔹
+                anyPanelClosed = true;
+            }
+
             return anyPanelClosed;
         }
+
+        protected override void OnNavigatedTo(NavigationEventArgs e)
+        {
+            base.OnNavigatedTo(e);
+
+            // Подписка на события
+            SystemNavigationManager.GetForCurrentView().BackRequested += OnBackRequested;
+            Window.Current.CoreWindow.KeyDown += OnKeyDown;
+            App.PlaylistsUpdated += OnPlaylistsUpdated;
+
+            // 🔹 ВОССТАНОВЛЕНИЕ ФОНА ИЗ СТАТИЧЕСКОГО КЭША
+            if (!_geometryReady && _cacheInitialized && _staticGeometryCache != null)
+            {
+                // Восстанавливаем ссылку на геометрию
+                _triangleGeometries = _staticGeometryCache;
+                _geometryReady = true;
+                // Принудительно перерисовываем
+                LowPolyCanvas.Invalidate();
+            }
+            else if (!_geometryReady)
+            {
+                // Кэша нет — пересоздаём
+                LowPolyCanvas.Invalidate();
+            }
+        }
+
         protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)
         {
+            // 1. Отписка от глобальных событий (СТРОГО ДО base)
             SystemNavigationManager.GetForCurrentView().BackRequested -= OnBackRequested;
             Window.Current.CoreWindow.KeyDown -= OnKeyDown;
+            App.PlaylistsUpdated -= OnPlaylistsUpdated;
+
+            // 2. Очищаем привязки только тех элементов, которые реально есть на MainPage
+            if (SearchResults != null) SearchResults.ItemsSource = null;
+
+            // 3. Скрываем панели (внутренняя очистка ListView уже реализована тобой в контролах)
+            TracksPanelControl?.Hide();
+            ArtistsPanelControl?.Hide();
+            AlbumsPanelControl?.Hide();
+            PlaylistsPanelControl?.Hide();
+
+            // 4. Сбрасываем DataContext страницы
+            this.DataContext = null;
+
             base.OnNavigatingFrom(e);
         }
         private async Task InitializeLibraryAsync()
@@ -158,23 +215,33 @@ namespace Decadence
                     ShowTracksFromCache(cachedTracks);
 
                     System.Diagnostics.Debug.WriteLine("🔄 Фоновая проверка обновлений...");
+
+                    // 🔹 Отменяем предыдущую проверку, если она ещё жива
+                    _bgCheckCts?.Cancel();
+                    _bgCheckCts = new System.Threading.CancellationTokenSource();
+                    var token = _bgCheckCts.Token;
+
                     _ = Task.Run(async () =>
                     {
-                        var updatedTracks = await MusicCacheService.QuickCheckAsync(cachedTracks);
-                        if (updatedTracks.Count != cachedTracks.Count)
+                        try
                         {
-                            await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
+                            var updatedTracks = await MusicCacheService.QuickCheckAsync(cachedTracks);
+                            if (!token.IsCancellationRequested && updatedTracks.Count != cachedTracks.Count)
                             {
-                                ShowTracksFromCache(updatedTracks);
-                            });
+                                await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+                                {
+                                    ShowTracksFromCache(updatedTracks);
+                                });
+                            }
                         }
-                    });
+                        catch (OperationCanceledException) { /* Задачу отменили — нормально */ }
+                        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"⚠️ Фоновая проверка упала: {ex.Message}"); }
+                    }, token);
                 }
                 else
                 {
                     System.Diagnostics.Debug.WriteLine("🔍 Первый запуск, сканирование...");
                     ShowLoadingIndicator(true);
-
                     cachedTracks = await MusicCacheService.FullScanAsync();
                     ShowTracksFromCache(cachedTracks);
                     ShowLoadingIndicator(false);
@@ -183,9 +250,17 @@ namespace Decadence
                 _isInitialized = true;
                 System.Diagnostics.Debug.WriteLine("=== ИНИЦИАЛИЗАЦИЯ ЗАВЕРШЕНА ===");
             }
+            catch (System.IO.FileNotFoundException ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"⚠️ Кэш битый (файл не найден: {ex.Message}). Пересканируем...");
+                ShowLoadingIndicator(true);
+                var freshTracks = await MusicCacheService.FullScanAsync();
+                ShowTracksFromCache(freshTracks);
+                ShowLoadingIndicator(false);
+            }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"❌ Ошибка: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"❌ Критическая ошибка загрузки: {ex.Message}");
             }
             finally
             {
@@ -351,6 +426,7 @@ namespace Decadence
         {
             try
             {
+                _libraryInitialized = false;
                 _isLoading = true;
                 ShowLoadingIndicator(true);
 
@@ -533,23 +609,14 @@ namespace Decadence
         // Переход в PlayerMenu
         private void StatsButton_Click(object sender, RoutedEventArgs e)
         {
-            if (App.PlayerMenuInstance != null)
+            var navData = new FullPlayerNavigationData
             {
-                // Обновляем данные в существующем экземпляре
-                App.PlayerMenuInstance.UpdateData(App.CurrentTrack, App.CurrentPlaylist, App.CurrentPlaylistIndex, App.CurrentRepeatMode);
-                Frame.Navigate(typeof(PlayerMenu));
-            }
-            else
-            {
-                var navData = new FullPlayerNavigationData
-                {
-                    Track = App.CurrentTrack,
-                    Playlist = App.CurrentPlaylist,
-                    PlaylistIndex = App.CurrentPlaylistIndex,
-                    CurrentRepeatMode = App.CurrentRepeatMode
-                };
-                Frame.Navigate(typeof(PlayerMenu), navData);
-            }
+                Track = App.CurrentTrack,
+                Playlist = App.CurrentPlaylist,
+                PlaylistIndex = App.CurrentPlaylistIndex,
+                CurrentRepeatMode = App.CurrentRepeatMode
+            };
+            Frame.Navigate(typeof(PlayerMenu), navData);
         }
 
         private void PlaylistsButton_Click(object sender, RoutedEventArgs e)
@@ -747,14 +814,28 @@ namespace Decadence
 
         private void LowPolyCanvas_CreateResources(CanvasControl sender, CanvasCreateResourcesEventArgs args)
         {
-            args.TrackAsyncAction(GenerateGeometryAsync((float)sender.ActualWidth, (float)sender.ActualHeight).AsAsyncAction());
+            args.TrackAsyncAction(GenerateGeometryAsync(
+                (float)sender.ActualWidth,
+                (float)sender.ActualHeight
+            ).AsAsyncAction());
         }
 
         private async System.Threading.Tasks.Task GenerateGeometryAsync(float width, float height)
         {
+            // 1. Проверка кэша — если есть, просто используем
+            if (_cacheInitialized && _staticGeometryCache != null)
+            {
+                _triangleGeometries = _staticGeometryCache;
+                _geometryReady = true;
+                return;
+            }
+
+            // 2. Создаём НОВЫЙ список для новой геометрии
+            var newGeometries = new List<CanvasGeometry>();
+
             _rnd = new Random(Guid.NewGuid().GetHashCode());
-            foreach (var geo in _triangleGeometries) geo.Dispose();
-            _triangleGeometries.Clear();
+
+            // Очищаем старые списки координат (не геометрию!)
             _points.Clear();
             _indices.Clear();
 
@@ -762,15 +843,11 @@ namespace Decadence
 
             float cellSize = 80f;
             float jitter = 70f;
-
-            // 🔹 ИСПРАВЛЕНИЕ: Добавляем запас (margin), чтобы треугольники выходили за экран
             float margin = 100f;
 
-            // Увеличиваем количество колонок и строк с учетом margin
             int cols = (int)((width + margin * 2) / cellSize) + 2;
             int rows = (int)((height + margin * 2) / cellSize) + 2;
 
-            // Создаем точки, начиная со смещением -margin (за левый/верхний край)
             for (int y = 0; y < rows; y++)
             {
                 for (int x = 0; x < cols; x++)
@@ -781,7 +858,6 @@ namespace Decadence
                 }
             }
 
-            // Соединяем в индексы (твоя логика)
             for (int y = 0; y < rows - 1; y++)
             {
                 for (int x = 0; x < cols - 1; x++)
@@ -796,7 +872,6 @@ namespace Decadence
                 }
             }
 
-            // Создание CanvasGeometry
             var device = CanvasDevice.GetSharedDevice();
             for (int i = 0; i < _indices.Count; i += 3)
             {
@@ -810,13 +885,24 @@ namespace Decadence
                     builder.AddLine(p2);
                     builder.AddLine(p3);
                     builder.EndFigure(CanvasFigureLoop.Closed);
-                    _triangleGeometries.Add(CanvasGeometry.CreatePath(builder));
+                    newGeometries.Add(CanvasGeometry.CreatePath(builder));
                 }
             }
 
+            // 3. Уничтожаем СТАРЫЕ геометрии (если они были)
+            foreach (var geo in _triangleGeometries)
+            {
+                try { geo.Dispose(); } catch { }
+            }
+
+            // 4. Присваиваем новый список
+            _triangleGeometries = newGeometries;
+
+            // 5. Сохраняем в статический кэш
+            _staticGeometryCache = _triangleGeometries;
+            _cacheInitialized = true;
             _geometryReady = true;
         }
-        // 🔹 2. ОТРИСОВКА
         private void LowPolyCanvas_Draw(CanvasControl sender, CanvasDrawEventArgs args)
         {
             if (!_geometryReady || _triangleGeometries.Count == 0) return;
@@ -827,7 +913,6 @@ namespace Decadence
 
                 foreach (var geometry in _triangleGeometries)
                 {
-                    // 🔹 ЕДИНСТВЕННОЕ ИЗМЕНЕНИЕ: цвет из палитры "Decadence"
                     Color baseDecayColor = _decayColors[_rnd.Next(_decayColors.Length)];
                     float variation = 0.85f + (float)(_rnd.NextDouble() * 0.3f);
                     Color triColor = Color.FromArgb(
@@ -842,22 +927,13 @@ namespace Decadence
                 }
             }
         }
-        // 🔹 3. Очистка при выгрузке
         private void LowPolyCanvas_Unloaded(object sender, object e)
         {
-            foreach (var geo in _triangleGeometries)
-            {
-                geo.Dispose();
-            }
-            _triangleGeometries.Clear();
             _geometryReady = false;
         }
-
-        // 🔹 4. При изменении размера
         private void LowPolyCanvas_SizeChanged(object sender, SizeChangedEventArgs e)
         {
             _geometryReady = false;
-            // Пересоздаем ресурсы
             LowPolyCanvas.Invalidate();
         }
     }

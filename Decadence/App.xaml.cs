@@ -23,15 +23,16 @@ namespace Decadence
 {
     sealed partial class App : Application
     {
-        public static ObservableCollection<TrackItem> _tracks;
-        public static ObservableCollection<TrackItem> Tracks { get; set; }
+        // 🔹 Состояние воспроизведения (лёгкие ссылки, допустимо)
         public static TrackItem CurrentTrack { get; set; }
         public static List<TrackItem> CurrentPlaylist { get; set; }
         public static int CurrentPlaylistIndex { get; set; }
         public static RepeatMode CurrentRepeatMode { get; set; }
-        public static PlayerMenu PlayerMenuInstance { get; set; }
+
+        // 🔹 Плейлисты (лёгкий список)
         public static List<Playlist> CurrentPlaylists { get; set; }
 
+        // 🔹 Безопасное событие (очищается при сворачивании)
         public static event Action PlaylistsUpdated;
 
         public App()
@@ -43,21 +44,26 @@ namespace Decadence
         protected override void OnLaunched(LaunchActivatedEventArgs e)
         {
             Frame rootFrame = Window.Current.Content as Frame;
-            App._tracks = _tracks;
 
             if (rootFrame == null)
             {
                 rootFrame = new Frame();
                 rootFrame.NavigationFailed += OnNavigationFailed;
 
+                // 🔹 Держим в памяти только 1 страницу. Остальные уничтожаются при уходе.
+                rootFrame.CacheSize = 1;
+
+                Window.Current.Content = rootFrame;
+
                 if (e.PreviousExecutionState == ApplicationExecutionState.Terminated)
                 {
-                    // TODO: Загрузить состояние из ранее приостановленного приложения
+                    // TODO: Восстановить состояние если нужно
                 }
 
                 Window.Current.Content = rootFrame;
             }
-            if (e.PrelaunchActivated == false)
+
+            if (!e.PrelaunchActivated)
             {
                 if (rootFrame.Content == null)
                 {
@@ -65,24 +71,16 @@ namespace Decadence
                 }
 
                 Window.Current.Activate();
+
+                // Настройки окна (оставил твои)
                 ApplicationView.PreferredLaunchViewSize = new Size(360, 640);
                 ApplicationView.PreferredLaunchWindowingMode = ApplicationViewWindowingMode.PreferredLaunchViewSize;
+                ApplicationView.GetForCurrentView().SetPreferredMinSize(new Size(360, 640));
 
-                var view = ApplicationView.GetForCurrentView();
-
-                // Устанавливаем минимальный размер (окно нельзя будет сделать меньше 360x640)
-                view.SetPreferredMinSize(new Size(360, 640));
-
-
-                var family = AnalyticsInfo.VersionInfo.DeviceFamily;
-
-                if (family == "Windows.Mobile")
+                if (AnalyticsInfo.VersionInfo.DeviceFamily == "Windows.Mobile")
                 {
-                    // Полноэкранный режим (скрывает системную панель автоматически)
                     ApplicationView.GetForCurrentView().TryEnterFullScreenMode();
                 }
-
-                Window.Current.Activate();
             }
         }
 
@@ -90,21 +88,31 @@ namespace Decadence
         {
             throw new Exception("Failed to load Page " + e.SourcePageType.FullName);
         }
-        public static event EventHandler<Windows.Storage.StorageFile> PlayRequested;
-        public static void RaisePlayRequested(StorageFile file)
-        {
-            PlayRequested?.Invoke(null, file);
-        }
+
+        public static event EventHandler<StorageFile> PlayRequested;
+        public static void RaisePlayRequested(StorageFile file) => PlayRequested?.Invoke(null, file);
+
         private void OnSuspending(object sender, SuspendingEventArgs e)
         {
             var deferral = e.SuspendingOperation.GetDeferral();
-            // TODO: Сохранить состояние приложения
+
+            // Очищаем статический кэш только при закрытии
+            if (MainPage._staticGeometryCache != null)
+            {
+                foreach (var geo in MainPage._staticGeometryCache)
+                {
+                    try { geo.Dispose(); } catch { }
+                }
+                MainPage._staticGeometryCache = null;
+                MainPage._cacheInitialized = false;
+            }
+
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+
             deferral.Complete();
         }
 
-        public static void NotifyPlaylistsUpdated()
-        {
-            PlaylistsUpdated?.Invoke();
-        }
+        public static void NotifyPlaylistsUpdated() => PlaylistsUpdated?.Invoke();
     }
 }

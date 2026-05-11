@@ -9,12 +9,12 @@
     mc:Ignorable="d">
     <Grid>
         <canvas:CanvasControl x:Name="LowPolyCanvas" 
-                      CreateResources="LowPolyCanvas_CreateResources"
-                      Draw="LowPolyCanvas_Draw" 
-                      SizeChanged="LowPolyCanvas_SizeChanged"
-                      Unloaded="LowPolyCanvas_Unloaded"
-                      HorizontalAlignment="Stretch" 
-                      VerticalAlignment="Stretch"/>
+                                CreateResources="LowPolyCanvas_CreateResources"
+                                Draw="LowPolyCanvas_Draw" 
+                                SizeChanged="LowPolyCanvas_SizeChanged"
+                                Unloaded="LowPolyCanvas_Unloaded"
+                                HorizontalAlignment="Stretch" 
+                                VerticalAlignment="Stretch"/>
         <Grid x:Name="MainContainer">
             <Grid.RowDefinitions>
                 <RowDefinition Height="385*"/>
