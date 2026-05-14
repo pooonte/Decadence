@@ -15,19 +15,18 @@
             <PivotItem Margin="0,-48,0,0">
                 <Grid>
                 <TextBlock Text="сейчас играет" FontFamily="Segoe UI" FontWeight="Light" Foreground="{StaticResource AccentBrush}" FontSize="46"  HorizontalAlignment="Left"  VerticalAlignment="Top"  Margin="10,10,0,0"/>
-                    <Grid HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,90,0,0" Height="300" Width="200">
+                    <Grid HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,90,0,0" Height="300" Width="267">
                     <!-- Обложка -->
-                        <Border BorderBrush="{StaticResource SecondBackgroundBrush}" 
-            BorderThickness="4" 
+                        <Border BorderBrush="{StaticResource SecondBackgroundBrush}"
             Width="200" Height="200" HorizontalAlignment="Left" Margin="0,17,0,83">
                             <Image x:Name="FullAlbumArt" Stretch="UniformToFill"/>
                         </Border>
                         <!-- Инфо-блок (привязан к низу обложки) -->
-                    <Grid HorizontalAlignment="Left" VerticalAlignment="Bottom" Background="{StaticResource SecondBackgroundBrush}" Padding="20,18" MaxWidth="400">
+                    <Grid HorizontalAlignment="Left" VerticalAlignment="Bottom" Background="Transparent" Padding="20,18" MaxWidth="400">
                         <StackPanel>
                             <TextBlock x:Name="FullTrackTitle" 
                        Foreground="{StaticResource TextBrush}" 
-                       FontSize="18" 
+                       FontSize="20" 
                        FontFamily="Segoe UI" 
                        FontWeight="Light" 
                        TextWrapping="Wrap" 
@@ -37,7 +36,7 @@
 
                             <TextBlock x:Name="FullTrackArtist" 
                        Foreground="{StaticResource TextBrush}" 
-                       FontSize="12" 
+                       FontSize="14" 
                        FontFamily="Segoe UI" 
                        FontWeight="Light" 
                        Opacity="0.75"/>
@@ -136,7 +135,18 @@
                                            Margin="10,0,0,0"/>
                         </Grid>
                     </Button>
-                </Grid>
+                        <Button x:Name="ShuffleButton" 
+        Click="ShuffleButton_Click" 
+        Margin="20,206,0,394"
+        Background="Transparent"
+        Padding="0">
+                            <TextBlock Text="Перемешать" 
+               FontSize="30" 
+               FontFamily="Segoe UI" 
+               FontWeight="Light" 
+               Foreground="White"/>
+                        </Button>
+                    </Grid>
                 <Grid HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Height="103">
                     <Button x:Name="PrevButton" Click="PrevButton_Click" Background="Transparent" Style="{StaticResource ImageButtonStyle}" Foreground="{StaticResource AccentBrush}" FontSize="24" HorizontalAlignment="Left" Margin="-8,0,0,0" VerticalAlignment="Bottom" Height="76" Width="100" >
                         <Image x:Name="PrevButtonImage" Width="100" Height="100" Source="ms-appx:///Assets/prev_white.png"/>
@@ -181,7 +191,7 @@
                                     Width="50"
                                     Height="50"
                                     Background="Transparent"
-                                    Click="BackButton_Click" HorizontalAlignment="Left" Margin="310,0,0,0" VerticalAlignment="Top">
+                                    Click="BackButton_Click" HorizontalAlignment="Right" Margin="0,0,0,0" VerticalAlignment="Top">
             <Image Source="ms-appx:///Assets/prev_white.png" Margin="0,-10,0,0" Width="60" Height="60" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
         </Button>
     </Grid>

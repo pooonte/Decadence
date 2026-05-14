@@ -40,6 +40,9 @@ namespace Decadence
         private Random _random = new Random();
 
 
+        private Random _shuffleRandom = new Random();
+        private bool _isShuffleEnabled = false;
+        private List<TrackItem> _originalPlaylist = new List<TrackItem>();
         public PlayerMenu()
         {
             this.InitializeComponent();
@@ -560,6 +563,35 @@ namespace Decadence
                     var file = await StorageFile.GetFileFromPathAsync(track.FilePath);
                     PlayTrack(file);
                 }
+            }
+        }
+        private void ShuffleButton_Click(object sender, RoutedEventArgs e)
+        {
+            _isShuffleEnabled = !_isShuffleEnabled;
+
+            var button = sender as Button;
+            var textBlock = button?.Content as TextBlock;
+
+            if (_isShuffleEnabled)
+            {
+                _originalPlaylist = new List<TrackItem>(_currentPlaylist);
+                var shuffled = _currentPlaylist.OrderBy(x => _shuffleRandom.Next()).ToList();
+                _currentPlaylist = shuffled;
+                _currentPlaylistIndex = 0;
+                UpdateQueue();
+
+                if (textBlock != null) textBlock.Text = "Перемешать ✓";
+            }
+            else
+            {
+                if (_originalPlaylist.Count > 0)
+                {
+                    _currentPlaylist = _originalPlaylist;
+                    _currentPlaylistIndex = 0;
+                    UpdateQueue();
+                }
+
+                if (textBlock != null) textBlock.Text = "Перемешать";
             }
         }
     }

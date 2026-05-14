@@ -50,7 +50,6 @@ namespace Decadence
         private DateTime _animationStartTime;
 
         private WriteableBitmap _amimBitmap;
-
         public MainPage()
         {
             this.InitializeComponent();
