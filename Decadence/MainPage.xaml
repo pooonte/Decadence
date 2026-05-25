@@ -6,23 +6,8 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:canvas="using:Microsoft.Graphics.Canvas.UI.Xaml" 
-    mc:Ignorable="d">
+    mc:Ignorable="d" Foreground="{StaticResource BackgroundBrush}">
     <Grid x:Name="BackgroundContainer">
-        <Grid x:Name="StaticBackground" Visibility="Visible">
-            <Grid.Background>
-                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                    <GradientStop Color="#0B0C0E" Offset="0.0"/>
-                    <GradientStop Color="#16181C" Offset="0.5"/>
-                    <GradientStop Color="#040506" Offset="1.0"/>
-                </LinearGradientBrush>
-            </Grid.Background>
-            <!-- Декоративные пятна для глубины (опционально) -->
-        </Grid>
-        <Image x:Name="PatternImage" 
-           Stretch="UniformToFill"
-           HorizontalAlignment="Stretch" 
-           VerticalAlignment="Stretch"
-           Visibility="Collapsed"/>
         <Grid x:Name="MainContainer">
             <Grid.RowDefinitions>
                 <RowDefinition Height="385*"/>
@@ -158,40 +143,6 @@
 
                         <TextBlock Text="Эксперименты" FontSize="25" FontFamily="Segoe UI" FontWeight="Light" Foreground="{StaticResource TextBrush}" Margin="10,261,180,342"/>
                         <TextBlock Text="Внимание! Здесь находятся экспериментальные функции, которые могут повлиять на опыт пользования приложением и на работоспособность устройства. Включать на свой страх и риск." TextWrapping="Wrap" FontSize="14" Foreground="{StaticResource TextBrush}" Margin="10,303,10,255"/>
-                        <TextBlock Text="Рандомно-генерируемый фон" TextWrapping="Wrap" FontSize="20" Foreground="{StaticResource TextBrush}" Margin="10,390,43,218" FontFamily="Segoe UI" FontWeight="Light"/>
-                        <ToggleSwitch x:Name="ExpBgToggle" OffContent="Выкл" 
-              OnContent="Вкл" 
-              Toggled="ExpBgToggle_Toggled"
-              HorizontalAlignment="Right" 
-              VerticalAlignment="Top" 
-              Margin="0,427,176,0"
-              Foreground="{StaticResource TextBrush}">
-                            <ToggleSwitch.Header>
-                            <TextBlock Text="Экспериментальный фон" 
-                   Foreground="{StaticResource TextBrush}"/>
-                            </ToggleSwitch.Header>
-
-                            <!-- 🔹 ПЕРЕОПРЕДЕЛЯЕМ ЦВЕТА СТАНДАРТНЫХ ЭЛЕМЕНТОВ -->
-                            <ToggleSwitch.Resources>
-
-                                <!-- 1. Цвет самого "бегунка" (кружка) -->
-                                <SolidColorBrush x:Key="ToggleSwitchThumbFill" Color="{StaticResource TextColor}" />
-
-                                <!-- 2. Цвет дорожки в состоянии ВКЛ (On) -->
-                                <SolidColorBrush x:Key="ToggleSwitchFillOn" Color="{StaticResource AccentColor}" />
-                                <!-- Тёмная ржавчина -->
-
-                                <!-- 3. Цвет обводки кружка в состоянии ВЫКЛ -->
-                                <SolidColorBrush x:Key="ToggleSwitchStrokeOff" Color="{StaticResource TextColor}" />
-                                <!-- Пыльный бархат -->
-
-                                <!-- 4. Цвет дорожки в состоянии ВЫКЛ (Off) -->
-                                <SolidColorBrush x:Key="ToggleSwitchFillOff" Color="{StaticResource AccentColor}" />
-                                <!-- Тёмный фон -->
-
-                            </ToggleSwitch.Resources>
-
-                        </ToggleSwitch>
                     </Grid>
                 </PivotItem>
             </Pivot>

@@ -130,7 +130,6 @@
       <DependentUpon>ArtistsPanelControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="Converters\BoolToVisibilityConverter.cs" />
-    <Compile Include="Experimental\PatternGenerator.cs" />
     <Compile Include="FullButtonsPanel.xaml.cs">
       <DependentUpon>FullButtonsPanel.xaml</DependentUpon>
     </Compile>

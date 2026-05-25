@@ -78,7 +78,6 @@
                     </Setter.Value>
                 </Setter>
             </Style>
-
             <Style x:Key="ImageButtonStyle" TargetType="Button">
                 <Setter Property="Background" Value="Transparent"/>
                 <Setter Property="BorderThickness" Value="0"/>
@@ -123,70 +122,14 @@
             <!-- градиент для фона-->
             <Color x:Key="BgGradientStart">#0C1610</Color>
             <Color x:Key="BgGradientEnd">#15241C</Color>
-
-            <!-- 🔹 ГРАДИЕНТ КАК РЕСУРС -->
-            <LinearGradientBrush x:Key="PageBackgroundGradient" StartPoint="0,0" EndPoint="1,1">
-                <GradientStop Color="#0C1610" Offset="0.0"/>
-                <GradientStop Color="#15241C" Offset="1.0"/>
-            </LinearGradientBrush>
-
-            <LinearGradientBrush x:Key="OrangePageBackground" StartPoint="1,0" EndPoint="0,1">
-                <GradientStop Color="#9A421A" Offset="1.0"/>
-                <GradientStop Color="#5E240E" Offset="0.5"/>
-                <GradientStop Color="#2F1107" Offset="0.0"/>
-            </LinearGradientBrush>
-            <!-- Или для космической темы -->
-            <LinearGradientBrush x:Key="CosmosBackgroundGradient" StartPoint="0,0" EndPoint="0,1">
-                <GradientStop Color="#06070A" Offset="0.0"/>
-                <GradientStop Color="#0B0C10" Offset="0.5"/>
-                <GradientStop Color="#0F111A" Offset="1.0"/>
-            </LinearGradientBrush>
-
-            <!--<LinearGradientBrush x:Key="BenzinGradient" StartPoint="0,0" EndPoint="1,1">
-                <GradientStop Color="#020204" Offset="0.00"/>
-                Глубокая пустота
-                <GradientStop Color="#060410" Offset="0.11"/>
-                Полночный индиго
-                <GradientStop Color="#100416" Offset="0.22"/>
-                Тёмный фиолет
-                <GradientStop Color="#160412" Offset="0.33"/>
-                Спектральная маджента
-                <GradientStop Color="#160806" Offset="0.44"/>
-                Ржавый янтарь
-                <GradientStop Color="#121206" Offset="0.55"/>
-                Окисленное золото
-                <GradientStop Color="#06160E" Offset="0.66"/>
-                Глубокий изумруд
-                <GradientStop Color="#041614" Offset="0.77"/>
-                Стальной циан
-                <GradientStop Color="#040A14" Offset="0.88"/>
-                Холодная сталь
-                <GradientStop Color="#000000" Offset="1.00"/>
-            </LinearGradientBrush> -->
-
-            <LinearGradientBrush x:Key="MetroMagentaGradient" StartPoint="0,0" EndPoint="1,1">
-                <GradientStop Color="#2A2A3A" Offset="0.0"/>
-
-                <!-- 0.25: Тёмная ржавчина (Тёплый переход) -->
-                <GradientStop Color="#3A2820" Offset="0.25"/>
-
-                <!-- 0.50: Пыльный бархат (Середина) -->
-                <GradientStop Color="#4A3830" Offset="0.50"/>
-
-                <!-- 0.75: Окисленная бронза (Самый светлый/акцентный) -->
-                <GradientStop Color="#5A4840" Offset="0.75"/>
-
-                <!-- 1.00: Засохшее вино (Возврат в тьму) -->
-                <GradientStop Color="#3A2A3A" Offset="1.00"/>
-            </LinearGradientBrush>
             <!-- градиент для фона-->
-            <Color x:Key="SurfaceColor">#16181C</Color>
-            <Color x:Key="BackgroundColor">#0B0C0E</Color>
-            <Color x:Key="TextColor">#C5C0B8</Color>
-            <Color x:Key="TextSecondaryColor">#6A6560</Color>
-            <Color x:Key="AccentColor">#EAE4DC</Color>
-            <Color x:Key="SecondBackgroundColor">#040506</Color>
-            
+            <Color x:Key="BackgroundColor">#000000</Color>
+            <Color x:Key="SurfaceColor">#0A0A0A</Color>
+            <Color x:Key="TextColor">#FFFFFF</Color>
+            <Color x:Key="TextSecondaryColor">#888888</Color>
+            <Color x:Key="AccentColor">#FFFFFF</Color>
+            <Color x:Key="SecondBackgroundColor">#0F0F0F</Color>
+
             <!-- Benzin2Gradient
             <GradientStop Color="#080C14" Offset="0.0"/>
             <GradientStop Color="#0F1A16" Offset="0.2"/>
@@ -210,7 +153,7 @@
             <Color x:Key="SecondBackgroundColor">#1A120D</Color>-->
 
             <SolidColorBrush x:Key="SecondBackgroundBrush" Color="{StaticResource SecondBackgroundColor}"/>
-            
+
             <Style x:Key="DecadenceTextButton" TargetType="Button">
                 <Setter Property="Background" Value="Transparent"/>
                 <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
@@ -252,64 +195,6 @@
                     </Setter.Value>
                 </Setter>
             </Style>
-            <!-- Полуночный париж
-            <Color x:Key="BackgroundColor">#0F0F1E</Color>
-            <Color x:Key="TextColor">#F0F0F5</Color>
-            <Color x:Key="TextSecondaryColor">#9B8B9F</Color>
-            <Color x:Key="AccentColor">#6B4E71</Color> 
-            -->
-
-            <!-- Винный подвал
-            <Color x:Key="BackgroundColor">#1E1518</Color>
-            <Color x:Key="TextColor">#E8D5C4</Color>
-            <Color x:Key="TextSecondaryColor">#9B766A</Color>
-            <Color x:Key="AccentColor">#7D3C4A</Color>
-            -->
-
-            <!-- Морская глубина
-            <Color x:Key="BackgroundColor">#0A1F24</Color>
-            <Color x:Key="TextColor">#E8F4F8</Color>
-            <Color x:Key="TextSecondaryColor">#6B8E99</Color>
-            <Color x:Key="AccentColor">#2D8B9E</Color>
-            -->
-
-            <!-- Зеленый слоник
-            <Color x:Key="SurfaceColor">#F1EDE6</Color>
-            <Color x:Key="BackgroundColor">#0F1A14</Color>
-            <Color x:Key="TextColor">#E0F0E8</Color>
-            <Color x:Key="TextSecondaryColor">#6B8E7E</Color>
-            <Color x:Key="AccentColor">#2D8B6E</Color>
-            <Color x:Key="SecondBackgroundColor">#080C0A</Color>
-            -->
-
-            <!-- Кобальт и медь
-            <Color x:Key="BackgroundColor">#0D1B2A</Color>
-            <Color x:Key="TextColor">#FFFFFF</Color>
-            <Color x:Key="TextSecondaryColor">#7B8FA3</Color>
-            <Color x:Key="AccentColor">#E07A5F</Color>
-            -->
-
-            <!-- Восточный бархат
-            <Color x:Key="BackgroundColor">#1A0F0F</Color>
-            <Color x:Key="TextColor">#F5E8E4</Color>
-            <Color x:Key="TextSecondaryColor">#A38B86</Color>
-            <Color x:Key="AccentColor">#C94B4B</Color>
-            -->
-
-            <!-- Алхимик
-            <Color x:Key="BackgroundColor">#0A1414</Color>
-            <Color x:Key="TextColor">#D4E8D4</Color>
-            <Color x:Key="TextSecondaryColor">#6B8B6B</Color>
-            <Color x:Key="AccentColor">#9B59B6</Color>
-            -->
-
-            <!-- Кооооосмооооос!
-            <Color x:Key="BackgroundColor">#0B0C10</Color>
-            <Color x:Key="TextColor">#C5D1E8</Color>
-            <Color x:Key="TextSecondaryColor">#5A6A8A</Color>
-            <Color x:Key="AccentColor">#4A90E2</Color>
-            -->
-            
             <!-- Кисти -->
             <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}"/>
             <SolidColorBrush x:Key="BackgroundBrush" Color="{StaticResource BackgroundColor}"/>

@@ -1,6 +1,5 @@
 ﻿using Decadence.Models;
 using Decadence.Services;
-using Decadence.Experimental;
 using Singleton;
 using System;
 using System.Collections.Generic;
@@ -45,19 +44,11 @@ namespace Decadence
 
         private List<string> _phrases = new List<string>();
         private Random _random = new Random();
-
-        private DispatcherTimer _animationTimer;
-        private DateTime _animationStartTime;
-
-        private WriteableBitmap _amimBitmap;
         public MainPage()
         {
             this.InitializeComponent();
-
-            // 🔹 ВКЛЮЧАЕМ КЭШИРОВАНИЕ СТРАНИЦЫ (ОБЯЗАТЕЛЬНО)
             this.NavigationCacheMode = NavigationCacheMode.Required;
 
-            // 🔹 Загружаем библиотеку ТОЛЬКО ОДИН РАЗ за сессию
             if (!_libraryInitialized && _tracks.Count == 0)
             {
                 _ = InitializeLibraryAsync();
@@ -66,41 +57,9 @@ namespace Decadence
 
             _ = LoadPlaylists();
 
-            // Твои подписки на контролы (оставь как было)
             PlaylistsPanelControl.CreatePlaylist += (s, name) => CreatePlaylist(name);
             TracksPanelControl.AddToPlaylistRequested += TracksPanelControl_AddToPlaylistRequested;
             PlaylistsPanelControl.RemoveTrackRequested += PlaylistsPanelControl_RemoveTrackRequested;
-
-            _animationTimer = new DispatcherTimer();
-            _animationTimer.Interval = TimeSpan.FromMilliseconds(33); // ~30 FPS
-            _animationTimer.Tick += async (s, e) =>
-            {
-                if (App.UseExperimentalBackground && ExpBgToggle.IsOn)
-                {
-                    // 🔹 ПРОВЕРКА: ждем пока контрол получит реальные размеры
-                    int w = (int)PatternImage.ActualWidth;
-                    int h = (int)PatternImage.ActualHeight;
-
-                    if (w < 10 || h < 10)
-                    {
-                        // Размеры еще не известны — пропускаем этот кадр
-                        return;
-                    }
-
-                    try
-                    {
-                        var elapsed = (DateTime.Now - _animationStartTime).TotalSeconds;
-                        var bitmap = await PatternGenerator.GeneratePatternAsync(w, h, elapsed);
-                        PatternImage.Source = bitmap;
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"PatternGen Error: {ex.Message}");
-                        // Останавливаем таймер при ошибке
-                        _animationTimer.Stop();
-                    }
-                }
-            };
         }
         private void OnBackRequested(object sender, BackRequestedEventArgs e)
         {
@@ -170,23 +129,6 @@ namespace Decadence
             SystemNavigationManager.GetForCurrentView().BackRequested += OnBackRequested;
             Window.Current.CoreWindow.KeyDown += OnKeyDown;
             App.PlaylistsUpdated += OnPlaylistsUpdated;
-
-            if (ExpBgToggle != null)
-            {
-                ExpBgToggle.IsOn = App.UseExperimentalBackground;
-
-                // Если включен экспериментальный режим — перегенерируем фон
-                if (App.UseExperimentalBackground)
-                {
-                    // Небольшая задержка, чтобы контрол получил размеры
-                    await Task.Delay(50);
-                    ApplyBackgroundSetting(true);
-                }
-                else
-                {
-                    ApplyBackgroundSetting(false);
-                }
-            }
         }
 
         protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)
@@ -825,60 +767,5 @@ namespace Decadence
                 MainButtonsPanel.Visibility = Visibility.Visible;
             }
         }
-
-        private void ExpBgToggle_Toggled(object sender, RoutedEventArgs e)
-        {
-            bool isOn = ExpBgToggle.IsOn;
-
-            // 1. Сохраняем выбор
-            App.UseExperimentalBackground = isOn;
-
-            // 2. Применяем визуально
-            ApplyBackgroundSetting(isOn);
-        }
-
-        private async void ApplyBackgroundSetting(bool isOn)
-        {
-            if (isOn)
-            {
-                // 🔹 ВКЛЮЧАЕМ ЭКСПЕРИМЕНТАЛЬНЫЙ ФОН
-                StaticBackground.Visibility = Visibility.Collapsed;
-                PatternImage.Visibility = Visibility.Visible;
-
-                // Генерируем новый паттерн асинхронно
-                // Размер берем с запасом или реальный, WriteableBitmap это любит
-                int w = (int)PatternImage.ActualWidth;
-                int h = (int)PatternImage.ActualHeight;
-                if (w < 10) w = (int)ActualWidth;
-                if (h < 10) h = (int)ActualHeight;
-
-                _animationStartTime = DateTime.Now;
-                _animationTimer.Start();
-
-                try
-                {
-                    // Вызываем твой новый класс
-                    var bitmap = await PatternGenerator.GeneratePatternAsync(w, h);
-                    PatternImage.Source = bitmap;
-                }
-                catch (Exception ex)
-                {
-                    System.Diagnostics.Debug.WriteLine($"PatternGen Error: {ex.Message}");
-                    // В случае ошибки можно показать заглушку или вернуть статический фон
-                }
-            }
-            else
-            {
-                // 🔹 ВЫКЛЮЧАЕМ (возвращаем статику)
-                PatternImage.Visibility = Visibility.Collapsed;
-                StaticBackground.Visibility = Visibility.Visible;
-
-                // Очищаем память: сбрасываем источник изображения
-                PatternImage.Source = null;
-
-                _animationTimer.Stop();
-            }
-        }
     }
-
 }
