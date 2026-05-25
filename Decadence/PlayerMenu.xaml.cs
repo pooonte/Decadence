@@ -39,7 +39,10 @@ namespace Decadence
 
         private Random _random = new Random();
 
-
+        private BitmapImage _repeatNoneIcon;
+        private BitmapImage _repeatOneIcon;
+        private BitmapImage _repeatAllIcon;
+        private BitmapImage _currentAlbumArt;
         private Random _shuffleRandom = new Random();
         private bool _isShuffleEnabled = false;
         private List<TrackItem> _originalPlaylist = new List<TrackItem>();
@@ -50,9 +53,17 @@ namespace Decadence
             _pauseIcon = new BitmapImage(new Uri("ms-appx:///Assets/pause_white.png"));
 
             MediaPlayerSingleton.Player.MediaEnded += Player_MediaEnded;
+
+            _repeatNoneIcon = new BitmapImage(new Uri("ms-appx:///Assets/repeat_none_white.png"));
+            _repeatOneIcon = new BitmapImage(new Uri("ms-appx:///Assets/repeat_one_white.png"));
+            _repeatAllIcon = new BitmapImage(new Uri("ms-appx:///Assets/repeat_all_white.png"));
         }
 
         private string FormatTime(TimeSpan t) => $"{(int)t.TotalMinutes}:{t.Seconds:D2}";
+        private void GlobalTimer_Tick(object sender, object e)
+        {
+            if (_isActive) UpdatePlaybackPosition();
+        }
         protected override async void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
@@ -92,18 +103,11 @@ namespace Decadence
             if (_globalTimer != null)
             {
                 _globalTimer.Stop();
-                _globalTimer = null;
+                _globalTimer.Tick -= GlobalTimer_Tick;
             }
-
             _globalTimer = new DispatcherTimer();
             _globalTimer.Interval = TimeSpan.FromMilliseconds(500);
-            _globalTimer.Tick += (s, args) =>
-            {
-                if (_isActive)
-                {
-                    UpdatePlaybackPosition();
-                }
-            };
+            _globalTimer.Tick += GlobalTimer_Tick;
             _globalTimer.Start();
 
             UpdateQueue();
@@ -153,8 +157,12 @@ namespace Decadence
         {
             try
             {
-                // 🔹 Разрываем ссылку на старое изображение (критично для RAM)
-                FullAlbumArt.Source = null;
+                // 🔹 Освобождаем старый BitmapImage
+                if (_currentAlbumArt != null)
+                {
+                    FullAlbumArt.Source = null;
+                    _currentAlbumArt = null;
+                }
 
                 var file = await StorageFile.GetFileFromPathAsync(filePath);
                 using (var thumb = await file.GetThumbnailAsync(
@@ -162,34 +170,38 @@ namespace Decadence
                 {
                     if (thumb != null && thumb.Size > 0)
                     {
-                        var bitmap = new BitmapImage { CreateOptions = BitmapCreateOptions.IgnoreImageCache };
-                        await bitmap.SetSourceAsync(thumb);
-                        FullAlbumArt.Source = bitmap;
+                        _currentAlbumArt = new BitmapImage
+                        {
+                            CreateOptions = BitmapCreateOptions.IgnoreImageCache
+                        };
+                        await _currentAlbumArt.SetSourceAsync(thumb);
+                        FullAlbumArt.Source = _currentAlbumArt;
                     }
                 }
             }
             catch { }
         }
-
         protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)
         {
-            // 1. Останавливаем всё, что держит ссылки
             _isActive = false;
-            _globalTimer?.Stop();
-            _globalTimer = null;
-
-            // 2. Отписываемся от вечных объектов
+            if (_globalTimer != null)
+            {
+                _globalTimer.Stop();
+                _globalTimer.Tick -= GlobalTimer_Tick;
+                _globalTimer = null;
+            }
             MediaPlayerSingleton.Player.MediaEnded -= Player_MediaEnded;
 
-            // 3. Разрываем привязки (критично для UWP Mobile)
             this.DataContext = null;
             if (QueueListView != null) QueueListView.ItemsSource = null;
-            if (FullAlbumArt != null) FullAlbumArt.Source = null;
+            if (FullAlbumArt != null)
+            {
+                FullAlbumArt.Source = null;
+            }
+            _currentAlbumArt = null;
 
-            // 4. Только потом вызываем базовый метод
             base.OnNavigatingFrom(e);
         }
-        // 🔹 Unloaded вызывается ПОСЛЕ выгрузки из визуального дерева
         private void PlayerMenu_Unloaded(object sender, RoutedEventArgs e)
         {
             // Финальная зачистка UI-элементов
@@ -233,6 +245,7 @@ namespace Decadence
 
             await LoadAlbumArt(file.Path);
             UpdatePlayButtonState();
+            GC.Collect(0, GCCollectionMode.Optimized);
         }
         private void UpdatePlayButtonState()
         {
@@ -247,13 +260,13 @@ namespace Decadence
             switch (_repeatMode)
             {
                 case RepeatMode.None:
-                    RepeatButtonImage.Source = new BitmapImage(new Uri("ms-appx:///Assets/repeat_none_white.png"));
+                    RepeatButtonImage.Source = _repeatNoneIcon;
                     break;
                 case RepeatMode.One:
-                    RepeatButtonImage.Source = new BitmapImage(new Uri("ms-appx:///Assets/repeat_one_white.png"));
+                    RepeatButtonImage.Source = _repeatOneIcon;
                     break;
                 case RepeatMode.All:
-                    RepeatButtonImage.Source = new BitmapImage(new Uri("ms-appx:///Assets/repeat_all_white.png"));
+                    RepeatButtonImage.Source = _repeatAllIcon;
                     break;
             }
         }

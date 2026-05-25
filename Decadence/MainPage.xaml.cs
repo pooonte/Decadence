@@ -96,31 +96,41 @@ namespace Decadence
             if (TracksPanelControl.IsVisible)
             {
                 TracksPanelControl.Hide();
-                TracksPanelControl.Clear(); // 🔹 Очищаем контрол
+                TracksPanelControl.Clear();
+                if (TracksPanelControl.Parent is Panel p) p.Children.Remove(TracksPanelControl);
                 anyPanelClosed = true;
             }
             if (ArtistsPanelControl.IsVisible)
             {
                 ArtistsPanelControl.Hide();
-                ArtistsPanelControl.Clear(); // 🔹
+                ArtistsPanelControl.Clear();
+                if (ArtistsPanelControl.Parent is Panel p) p.Children.Remove(ArtistsPanelControl);
                 anyPanelClosed = true;
             }
             if (AlbumsPanelControl.IsVisible)
             {
                 AlbumsPanelControl.Hide();
-                AlbumsPanelControl.Clear(); // 🔹
+                AlbumsPanelControl.Clear();
+                if (AlbumsPanelControl.Parent is Panel p) p.Children.Remove(AlbumsPanelControl);
                 anyPanelClosed = true;
             }
             if (PlaylistsPanelControl.IsVisible)
             {
                 PlaylistsPanelControl.Hide();
-                PlaylistsPanelControl.Clear(); // 🔹
+                PlaylistsPanelControl.Clear();
+                if (PlaylistsPanelControl.Parent is Panel p) p.Children.Remove(PlaylistsPanelControl);
                 anyPanelClosed = true;
+            }
+
+            // 🔹 Сразу подчищаем мусор после закрытия
+            if (anyPanelClosed)
+            {
+                GC.Collect(1, GCCollectionMode.Optimized);
+                GC.WaitForPendingFinalizers();
             }
 
             return anyPanelClosed;
         }
-
         protected override async void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
@@ -346,20 +356,6 @@ namespace Decadence
             var dialog = new Windows.UI.Popups.MessageDialog("Decadence\nВерсия 0.1\nМузыкальный плеер", "О программе");
             _ = dialog.ShowAsync();
         }
-        private void ArtistsButton_Click(object sender, RoutedEventArgs e)
-        {
-            System.Diagnostics.Debug.WriteLine($"Артистов в _artists: {_artists.Count}");
-
-            if (_artists.Count > 0)
-            {
-                ArtistsPanelControl.SetArtists(_artists);
-                ArtistsPanelControl.Show();
-            }
-            else
-            {
-                System.Diagnostics.Debug.WriteLine("⚠️ _artists пуст!");
-            }
-        }
 
         private async void RefreshLibraryButton_Click(object sender, RoutedEventArgs e)
         {
@@ -468,6 +464,12 @@ namespace Decadence
         {
             if (_tracks.Count > 0)
             {
+                if (TracksPanelControl.Parent is Panel parent)
+                    parent.Children.Remove(TracksPanelControl);
+
+                // 🔹 Явно задаём RowSpan перед добавлением
+                Grid.SetRowSpan(TracksPanelControl, 2);
+                MainContainer.Children.Add(TracksPanelControl);
                 TracksPanelControl.SetTracks(_tracks);
                 TracksPanelControl.Show();
             }
@@ -476,6 +478,46 @@ namespace Decadence
         private void TracksPanelControl_BackClicked(object sender, EventArgs e)
         {
             TracksPanelControl.Hide();
+            TracksPanelControl.Clear();
+            MainContainer.Children.Remove(TracksPanelControl);
+        }
+        private void ArtistsButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_artists.Count > 0)
+            {
+                if (ArtistsPanelControl.Parent is Panel parent)
+                    parent.Children.Remove(ArtistsPanelControl);
+
+                Grid.SetRowSpan(ArtistsPanelControl, 2);
+                MainContainer.Children.Add(ArtistsPanelControl);
+                ArtistsPanelControl.SetArtists(_artists);
+                ArtistsPanelControl.Show();
+            }
+        }
+
+        private void AlbumsButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (_albums.Count > 0)
+            {
+                if (AlbumsPanelControl.Parent is Panel parent)
+                    parent.Children.Remove(AlbumsPanelControl);
+
+                Grid.SetRowSpan(AlbumsPanelControl, 2);
+                MainContainer.Children.Add(AlbumsPanelControl);
+                AlbumsPanelControl.SetAlbums(_albums);
+                AlbumsPanelControl.Show();
+            }
+        }
+
+        private void PlaylistsButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (PlaylistsPanelControl.Parent is Panel parent)
+                parent.Children.Remove(PlaylistsPanelControl);
+
+            Grid.SetRowSpan(PlaylistsPanelControl, 2);
+            MainContainer.Children.Add(PlaylistsPanelControl);
+            PlaylistsPanelControl.SetPlaylists(_playlists);
+            PlaylistsPanelControl.Show();
         }
         // Обработчик клика по артисту
         private void ArtistsPanelControl_ArtistClicked(object sender, ItemClickEventArgs e)
@@ -512,15 +554,9 @@ namespace Decadence
         private void ArtistsPanelControl_BackClicked(object sender, EventArgs e)
         {
             ArtistsPanelControl.Hide();
+            ArtistsPanelControl.Clear();
+            MainContainer.Children.Remove(ArtistsPanelControl);
         }
-
-        // Открыть панель альбомов
-        private void AlbumsButton_Click(object sender, RoutedEventArgs e)
-        {
-            AlbumsPanelControl.SetAlbums(_albums);
-            AlbumsPanelControl.Show();
-        }
-
         // Клик по альбому
         private void AlbumsPanelControl_AlbumClicked(object sender, ItemClickEventArgs e)
         {
@@ -554,6 +590,8 @@ namespace Decadence
         private void AlbumsPanelControl_BackClicked(object sender, EventArgs e)
         {
             AlbumsPanelControl.Hide();
+            AlbumsPanelControl.Clear();
+            MainContainer.Children.Remove(AlbumsPanelControl);
         }
 
         // Обновление счетчика (вызывай после загрузки треков)
@@ -573,12 +611,6 @@ namespace Decadence
                 CurrentRepeatMode = App.CurrentRepeatMode
             };
             Frame.Navigate(typeof(PlayerMenu), navData);
-        }
-
-        private void PlaylistsButton_Click(object sender, RoutedEventArgs e)
-        {
-            PlaylistsPanelControl.SetPlaylists(_playlists);
-            PlaylistsPanelControl.Show();
         }
 
         private async void PlaylistsPanelControl_PlaylistSelected(object sender, Playlist playlist)

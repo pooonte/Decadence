@@ -1,4 +1,5 @@
 ﻿using Decadence.Models;
+using Singleton;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -29,6 +30,7 @@ namespace Decadence
         public static int CurrentPlaylistIndex { get; set; }
         public static RepeatMode CurrentRepeatMode { get; set; }
 
+        private DispatcherTimer _gcTimer;
         // 🔹 Плейлисты (лёгкий список)
         public static List<Playlist> CurrentPlaylists { get; set; }
 
@@ -39,6 +41,7 @@ namespace Decadence
         {
             this.InitializeComponent();
             this.Suspending += OnSuspending;
+            StartGarbageCollector();
         }
 
         protected override void OnLaunched(LaunchActivatedEventArgs e)
@@ -96,9 +99,13 @@ namespace Decadence
         {
             var deferral = e.SuspendingOperation.GetDeferral();
 
+            _gcTimer?.Stop();
+            MediaPlayerSingleton.Shutdown();
 
+            // Полная сборка при сворачивании
             GC.Collect();
             GC.WaitForPendingFinalizers();
+            GC.Collect();
 
             deferral.Complete();
         }
@@ -109,6 +116,22 @@ namespace Decadence
         {
             get => (bool)(Windows.Storage.ApplicationData.Current.LocalSettings.Values["ExpBg"] ?? false);
             set => Windows.Storage.ApplicationData.Current.LocalSettings.Values["ExpBg"] = value;
+        }
+
+        private void StartGarbageCollector()
+        {
+            _gcTimer = new DispatcherTimer();
+            _gcTimer.Interval = TimeSpan.FromMinutes(1);
+            _gcTimer.Tick += (s, e) =>
+            {
+                // Мягкая сборка — поколения 0 и 1
+                GC.Collect(1, GCCollectionMode.Optimized);
+                GC.WaitForPendingFinalizers();
+
+                System.Diagnostics.Debug.WriteLine(
+                    $"🧹 GC: {GC.GetTotalMemory(false) / 1024} KB после сборки");
+            };
+            _gcTimer.Start();
         }
     }
 }

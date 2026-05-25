@@ -39,26 +39,42 @@ namespace Decadence
         {
             if (_allTracks == null) return;
 
-            IEnumerable<TrackItem> sorted;
+            List<TrackItem> sorted;
             switch (_currentSort)
             {
                 case "По исполнителю":
-                    sorted = _allTracks.OrderBy(t => t.Artist).ThenBy(t => t.Title);
+                    sorted = _allTracks.OrderBy(t => t.Artist).ThenBy(t => t.Title).ToList();
                     break;
                 case "По альбому":
-                    sorted = _allTracks.OrderBy(t => t.Album).ThenBy(t => t.TrackNumber).ThenBy(t => t.Title);
+                    sorted = _allTracks.OrderBy(t => t.Album).ThenBy(t => t.TrackNumber).ThenBy(t => t.Title).ToList();
                     break;
                 case "По длительности":
-                    sorted = _allTracks.OrderBy(t => t.Duration);
+                    sorted = _allTracks.OrderBy(t => t.Duration).ToList();
                     break;
                 default:
-                    sorted = _allTracks.OrderBy(t => t.Title);
+                    sorted = _allTracks.OrderBy(t => t.Title).ToList();
                     break;
             }
 
-            TracksListView.ItemsSource = new ObservableCollection<TrackItem>(sorted);
-        }
+            // 🔹 Очищаем и наполняем существующую коллекцию вместо создания новой
+            if (_sortedTracks == null)
+                _sortedTracks = new ObservableCollection<TrackItem>();
+            else
+                _sortedTracks.Clear();
 
+            foreach (var track in sorted)
+                _sortedTracks.Add(track);
+
+            TracksListView.ItemsSource = _sortedTracks;
+        }
+        public void Clear()
+        {
+            if (TracksListView != null)
+                TracksListView.ItemsSource = null;
+            this.DataContext = null;
+            GC.Collect(0, GCCollectionMode.Optimized);  // 🔹 только поколение 0
+        }
+        private ObservableCollection<TrackItem> _sortedTracks;
         private void SortCombo_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (SortCombo.SelectedItem is ComboBoxItem item)
@@ -80,14 +96,6 @@ namespace Decadence
             PanelCloseAnimation.Completed -= PanelCloseAnimation_Completed;
             PanelCloseAnimation.Completed += PanelCloseAnimation_Completed;
             PanelCloseAnimation.Begin();
-        }
-        public void Clear()
-        {
-            if (TracksListView != null)
-            {
-                TracksListView.ItemsSource = null;
-            }
-            this.DataContext = null;
         }
         private void PanelCloseAnimation_Completed(object sender, object e)
         {
