@@ -7,6 +7,7 @@ using Decadence.Models;
 using System;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Input;
+using Decadence.Services;
 
 namespace Decadence
 {
@@ -114,15 +115,28 @@ namespace Decadence
             BackClicked?.Invoke(this, EventArgs.Empty);
         }
 
-        private void TracksListView_RightTapped(object sender, RightTappedRoutedEventArgs e)
+        private async void TracksListView_RightTapped(object sender, RightTappedRoutedEventArgs e)
         {
             var item = (e.OriginalSource as FrameworkElement)?.DataContext as TrackItem;
             if (item != null)
             {
                 var menu = new MenuFlyout();
+
+                var favoriteItem = new MenuFlyoutItem
+                {
+                    Text = item.IsFavorite ? "Убрать из избранного" : "В избранное"
+                };
+                favoriteItem.Click += async (s, args) =>
+                {
+                    bool nowFavorite = await LibraryDatabase.ToggleFavoriteAsync(item.Id);
+                    item.IsFavorite = nowFavorite;
+                };
+                menu.Items.Add(favoriteItem);
+
                 var addItem = new MenuFlyoutItem { Text = "Добавить в плейлист" };
                 addItem.Click += (s, args) => AddToPlaylistRequested?.Invoke(this, item);
                 menu.Items.Add(addItem);
+
                 menu.ShowAt(sender as UIElement, e.GetPosition(sender as UIElement));
             }
         }

@@ -24,24 +24,45 @@ namespace Decadence
 {
     sealed partial class App : Application
     {
-        // 🔹 Состояние воспроизведения (лёгкие ссылки, допустимо)
-        public static TrackItem CurrentTrack { get; set; }
-        public static List<TrackItem> CurrentPlaylist { get; set; }
-        public static int CurrentPlaylistIndex { get; set; }
-        public static RepeatMode CurrentRepeatMode { get; set; }
-
         private DispatcherTimer _gcTimer;
         // 🔹 Плейлисты (лёгкий список)
         public static List<Playlist> CurrentPlaylists { get; set; }
 
         // 🔹 Безопасное событие (очищается при сворачивании)
         public static event Action PlaylistsUpdated;
+        private DispatcherTimer _memoryDebugTimer; // ВРЕМЕННО, для диагностики
 
         public App()
         {
             this.InitializeComponent();
             this.Suspending += OnSuspending;
-            StartGarbageCollector();
+            Windows.System.MemoryManager.AppMemoryUsageIncreased += MemoryManager_AppMemoryUsageIncreased;
+
+#if DEBUG
+            _memoryDebugTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
+            _memoryDebugTimer.Tick += (s, e) =>
+            {
+                var usage = Windows.System.MemoryManager.AppMemoryUsage / 1024 / 1024;
+                var limit = Windows.System.MemoryManager.AppMemoryUsageLimit / 1024 / 1024;
+                var level = Windows.System.MemoryManager.AppMemoryUsageLevel;
+                System.Diagnostics.Debug.WriteLine($"📈 Память: {usage}MB / {limit}MB, уровень: {level}");
+            };
+            _memoryDebugTimer.Start();
+#endif
+        }
+
+        private void MemoryManager_AppMemoryUsageIncreased(object sender, object e)
+        {
+            var level = Windows.System.MemoryManager.AppMemoryUsageLevel;
+
+            if (level == Windows.System.AppMemoryUsageLevel.High ||
+                level == Windows.System.AppMemoryUsageLevel.OverLimit)
+            {
+                System.Diagnostics.Debug.WriteLine($"⚠️ Память: {level}, принудительная сборка");
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+                GC.Collect();
+            }
         }
 
         protected override void OnLaunched(LaunchActivatedEventArgs e)
@@ -116,22 +137,6 @@ namespace Decadence
         {
             get => (bool)(Windows.Storage.ApplicationData.Current.LocalSettings.Values["ExpBg"] ?? false);
             set => Windows.Storage.ApplicationData.Current.LocalSettings.Values["ExpBg"] = value;
-        }
-
-        private void StartGarbageCollector()
-        {
-            _gcTimer = new DispatcherTimer();
-            _gcTimer.Interval = TimeSpan.FromMinutes(1);
-            _gcTimer.Tick += (s, e) =>
-            {
-                // Мягкая сборка — поколения 0 и 1
-                GC.Collect(1, GCCollectionMode.Optimized);
-                GC.WaitForPendingFinalizers();
-
-                System.Diagnostics.Debug.WriteLine(
-                    $"🧹 GC: {GC.GetTotalMemory(false) / 1024} KB после сборки");
-            };
-            _gcTimer.Start();
         }
     }
 }

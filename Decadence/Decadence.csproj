@@ -11,7 +11,7 @@
     <AssemblyName>Decadence</AssemblyName>
     <DefaultLanguage>ru-RU</DefaultLanguage>
     <TargetPlatformIdentifier>UAP</TargetPlatformIdentifier>
-    <TargetPlatformVersion Condition=" '$(TargetPlatformVersion)' == '' ">10.0.15063.0</TargetPlatformVersion>
+    <TargetPlatformVersion Condition=" '$(TargetPlatformVersion)' == '' ">10.0.16299.0</TargetPlatformVersion>
     <TargetPlatformMinVersion>10.0.15063.0</TargetPlatformMinVersion>
     <MinimumVisualStudioVersion>14</MinimumVisualStudioVersion>
     <FileAlignment>512</FileAlignment>
@@ -140,13 +140,14 @@
     <Compile Include="MediaPlayerSingleton.cs" />
     <Compile Include="Models\AlbumItem.cs" />
     <Compile Include="Models\ArtistItem.cs" />
-    <Compile Include="Models\CachedTrack.cs" />
     <Compile Include="Models\GenreItem.cs" />
     <Compile Include="Models\MusicTagHelper.cs" />
     <Compile Include="Models\Playlist.cs" />
+    <Compile Include="Models\PlaylistRecord.cs" />
     <Compile Include="Models\PlaylistTrackEventArgs.cs" />
     <Compile Include="Models\QueueItem.cs" />
     <Compile Include="Models\TrackItem.cs" />
+    <Compile Include="Models\TrackRecord.cs" />
     <Compile Include="PlayerMenu.xaml.cs">
       <DependentUpon>PlayerMenu.xaml</DependentUpon>
     </Compile>
@@ -154,12 +155,11 @@
       <DependentUpon>PlaylistsPanelControl.xaml</DependentUpon>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Services\FullPlayerNavigationData.cs" />
+    <Compile Include="Services\LibraryDatabase.cs" />
     <Compile Include="Services\LibraryService.cs" />
-    <Compile Include="Services\MusicCacheService.cs" />
     <Compile Include="Services\MusicLibrary.cs" />
-    <Compile Include="Services\PlayerService.cs" />
     <Compile Include="Services\PlaylistStorage.cs" />
+    <Compile Include="Services\RepeatMode.cs" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest">
@@ -168,11 +168,13 @@
     <None Include="Decadence_TemporaryKey.pfx" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Assets\decadence.png" />
     <Content Include="Assets\intelligence.png" />
     <Content Include="Assets\menu.png" />
     <Content Include="Assets\menu_white.png" />
     <Content Include="Assets\next.png" />
     <Content Include="Assets\next_white.png" />
+    <Content Include="Assets\panorama_bg.png" />
     <Content Include="Assets\pause.png" />
     <Content Include="Assets\more.png" />
     <Content Include="Assets\pause_white.png" />
@@ -234,6 +236,12 @@
     </PackageReference>
     <PackageReference Include="Newtonsoft.Json">
       <Version>10.0.3</Version>
+    </PackageReference>
+    <PackageReference Include="sqlite-net-pcl">
+      <Version>1.6.292</Version>
+    </PackageReference>
+    <PackageReference Include="SQLitePCLRaw.bundle_green">
+      <Version>1.1.15</Version>
     </PackageReference>
     <PackageReference Include="Win2D.uwp">
       <Version>1.21.0</Version>

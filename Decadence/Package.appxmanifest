@@ -1,5 +1,12 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10" xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest" xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10" IgnorableNamespaces="uap mp">
+<Package 
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
+  xmlns:iot="http://schemas.microsoft.com/appx/manifest/iot/windows10" 
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3"
+  xmlns:uap2="http://schemas.microsoft.com/appx/manifest/uap/windows10/2" 
+  IgnorableNamespaces="uap mp iot uap3 uap2">
   <Identity Name="0443dc2e-07f2-4f95-b1b2-b0f11bf5da7b" Publisher="CN=maxim" Version="1.0.0.0" />
   <mp:PhoneIdentity PhoneProductId="0443dc2e-07f2-4f95-b1b2-b0f11bf5da7b" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
   <Properties>
@@ -27,6 +34,12 @@
   </Applications>
   <Capabilities>
     <Capability Name="internetClient" />
+    <Capability Name="codeGeneration" />
     <uap:Capability Name="musicLibrary" />
+    <iot:Capability Name="systemManagement" />
+    <uap3:Capability Name="backgroundMediaPlayback" />
+    <uap2:Capability Name="spatialPerception" />
+    <DeviceCapability Name="proximity" />
+    <DeviceCapability Name="location" />
   </Capabilities>
 </Package>

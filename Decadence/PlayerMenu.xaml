@@ -8,16 +8,38 @@
     mc:Ignorable="d" Foreground="{StaticResource BackgroundBrush}">
     
     <Grid>
+        <Canvas>
+            <Image x:Name="PanoramaBackground"
+               Source="Assets/panorama_bg.png"
+               Stretch="UniformToFill"
+               Opacity="0.35">
+            </Image>
+        </Canvas>
         <Pivot>
             <PivotItem Margin="0,-48,0,0">
                 <Grid>
                 <TextBlock Text="сейчас играет" FontFamily="Segoe UI" FontWeight="Light" Foreground="{StaticResource AccentBrush}" FontSize="46"  HorizontalAlignment="Left"  VerticalAlignment="Top"  Margin="10,10,0,0"/>
-                    <Grid HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,90,0,0" Height="300" Width="267">
-                    <!-- Обложка -->
-                        <Border BorderBrush="{StaticResource SecondBackgroundBrush}"
-            Width="200" Height="200" HorizontalAlignment="Left" Margin="0,17,0,83">
-                            <Image x:Name="FullAlbumArt" Stretch="UniformToFill"/>
+                    <Grid HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,90,0,0" 
+      Height="300" Width="330"
+      ManipulationMode="TranslateX, TranslateY, TranslateInertia"
+      ManipulationStarted="AlbumArt_ManipulationStarted"
+      ManipulationDelta="AlbumArt_ManipulationDelta"
+      ManipulationCompleted="AlbumArt_ManipulationCompleted">
+
+                        <Border BorderBrush="{StaticResource SecondBackgroundBrush}" Width="200" Height="200" Margin="0,10,0,90" HorizontalAlignment="Center">
+                            <Image x:Name="FullAlbumArt" Stretch="UniformToFill" RightTapped="AlbumArt_RightTapped"
+       ManipulationStarted="AlbumArt_ManipulationStarted"
+       ManipulationDelta="AlbumArt_ManipulationDelta"
+       ManipulationCompleted="AlbumArt_ManipulationCompleted"/>
                         </Border>
+
+                        <!-- Индикатор свайпа — стрелки по бокам -->
+                        <TextBlock x:Name="SwipeLeftHint" Text="◀" FontSize="24" Opacity="0"
+               Foreground="{StaticResource TextBrush}" VerticalAlignment="Center" 
+               HorizontalAlignment="Left" Margin="10,0,0,0"/>
+                        <TextBlock x:Name="SwipeRightHint" Text="▶" FontSize="24" Opacity="0"
+               Foreground="{StaticResource TextBrush}" VerticalAlignment="Center" 
+               HorizontalAlignment="Right" Margin="0,0,10,0"/>
                         <!-- Инфо-блок (привязан к низу обложки) -->
                     <Grid HorizontalAlignment="Left" VerticalAlignment="Bottom" Background="Transparent" Padding="20,18" MaxWidth="400">
                         <StackPanel>

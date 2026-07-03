@@ -23,6 +23,8 @@ namespace Decadence
 {
     public sealed partial class MainPage : Page
     {
+        private bool _isSnapping = false;
+
         private static bool _libraryInitialized = false;
         private CancellationTokenSource _bgCheckCts;
 
@@ -32,22 +34,12 @@ namespace Decadence
 
         private bool _isLoading = false;
         private bool _isInitialized = false;
-
-        private TrackItem currentTrack;
-
-        private DispatcherTimer _miniPlayerTimer;
-
-        private List<TrackItem> _currentPlaylist = new List<TrackItem>();
-        private int _currentPlaylistIndex = -1;
-
-        private RepeatMode _repeatMode = RepeatMode.None;
-
-        private List<string> _phrases = new List<string>();
-        private Random _random = new Random();
         public MainPage()
         {
             this.InitializeComponent();
             this.NavigationCacheMode = NavigationCacheMode.Required;
+            this.Loaded += MainPage_Loaded;
+            MainPanorama.SizeChanged += MainPanorama_SizeChanged;
 
             if (!_libraryInitialized && _tracks.Count == 0)
             {
@@ -61,6 +53,107 @@ namespace Decadence
             TracksPanelControl.AddToPlaylistRequested += TracksPanelControl_AddToPlaylistRequested;
             PlaylistsPanelControl.RemoveTrackRequested += PlaylistsPanelControl_RemoveTrackRequested;
         }
+
+        private void MainPage_Loaded(object sender, RoutedEventArgs e)
+        {
+            UpdateBackgroundSize();
+            UpdatePanoramaSectionWidths();
+        }
+
+        private void MainPanorama_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            UpdateBackgroundSize();
+            UpdatePanoramaSectionWidths();
+        }
+
+        private void UpdatePanoramaSectionWidths()
+        {
+            double width = MainPanorama.ActualWidth;
+            if (width <= 0) return;
+
+            HomeSection.Width = width;
+            SettingButtonsPanel.Width = width;
+            OnlineButtonsPanel.Width = width;
+
+            this.UpdateLayout();
+
+            UpdateBackgroundParallax();
+            SnapToNearestSection();   // сразу подправит текущее положение, если ресайз застал вид "между" секциями
+        }
+
+
+        private void PanoramaBackground_ImageOpened(object sender, RoutedEventArgs e)
+        {
+            if (PanoramaBackground.Source is Windows.UI.Xaml.Media.Imaging.BitmapImage bmp)
+            {
+                System.Diagnostics.Debug.WriteLine(
+                    $"🖼️ Исходный файл: {bmp.PixelWidth}×{bmp.PixelHeight}px | " +
+                    $"Отрендерено: {PanoramaBackground.ActualWidth:F0}×{PanoramaBackground.ActualHeight:F0} | " +
+                    $"Ширина экрана: {Window.Current.Bounds.Width:F0}, высота: {Window.Current.Bounds.Height:F0}");
+            }
+
+            UpdateBackgroundParallax();
+        }
+
+        private void MainPanorama_ViewChanged(object sender, ScrollViewerViewChangedEventArgs e)
+        {
+            ApplyParallaxOffset();
+
+            if (!e.IsIntermediate && !_isSnapping)
+            {
+                SnapToNearestSection();
+            }
+        }
+
+        private void SnapToNearestSection()
+        {
+            double sectionWidth = HomeSection.ActualWidth;
+            if (sectionWidth <= 0) return;
+
+            double currentOffset = MainPanorama.HorizontalOffset;
+            double nearestSection = Math.Round(currentOffset / sectionWidth) * sectionWidth;
+
+            if (Math.Abs(currentOffset - nearestSection) > 1)
+            {
+                _isSnapping = true;
+                MainPanorama.ChangeView(nearestSection, null, null, false);
+                _isSnapping = false;
+            }
+        }
+        private void UpdateBackgroundSize()
+        {
+            double screenHeight = Window.Current.Bounds.Height;
+            if (screenHeight > 0)
+                PanoramaBackground.Height = screenHeight;
+        }
+
+        private double _parallaxRatio = 0.5; // запасное значение, пока не посчитан реальный
+
+        private void UpdateBackgroundParallax()
+        {
+            double screenWidth = Window.Current.Bounds.Width;
+            double totalContentWidth = PanoramaSections.ActualWidth;
+            double backgroundWidth = PanoramaBackground.ActualWidth;
+
+            double scrollableForeground = Math.Max(totalContentWidth - screenWidth, 1);
+            double scrollableBackground = Math.Max(backgroundWidth - screenWidth, 0);
+
+            _parallaxRatio = scrollableBackground / scrollableForeground;
+
+            System.Diagnostics.Debug.WriteLine(
+    $"🎛️ totalContentWidth={totalContentWidth:F0} (ожидается ~720), " +
+    $"backgroundWidth={backgroundWidth:F0}, screenWidth={screenWidth:F0}, " +
+    $"scrollableForeground={scrollableForeground:F0}, scrollableBackground={scrollableBackground:F0}, " +
+    $"ratio={_parallaxRatio:F3}");
+
+            ApplyParallaxOffset();
+        }
+
+        private void ApplyParallaxOffset()
+        {
+            PanoramaBackgroundTransform.TranslateX = -MainPanorama.HorizontalOffset * _parallaxRatio;
+        }
+
         private void OnBackRequested(object sender, BackRequestedEventArgs e)
         {
             if (CloseAnyOpenPanel())
@@ -71,11 +164,6 @@ namespace Decadence
             {
                 e.Handled = false; // Панелей нет, можно закрыть приложение
             }
-        }
-        public void RefreshPlaylistsUI()
-        {
-            // Вызываем метод контрола, а не напрямую
-            PlaylistsPanelControl.SetPlaylists(_playlists);
         }
         private void OnPlaylistsUpdated()
         {
@@ -122,20 +210,15 @@ namespace Decadence
                 anyPanelClosed = true;
             }
 
-            // 🔹 Сразу подчищаем мусор после закрытия
-            if (anyPanelClosed)
-            {
-                GC.Collect(1, GCCollectionMode.Optimized);
-                GC.WaitForPendingFinalizers();
-            }
-
             return anyPanelClosed;
         }
         protected override async void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
 
-            // Подписка на события
+            UpdateBackgroundSize();
+            UpdatePanoramaSectionWidths();
+
             SystemNavigationManager.GetForCurrentView().BackRequested += OnBackRequested;
             Window.Current.CoreWindow.KeyDown += OnKeyDown;
             App.PlaylistsUpdated += OnPlaylistsUpdated;
@@ -171,18 +254,16 @@ namespace Decadence
             {
                 System.Diagnostics.Debug.WriteLine("=== ИНИЦИАЛИЗАЦИЯ БИБЛИОТЕКИ ===");
 
-                bool hasCache = await MusicCacheService.HasCacheAsync();
-                List<CachedTrack> cachedTracks;
+                int existingCount = await LibraryDatabase.GetTrackCountAsync();
 
-                if (hasCache)
+                if (existingCount > 0)
                 {
-                    System.Diagnostics.Debug.WriteLine("📖 Загрузка из кэша...");
-                    cachedTracks = await MusicCacheService.LoadCacheAsync();
-                    ShowTracksFromCache(cachedTracks);
+                    System.Diagnostics.Debug.WriteLine("📖 Загрузка из базы...");
+                    var records = await LibraryDatabase.GetAllTracksAsync();
+                    ShowTracksFromRecords(records);
 
                     System.Diagnostics.Debug.WriteLine("🔄 Фоновая проверка обновлений...");
 
-                    // 🔹 Отменяем предыдущую проверку, если она ещё жива
                     _bgCheckCts?.Cancel();
                     _bgCheckCts = new System.Threading.CancellationTokenSource();
                     var token = _bgCheckCts.Token;
@@ -191,12 +272,13 @@ namespace Decadence
                     {
                         try
                         {
-                            var updatedTracks = await MusicCacheService.QuickCheckAsync(cachedTracks);
-                            if (!token.IsCancellationRequested && updatedTracks.Count != cachedTracks.Count)
+                            bool changed = await LibraryService.QuickCheckAsync();
+                            if (!token.IsCancellationRequested && changed)
                             {
+                                var updated = await LibraryDatabase.GetAllTracksAsync();
                                 await Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
                                 {
-                                    ShowTracksFromCache(updatedTracks);
+                                    ShowTracksFromRecords(updated);
                                 });
                             }
                         }
@@ -208,21 +290,14 @@ namespace Decadence
                 {
                     System.Diagnostics.Debug.WriteLine("🔍 Первый запуск, сканирование...");
                     ShowLoadingIndicator(true);
-                    cachedTracks = await MusicCacheService.FullScanAsync();
-                    ShowTracksFromCache(cachedTracks);
+                    await LibraryService.FullScanAsync();
+                    var records = await LibraryDatabase.GetAllTracksAsync();
+                    ShowTracksFromRecords(records);
                     ShowLoadingIndicator(false);
                 }
 
                 _isInitialized = true;
                 System.Diagnostics.Debug.WriteLine("=== ИНИЦИАЛИЗАЦИЯ ЗАВЕРШЕНА ===");
-            }
-            catch (System.IO.FileNotFoundException ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"⚠️ Кэш битый (файл не найден: {ex.Message}). Пересканируем...");
-                ShowLoadingIndicator(true);
-                var freshTracks = await MusicCacheService.FullScanAsync();
-                ShowTracksFromCache(freshTracks);
-                ShowLoadingIndicator(false);
             }
             catch (Exception ex)
             {
@@ -235,10 +310,10 @@ namespace Decadence
         }
         private void ShowLoadingIndicator(bool show)
         {
-            if (MainPivot != null)
-                MainPivot.IsEnabled = !show;
+            if (MainPanorama != null)
+                MainPanorama.IsEnabled = !show;
         }
-        private void ShowTracksFromCache(List<CachedTrack> cachedTracks)
+        private void ShowTracksFromRecords(List<TrackRecord> records)
         {
             _tracks.Clear();
             _artists.Clear();
@@ -247,15 +322,19 @@ namespace Decadence
             var artistDict = new Dictionary<string, List<TrackItem>>();
             var albumDict = new Dictionary<string, List<TrackItem>>();
 
-            foreach (var cached in cachedTracks)
+            foreach (var record in records)
             {
                 var track = new TrackItem
                 {
-                    FilePath = cached.FilePath,
-                    Title = cached.Title,
-                    Artist = cached.Artist,
-                    Album = cached.Album,
-                    Duration = TimeSpan.Parse(cached.Duration)
+                    Id = record.Id,
+                    FilePath = record.FilePath,
+                    Title = record.Title,
+                    Artist = record.Artist,
+                    Album = record.Album,
+                    Genre = record.Genre,
+                    TrackNumber = record.TrackNumber,
+                    IsFavorite = record.IsFavorite,   // ← эта строка должна быть ЗДЕСЬ, внутри foreach
+                    Duration = TimeSpan.FromMilliseconds(record.DurationMs)
                 };
 
                 _tracks.Add(track);
@@ -304,76 +383,43 @@ namespace Decadence
                 TrackCountNumber.Text = _tracks.Count.ToString();
             });
         }
-        private async void PlayTrack(StorageFile file)
-        {
-            System.Diagnostics.Debug.WriteLine("▶️ PlayTrack ВЫЗВАН");
-
-            if (file == null)
-            {
-                System.Diagnostics.Debug.WriteLine("❌ file == null");
-                return;
-            }
-
-            var track = _currentPlaylist.FirstOrDefault(t => t.FilePath == file.Path);
-            if (track == null)
-            {
-                System.Diagnostics.Debug.WriteLine("🔍 Трек не найден в _currentPlaylist, ищу в _tracks");
-                track = _tracks.FirstOrDefault(t => t.FilePath == file.Path);
-                if (track == null)
-                {
-                    System.Diagnostics.Debug.WriteLine("❌ Трек не найден в _tracks");
-                    return;
-                }
-
-                _currentPlaylist = _tracks.ToList();
-                _currentPlaylistIndex = _tracks.IndexOf(track);
-                System.Diagnostics.Debug.WriteLine($"✅ Плейлист создан, индекс: {_currentPlaylistIndex}");
-            }
-            else
-            {
-                _currentPlaylistIndex = _currentPlaylist.IndexOf(track);
-            }
-
-            System.Diagnostics.Debug.WriteLine($"🎵 Трек: {track.Title}");
-            currentTrack = track;
-
-            App.CurrentTrack = currentTrack;
-            App.CurrentPlaylist = _currentPlaylist;
-            App.CurrentPlaylistIndex = _currentPlaylistIndex;
-            App.CurrentRepeatMode = _repeatMode;
-
-            System.Diagnostics.Debug.WriteLine(" Запуск MediaPlayerSingleton.PlayFile");
-            MediaPlayerSingleton.PlayFile(file);
-
-            var saved = ApplicationData.Current.LocalSettings.Values["SavedVolume"];
-            MediaPlayerSingleton.Player.Volume = saved is double v ? v : 1.0;
-            System.Diagnostics.Debug.WriteLine("✅ PlayTrack завершён");
-        }
-
         private void AboutButton_Click(object sender, RoutedEventArgs e)
         {
             // Заглушка
-            var dialog = new Windows.UI.Popups.MessageDialog("Decadence\nВерсия 0.1\nМузыкальный плеер", "О программе");
+            var dialog = new Windows.UI.Popups.MessageDialog("Decadence\nВерсия 0.3\nМузыкальный плеер", "О программе");
             _ = dialog.ShowAsync();
+        }
+
+        private async void PlayAndOpenPlayer(TrackItem track, List<TrackItem> playlist)
+        {
+            await MediaPlayerSingleton.PlayAsync(track, playlist);
+            Frame.Navigate(typeof(PlayerMenu));
         }
 
         private async void RefreshLibraryButton_Click(object sender, RoutedEventArgs e)
         {
             if (_isLoading) return;
 
-            var dialog = new Windows.UI.Popups.MessageDialog(
-                "Обновление библиотеки пересканирует все музыкальные файлы. Это может занять несколько минут. Продолжить?",
-                "Обновление библиотеки");
+            try
+            {
+                var dialog = new Windows.UI.Popups.MessageDialog(
+                    "Обновление библиотеки пересканирует все музыкальные файлы. Это может занять несколько минут. Продолжить?",
+                    "Обновление библиотеки");
 
-            dialog.Commands.Add(new Windows.UI.Popups.UICommand("Да") { Id = 0 });
-            dialog.Commands.Add(new Windows.UI.Popups.UICommand("Нет") { Id = 1 });
-            dialog.DefaultCommandIndex = 0;
-            dialog.CancelCommandIndex = 1;
+                dialog.Commands.Add(new Windows.UI.Popups.UICommand("Да") { Id = 0 });
+                dialog.Commands.Add(new Windows.UI.Popups.UICommand("Нет") { Id = 1 });
 
-            var result = await dialog.ShowAsync();
-            if ((int)result.Id == 0)
-                await RefreshLibraryAsync();
+                var result = await dialog.ShowAsync();
+                if ((int)result.Id == 0)
+                    await RefreshLibraryAsync();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"❌ КРАШ В RefreshLibrary: {ex.GetType().Name}: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"   StackTrace: {ex.StackTrace}");
+            }
         }
+
         private async Task RefreshLibraryAsync()
         {
             try
@@ -382,22 +428,25 @@ namespace Decadence
                 _isLoading = true;
                 ShowLoadingIndicator(true);
 
-                System.Diagnostics.Debug.WriteLine("🔄 Принудительное обновление библиотеки...");
+                await LibraryService.FullScanAsync();
+                var records = await LibraryDatabase.GetAllTracksAsync();
+                ShowTracksFromRecords(records);
 
-                var cachedTracks = await MusicCacheService.FullScanAsync();
-                ShowTracksFromCache(cachedTracks);
-
-                var completeDialog = new Windows.UI.Popups.MessageDialog(
-                    $"Библиотека обновлена. Найдено {cachedTracks.Count} треков.", "Готово");
-                _ = completeDialog.ShowAsync();
+                try
+                {
+                    var completeDialog = new Windows.UI.Popups.MessageDialog(
+                        $"Библиотека обновлена. Найдено {records.Count} треков.", "Готово");
+                    await completeDialog.ShowAsync();
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"⚠️ Не удалось показать диалог: {ex.Message}");
+                }
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"❌ Ошибка обновления: {ex.Message}");
-
-                var errorDialog = new Windows.UI.Popups.MessageDialog(
-                    $"Ошибка при обновлении: {ex.Message}", "Ошибка");
-                _ = errorDialog.ShowAsync();
+                System.Diagnostics.Debug.WriteLine($"❌ КРАШ В RefreshLibraryAsync: {ex.GetType().Name}: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"   StackTrace: {ex.StackTrace}");
             }
             finally
             {
@@ -405,7 +454,6 @@ namespace Decadence
                 ShowLoadingIndicator(false);
             }
         }
-
         private void TextBlock_SelectionChanged(object sender, RoutedEventArgs e)
         {
 
@@ -413,17 +461,17 @@ namespace Decadence
 
         private async void TrackInfo_Click(object sender, RoutedEventArgs e)
         {
-            if (currentTrack == null) return;
+            var track = MediaPlayerSingleton.CurrentTrack;
+            if (track == null) return;
 
             var dialog = new Windows.UI.Popups.MessageDialog(
-                $"Название: {currentTrack.Title}\n" +
-                $"Исполнитель: {currentTrack.Artist}\n" +
-                $"Альбом: {currentTrack.Album}\n" +
-                $"Длительность: {currentTrack.Duration.ToString(@"mm\:ss")}\n" +
-                $"Путь: {currentTrack.FilePath}",
+                $"Название: {track.Title}\n" +
+                $"Исполнитель: {track.Artist}\n" +
+                $"Альбом: {track.Album}\n" +
+                $"Длительность: {track.Duration:mm\\:ss}\n" +
+                $"Путь: {track.FilePath}",
                 "Информация о треке"
             );
-
             await dialog.ShowAsync();
         }
 
@@ -437,27 +485,12 @@ namespace Decadence
             await dialog.ShowAsync();
         }
         // Обработчик клика по треку
-        private async void TracksPanelControl_TrackClicked(object sender, ItemClickEventArgs e)
+        private void TracksPanelControl_TrackClicked(object sender, ItemClickEventArgs e)
         {
             if (e.ClickedItem is TrackItem track)
             {
-                _currentPlaylist = _tracks.ToList();
-                _currentPlaylistIndex = _tracks.IndexOf(track);
-
-                // Воспроизводим трек
-                var file = await StorageFile.GetFileFromPathAsync(track.FilePath);
-                PlayTrack(file);  // ← ДОБАВЬ ЭТУ СТРОКУ
-
-                var navigationData = new FullPlayerNavigationData
-                {
-                    Track = track,
-                    Playlist = _currentPlaylist,
-                    PlaylistIndex = _currentPlaylistIndex,
-                    CurrentRepeatMode = _repeatMode
-                };
-
                 TracksPanelControl.Hide();
-                Frame.Navigate(typeof(PlayerMenu), navigationData);
+                PlayAndOpenPlayer(track, _tracks.ToList());
             }
         }
         private void TracksButton_Click(object sender, RoutedEventArgs e)
@@ -530,23 +563,13 @@ namespace Decadence
         }
 
         // Обработчик клика по треку
-        private async void ArtistsPanelControl_TrackClicked(object sender, ItemClickEventArgs e)
+        private void ArtistsPanelControl_TrackClicked(object sender, ItemClickEventArgs e)
         {
             if (e.ClickedItem is TrackItem track)
             {
-                _currentPlaylist = _tracks.Where(t => t.Artist == track.Artist).ToList();
-                _currentPlaylistIndex = _currentPlaylist.IndexOf(track);
-
-                var navigationData = new FullPlayerNavigationData
-                {
-                    Track = track,
-                    Playlist = _currentPlaylist,
-                    PlaylistIndex = _currentPlaylistIndex,
-                    CurrentRepeatMode = _repeatMode
-                };
-
-                Frame.Navigate(typeof(PlayerMenu), navigationData);
+                var playlist = _tracks.Where(t => t.Artist == track.Artist).ToList();
                 ArtistsPanelControl.Hide();
+                PlayAndOpenPlayer(track, playlist);
             }
         }
 
@@ -568,25 +591,16 @@ namespace Decadence
         }
 
         // Клик по треку
-        private async void AlbumsPanelControl_TrackClicked(object sender, ItemClickEventArgs e)
+        private void AlbumsPanelControl_TrackClicked(object sender, ItemClickEventArgs e)
         {
             if (e.ClickedItem is TrackItem track)
             {
-                _currentPlaylist = _tracks.Where(t => t.Album == track.Album).ToList();
-                _currentPlaylistIndex = _currentPlaylist.IndexOf(track);
-
-                var navigationData = new FullPlayerNavigationData
-                {
-                    Track = track,
-                    Playlist = _currentPlaylist,
-                    PlaylistIndex = _currentPlaylistIndex,
-                    CurrentRepeatMode = _repeatMode
-                };
-
-                Frame.Navigate(typeof(PlayerMenu), navigationData);
+                var playlist = _tracks.Where(t => t.Album == track.Album).ToList();
                 AlbumsPanelControl.Hide();
+                PlayAndOpenPlayer(track, playlist);
             }
         }
+
         private void AlbumsPanelControl_BackClicked(object sender, EventArgs e)
         {
             AlbumsPanelControl.Hide();
@@ -603,27 +617,13 @@ namespace Decadence
         // Переход в PlayerMenu
         private void StatsButton_Click(object sender, RoutedEventArgs e)
         {
-            var navData = new FullPlayerNavigationData
-            {
-                Track = App.CurrentTrack,
-                Playlist = App.CurrentPlaylist,
-                PlaylistIndex = App.CurrentPlaylistIndex,
-                CurrentRepeatMode = App.CurrentRepeatMode
-            };
-            Frame.Navigate(typeof(PlayerMenu), navData);
+            Frame.Navigate(typeof(PlayerMenu));
         }
 
-        private async void PlaylistsPanelControl_PlaylistSelected(object sender, Playlist playlist)
+        private void PlaylistsPanelControl_PlaylistSelected(object sender, Playlist playlist)
         {
-            // Воспроизвести плейлист
-            _currentPlaylist = playlist.Tracks.ToList();
-            _currentPlaylistIndex = 0;
-            if (_currentPlaylist.Count > 0)
-            {
-                var track = _currentPlaylist[0];
-                var file = await StorageFile.GetFileFromPathAsync(track.FilePath);
-                PlayTrack(file);
-            }
+            if (playlist.Tracks.Count == 0) return;
+            PlayAndOpenPlayer(playlist.Tracks[0], playlist.Tracks.ToList());
         }
 
         private void PlaylistsPanelControl_PlaylistEditRequested(object sender, Playlist playlist)
@@ -649,11 +649,12 @@ namespace Decadence
         // Добавление трека в плейлист
         private async void AddCurrentTrackToPlaylist(Playlist playlist)
         {
-            if (currentTrack == null) return;
+            var track = MediaPlayerSingleton.CurrentTrack;
+            if (track == null) return;
 
-            if (!playlist.Tracks.Any(t => t.FilePath == currentTrack.FilePath))
+            if (!playlist.Tracks.Any(t => t.FilePath == track.FilePath))
             {
-                playlist.Tracks.Add(currentTrack);
+                playlist.Tracks.Add(track);
                 await PlaylistStorage.SavePlaylistsAsync(_playlists);
             }
         }
@@ -757,41 +758,11 @@ namespace Decadence
             SearchResults.Visibility = Visibility.Visible;
             SearchResults.ItemsSource = results;
         }
-        private void ShowMainButtons()
-        {
-            var stack = SearchResults.Parent as StackPanel;
-            if (stack != null && stack.Children.Count > 1)
-            {
-                (stack.Children[1] as StackPanel).Visibility = Visibility.Visible;
-            }
-        }
-
-        private void HideMainButtons()
-        {
-            var stack = SearchResults.Parent as StackPanel;
-            if (stack != null && stack.Children.Count > 1)
-            {
-                (stack.Children[1] as StackPanel).Visibility = Visibility.Collapsed;
-            }
-        }
-        private async void SearchResult_Click(object sender, ItemClickEventArgs e)
+        private void SearchResult_Click(object sender, ItemClickEventArgs e)
         {
             if (e.ClickedItem is TrackItem track)
             {
-                _currentPlaylist = _tracks.ToList();
-                _currentPlaylistIndex = _tracks.IndexOf(track);
-
-                var file = await StorageFile.GetFileFromPathAsync(track.FilePath);
-                PlayTrack(file);
-
-                var navigationData = new FullPlayerNavigationData
-                {
-                    Track = track,
-                    Playlist = _currentPlaylist,
-                    PlaylistIndex = _currentPlaylistIndex,
-                    CurrentRepeatMode = _repeatMode
-                };
-                Frame.Navigate(typeof(PlayerMenu), navigationData);
+                PlayAndOpenPlayer(track, _tracks.ToList());
 
                 // Очищаем поиск
                 SearchBox.Text = "";

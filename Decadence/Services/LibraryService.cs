@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
 using Windows.Storage;
@@ -11,113 +10,122 @@ namespace Decadence.Services
 {
     public static class LibraryService
     {
-        public static async Task<List<CachedTrack>> ScanLibraryAsync()
+        private static readonly string[] SupportedExtensions =
+            { ".mp3", ".flac", ".m4a", ".wma", ".wav" };
+
+        // Полное сканирование: читает теги ВСЕХ файлов и синхронизирует с базой.
+        // Используется при первом запуске и при ручном "Обновить библиотеку".
+        public static async Task<int> FullScanAsync()
         {
-            var tracks = new List<CachedTrack>();
+            var files = await GetMusicFilesAsync();
+            var existingByPath = await LibraryDatabase.GetAllTracksByPathAsync();
 
-            try
+            var toUpsert = new List<TrackRecord>();
+            var seenPaths = new HashSet<string>();
+
+            foreach (var file in files)
             {
-                var musicFolder = KnownFolders.MusicLibrary;
-                var queryOptions = new QueryOptions
+                seenPaths.Add(file.Path);
+                try
                 {
-                    FolderDepth = FolderDepth.Deep,
-                    IndexerOption = IndexerOption.UseIndexerWhenAvailable
-                };
+                    var record = await BuildTrackRecordAsync(file);
+                    toUpsert.Add(record);
+                }
+                catch { /* повреждённый/недоступный файл — пропускаем */ }
+            }
 
-                queryOptions.FileTypeFilter.Add(".mp3");
-                queryOptions.FileTypeFilter.Add(".flac");
-                queryOptions.FileTypeFilter.Add(".m4a");
-                queryOptions.FileTypeFilter.Add(".wma");
-                queryOptions.FileTypeFilter.Add(".wav");
+            if (toUpsert.Count > 0)
+                await LibraryDatabase.UpsertTracksAsync(toUpsert);
 
-                var query = musicFolder.CreateFileQueryWithOptions(queryOptions);
-                var files = await query.GetFilesAsync();
+            // Удаляем из базы то, чего больше нет на диске
+            var removedPaths = existingByPath.Keys.Where(p => !seenPaths.Contains(p)).ToList();
+            if (removedPaths.Count > 0)
+                await LibraryDatabase.DeleteTracksByPathAsync(removedPaths);
 
-                foreach (var file in files)
+            return toUpsert.Count;
+        }
+
+        // Лёгкая проверка: сравнивает только путь + дату изменения, БЕЗ чтения тегов.
+        // Если что-то реально изменилось — дочитывает теги только для изменившихся файлов.
+        public static async Task<bool> QuickCheckAsync()
+        {
+            var files = await GetMusicFilesAsync();
+            var existingByPath = await LibraryDatabase.GetAllTracksByPathAsync();
+
+            var toUpsert = new List<TrackRecord>();
+            var seenPaths = new HashSet<string>();
+            bool anyChange = false;
+
+            foreach (var file in files)
+            {
+                seenPaths.Add(file.Path);
+
+                Windows.Storage.FileProperties.BasicProperties basicProps;
+                try { basicProps = await file.GetBasicPropertiesAsync(); }
+                catch { continue; }
+
+                long modifiedTicks = basicProps.DateModified.DateTime.Ticks;
+
+                bool isNew = !existingByPath.TryGetValue(file.Path, out var existing);
+                bool isChanged = !isNew && existing.LastModifiedTicks != modifiedTicks;
+
+                if (isNew || isChanged)
                 {
+                    anyChange = true;
                     try
                     {
-                        var props = await file.Properties.GetMusicPropertiesAsync();
-                        var basicProps = await file.GetBasicPropertiesAsync();
-
-                        tracks.Add(new CachedTrack
-                        {
-                            FilePath = file.Path,
-                            Title = string.IsNullOrEmpty(props.Title) ? file.DisplayName : props.Title,
-                            Artist = string.IsNullOrEmpty(props.Artist) ? "Неизвестный исполнитель" : props.Artist,
-                            Album = string.IsNullOrEmpty(props.Album) ? "Неизвестный альбом" : props.Album,
-                            Duration = props.Duration.ToString(),
-                            LastModified = basicProps.DateModified.DateTime,
-                            LastScanned = DateTime.Now
-                        });
+                        var record = await BuildTrackRecordAsync(file);
+                        toUpsert.Add(record);
                     }
                     catch { }
                 }
             }
-            catch (Exception ex)
+
+            if (toUpsert.Count > 0)
+                await LibraryDatabase.UpsertTracksAsync(toUpsert);
+
+            var removedPaths = existingByPath.Keys.Where(p => !seenPaths.Contains(p)).ToList();
+            if (removedPaths.Count > 0)
             {
-                System.Diagnostics.Debug.WriteLine($"Ошибка сканирования: {ex.Message}");
+                await LibraryDatabase.DeleteTracksByPathAsync(removedPaths);
+                anyChange = true;
             }
 
-            return tracks;
+            return anyChange;
         }
 
-        public static void UpdateCollections(List<CachedTrack> cachedTracks,
-            ObservableCollection<TrackItem> tracks,
-            ObservableCollection<ArtistItem> artists,
-            ObservableCollection<AlbumItem> albums)
+        private static async Task<IReadOnlyList<StorageFile>> GetMusicFilesAsync()
         {
-            tracks.Clear();
-            artists.Clear();
-            albums.Clear();
-
-            var artistDict = new Dictionary<string, List<TrackItem>>();
-            var albumDict = new Dictionary<string, List<TrackItem>>();
-
-            foreach (var cached in cachedTracks)
+            var musicFolder = KnownFolders.MusicLibrary;
+            var queryOptions = new QueryOptions
             {
-                var track = new TrackItem
-                {
-                    FilePath = cached.FilePath,
-                    Title = cached.Title,
-                    Artist = cached.Artist,
-                    Album = cached.Album,
-                    Duration = TimeSpan.Parse(cached.Duration)
-                };
+                FolderDepth = FolderDepth.Deep,
+                IndexerOption = IndexerOption.UseIndexerWhenAvailable
+            };
+            foreach (var ext in SupportedExtensions)
+                queryOptions.FileTypeFilter.Add(ext);
 
-                tracks.Add(track);
+            var query = musicFolder.CreateFileQueryWithOptions(queryOptions);
+            return await query.GetFilesAsync();
+        }
 
-                if (!artistDict.ContainsKey(track.Artist))
-                    artistDict[track.Artist] = new List<TrackItem>();
-                artistDict[track.Artist].Add(track);
+        private static async Task<TrackRecord> BuildTrackRecordAsync(StorageFile file)
+        {
+            var props = await file.Properties.GetMusicPropertiesAsync();
+            var basicProps = await file.GetBasicPropertiesAsync();
 
-                if (!albumDict.ContainsKey(track.Album))
-                    albumDict[track.Album] = new List<TrackItem>();
-                albumDict[track.Album].Add(track);
-            }
-
-            foreach (var kvp in artistDict.OrderBy(k => k.Key))
+            return new TrackRecord
             {
-                artists.Add(new ArtistItem
-                {
-                    Name = kvp.Key,
-                    FirstTrack = kvp.Value.First(),
-                    TrackCount = kvp.Value.Count
-                });
-            }
-
-            foreach (var kvp in albumDict
-                .Where(k => k.Key != "Неизвестный альбом")
-                .OrderBy(k => k.Key))
-            {
-                albums.Add(new AlbumItem
-                {
-                    Name = kvp.Key,
-                    Artist = kvp.Value.First().Artist,
-                    FirstTrack = kvp.Value.First(),
-                    TrackCount = kvp.Value.Count
-                });
-            }
+                FilePath = file.Path,
+                Title = string.IsNullOrEmpty(props.Title) ? file.DisplayName : props.Title,
+                Artist = string.IsNullOrEmpty(props.Artist) ? "Неизвестный исполнитель" : props.Artist,
+                Album = string.IsNullOrEmpty(props.Album) ? "Неизвестный альбом" : props.Album,
+                Genre = props.Genre?.FirstOrDefault() ?? "",
+                TrackNumber = (int)props.TrackNumber,
+                DurationMs = (long)props.Duration.TotalMilliseconds,
+                LastModifiedTicks = basicProps.DateModified.DateTime.Ticks,
+                LastScannedTicks = DateTime.Now.Ticks
+            };
         }
     }
 }

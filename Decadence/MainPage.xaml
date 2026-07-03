@@ -8,13 +8,36 @@
     xmlns:canvas="using:Microsoft.Graphics.Canvas.UI.Xaml" 
     mc:Ignorable="d" Foreground="{StaticResource BackgroundBrush}">
     <Grid x:Name="BackgroundContainer">
+        <Canvas>
+            <Image x:Name="PanoramaBackground"
+               Source="Assets/panorama_bg.png"
+               Stretch="UniformToFill"
+               Opacity="0.35"
+               ImageOpened="PanoramaBackground_ImageOpened">
+                <Image.RenderTransform>
+                    <CompositeTransform x:Name="PanoramaBackgroundTransform"/>
+                </Image.RenderTransform>
+            </Image>
+        </Canvas>
+
         <Grid x:Name="MainContainer">
             <Grid.RowDefinitions>
                 <RowDefinition Height="385*"/>
                 <RowDefinition Height="383*"/>
             </Grid.RowDefinitions>
-            <Pivot x:Name="MainPivot" Grid.RowSpan="2" HeaderTemplate="{x:Null}">
-                <PivotItem Margin="0,-48,0,0">
+
+            <ScrollViewer x:Name="MainPanorama"
+                      Grid.RowSpan="2"
+                      HorizontalScrollMode="Enabled"
+                      HorizontalScrollBarVisibility="Hidden"
+                      VerticalScrollMode="Disabled"
+                      VerticalScrollBarVisibility="Hidden"
+                      HorizontalSnapPointsType="MandatorySingle"
+                      HorizontalSnapPointsAlignment="Near"
+                      ZoomMode="Disabled"
+                      ViewChanged="MainPanorama_ViewChanged">
+                <StackPanel x:Name="PanoramaSections" Orientation="Horizontal">
+                    <Grid x:Name="HomeSection" Margin="0,0,0,0">
                     <Grid  HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
                         <TextBox x:Name="SearchBox" 
                  PlaceholderText="Поиск треков, исполнителей, альбомов"
@@ -114,38 +137,42 @@
                              PlaylistSelected="PlaylistsPanelControl_PlaylistSelected"
                              PlaylistEditRequested="PlaylistsPanelControl_PlaylistEditRequested"/>
                     </Grid>
-                </PivotItem>
-                <PivotItem Margin="0,-48,0,0">
-                    <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                        <TextBlock Text="настройки" 
-                   FontSize="68" 
-                   FontFamily="Segoe UI Light" 
-                   FontWeight="Light"
-                   Foreground="{StaticResource AppTitleBrush}"
-                   Opacity="0.6"
-                   HorizontalAlignment="Left" 
-                   VerticalAlignment="Top" 
-                   Margin="10,10,0,0"/>
-                        <TextBlock Text="Библиотеки" FontSize="25" FontFamily="Segoe UI" FontWeight="Light" Foreground="{StaticResource TextBrush}" Margin="10,105,211,500"/>
-                        <TextBlock Text="При обновлении библиотеки приложение пересканирует все папки и найдет новые треки. Это может занять некоторое время." TextWrapping="Wrap" FontSize="14" Foreground="{StaticResource TextBrush}" Margin="10,195,10,384"/>
-                        <Button x:Name="RefreshLibraryButton" Content="Обновление библиотеки" Click="RefreshLibraryButton_Click" Height="45" Width="237" Padding="0" BorderThickness="0" Background="Transparent" Foreground="{StaticResource TextBrush}" BorderBrush="LightGray" FontSize="20" FontFamily="Segoe UI Light" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0,145,113,0"/>
-                        <!--<TextBlock Text="Персонализация" FontSize="20" FontFamily="Segoe UI" FontWeight="Light" Foreground="{StaticResource TextBrush}" Margin="10,256,178,352"/>
-                    <TextBlock Text="Визуализация обложки" FontSize="20" FontFamily="Segoe UI" FontWeight="Light" Foreground="{StaticResource TextBrush}" Margin="10,293,113,317"/>
-                    <ComboBox x:Name="VisualizationCombo" SelectionChanged="VisualizationCombo_SelectionChanged" Margin="10,328,0,0" Width="237">
-                        <ComboBoxItem Content="Выключено"/>
-                        <ComboBoxItem Content="Анимированные круги"/>
-                        <ComboBoxItem Content="Эквалайзер (полоски)"/>
-                        <ComboBoxItem Content="Волны"/>
-                        <ComboBoxItem Content="Частицы"/>
-                        <ComboBoxItem Content="3D куб"/>
-                        <ComboBoxItem Content="Звездное небо"/>
-                    </ComboBox>-->
+                </Grid>
+                    <Grid Margin="0,0,0,0" x:Name="SettingButtonsPanel">
+                        <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                            <TextBlock Text="настройки" 
+                       FontSize="68" 
+                       FontFamily="Segoe UI Light" 
+                       FontWeight="Light"
+                       Foreground="{StaticResource AppTitleBrush}"
+                       Opacity="0.6"
+                       HorizontalAlignment="Left" 
+                       VerticalAlignment="Top" 
+                       Margin="10,10,0,0"/>
+                            <TextBlock Text="Библиотеки" FontSize="25" FontFamily="Segoe UI" FontWeight="Light" Foreground="{StaticResource TextBrush}" Margin="10,105,211,500"/>
+                            <TextBlock Text="При обновлении библиотеки приложение пересканирует все папки и найдет новые треки. Это может занять некоторое время." TextWrapping="Wrap" FontSize="14" Foreground="{StaticResource TextBrush}" Margin="10,195,10,384"/>
+                            <Button x:Name="RefreshLibraryButton" Content="Обновление библиотеки" Click="RefreshLibraryButton_Click" Height="45" Width="237" Padding="0" BorderThickness="0" Background="Transparent" Foreground="{StaticResource TextBrush}" BorderBrush="LightGray" FontSize="20" FontFamily="Segoe UI Light" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0,145,113,0"/>
 
-                        <TextBlock Text="Эксперименты" FontSize="25" FontFamily="Segoe UI" FontWeight="Light" Foreground="{StaticResource TextBrush}" Margin="10,261,180,342"/>
-                        <TextBlock Text="Внимание! Здесь находятся экспериментальные функции, которые могут повлиять на опыт пользования приложением и на работоспособность устройства. Включать на свой страх и риск." TextWrapping="Wrap" FontSize="14" Foreground="{StaticResource TextBrush}" Margin="10,303,10,255"/>
+                            <TextBlock Text="Эксперименты" FontSize="25" FontFamily="Segoe UI" FontWeight="Light" Foreground="{StaticResource TextBrush}" Margin="10,261,180,342"/>
+                            <TextBlock Text="Внимание! Здесь находятся экспериментальные функции, которые могут повлиять на опыт пользования приложением и на работоспособность устройства. Включать на свой страх и риск." TextWrapping="Wrap" FontSize="14" Foreground="{StaticResource TextBrush}" Margin="10,303,10,255"/>
+                        </Grid>
                     </Grid>
-                </PivotItem>
-            </Pivot>
+                    <Grid Margin="0,0,0,0" x:Name="OnlineButtonsPanel">
+                        <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                            <TextBlock Text="онлайн" 
+                       FontSize="68" 
+                       FontFamily="Segoe UI Light" 
+                       FontWeight="Light"
+                       Foreground="{StaticResource AppTitleBrush}"
+                       Opacity="0.6"
+                       HorizontalAlignment="Left" 
+                       VerticalAlignment="Top" 
+                       Margin="10,10,0,0"/>
+                            
+                        </Grid>
+                    </Grid>
+                </StackPanel>
+            </ScrollViewer>
             <Frame x:Name="ContentFrame" Visibility="Collapsed"/>
             <ContentControl x:Name="MenuContent" Visibility="Collapsed" Background="{StaticResource BackgroundBrush}" Canvas.ZIndex="100" Margin="0,0,0,0" Grid.RowSpan="2"/>
         </Grid>

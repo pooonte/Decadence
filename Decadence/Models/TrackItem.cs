@@ -1,34 +1,26 @@
-﻿using System;
-using Windows.Storage;
+﻿using Windows.Storage;
 using Windows.Storage.FileProperties;
-using System.Runtime.Serialization;
 using System.Threading.Tasks;
+using Newtonsoft.Json;
+using System;
 
 namespace Decadence.Models
 {
-    [DataContract]
     public class TrackItem
     {
-        [IgnoreDataMember]
+        public int Id { get; set; }
+
+        [JsonIgnore]
         public StorageFile File { get; set; }
 
-        [DataMember]
         public string FilePath { get; set; }
-
-        [DataMember]
         public string Title { get; set; }
-
-        [DataMember]
         public string Artist { get; set; }
-
-        [DataMember]
         public string Album { get; set; }
-
-        [IgnoreDataMember]
         public TimeSpan Duration { get; set; }
-
         public int TrackNumber { get; set; }
         public string Genre { get; set; }
+        public bool IsFavorite { get; set; }
         public string DurationString => $"{(int)Duration.TotalMinutes}:{Duration.Seconds:D2}";
         // ДЛЯ АЛФАВИТНОЙ НАВИГАЦИИ - ПЕРВАЯ БУКВА
         public string FirstLetter
@@ -42,7 +34,7 @@ namespace Decadence.Models
         }
 
         // ДЛЯ АЛФАВИТНОЙ НАВИГАЦИИ - ПОКАЗЫВАТЬ БУКВУ-РАЗДЕЛИТЕЛЬ
-        public bool ShowLetter { get; set; } // ЭТО СВОЙСТВО НУЖНО ДОБАВИТЬ
+        public bool ShowLetter { get; set; }
 
         public static async Task<TrackItem> FromFile(StorageFile file)
         {
