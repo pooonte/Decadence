@@ -148,9 +148,6 @@
     <Compile Include="Models\QueueItem.cs" />
     <Compile Include="Models\TrackItem.cs" />
     <Compile Include="Models\TrackRecord.cs" />
-    <Compile Include="PlayerMenu.xaml.cs">
-      <DependentUpon>PlayerMenu.xaml</DependentUpon>
-    </Compile>
     <Compile Include="PlaylistsPanelControl.xaml.cs">
       <DependentUpon>PlaylistsPanelControl.xaml</DependentUpon>
     </Compile>
@@ -160,6 +157,7 @@
     <Compile Include="Services\MusicLibrary.cs" />
     <Compile Include="Services\PlaylistStorage.cs" />
     <Compile Include="Services\RepeatMode.cs" />
+    <Compile Include="Services\TrackMapping.cs" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest">
@@ -220,10 +218,6 @@
     <Page Include="MainPage.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
-    </Page>
-    <Page Include="PlayerMenu.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="PlaylistsPanelControl.xaml">
       <SubType>Designer</SubType>

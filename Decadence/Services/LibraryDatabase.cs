@@ -112,6 +112,16 @@ namespace Decadence.Services
             return track.IsFavorite;
         }
 
+        public static async Task<List<TrackRecord>> SearchTracksAsync(string queryLower)
+        {
+            var db = await GetConnectionAsync();
+            return await db.Table<TrackRecord>()
+                .Where(t => t.TitleLower.Contains(queryLower)
+                         || t.ArtistLower.Contains(queryLower)
+                         || t.AlbumLower.Contains(queryLower))
+                .ToListAsync();
+        }
+
         // ===== Playlists =====
 
         public static async Task<List<PlaylistRecord>> GetPlaylistsAsync()
@@ -196,6 +206,20 @@ namespace Decadence.Services
         {
             var db = await GetConnectionAsync();
             return await db.Table<TrackRecord>().CountAsync();
+        }
+
+        public static async Task ReorderPlaylistTracksAsync(int playlistId, List<int> orderedTrackIds)
+        {
+            var db = await GetConnectionAsync();
+            await db.RunInTransactionAsync(conn =>
+            {
+                for (int i = 0; i < orderedTrackIds.Count; i++)
+                {
+                    conn.Execute(
+                        "UPDATE PlaylistTracks SET Position = ? WHERE PlaylistId = ? AND TrackId = ?",
+                        i, playlistId, orderedTrackIds[i]);
+                }
+            });
         }
     }
 }

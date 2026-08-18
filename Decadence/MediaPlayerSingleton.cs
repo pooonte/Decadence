@@ -6,6 +6,8 @@ using Windows.Media.Playback;
 using Windows.Storage;
 using Decadence.Models;
 using Decadence;
+using Windows.Media;
+using Windows.Storage.Streams;
 
 namespace Singleton
 {
@@ -14,6 +16,7 @@ namespace Singleton
         private static MediaPlayer _mediaPlayer;
         private static StorageFile _currentFile;
         private static Windows.Media.Core.MediaSource _currentSource;
+        private static SystemMediaTransportControls _smtc;
 
         // ===== То, что уже было — не трогаем, чтобы не сломать существующие вызовы =====
 
@@ -32,7 +35,84 @@ namespace Singleton
                 return _mediaPlayer;
             }
         }
+        private static MediaPlayer CreatePlayer()
+        {
+            var player = new MediaPlayer { AutoPlay = false };
+            player.PlaybackSession.PlaybackStateChanged += (s, e) =>
+            {
+                PlaybackStateChanged?.Invoke(null, IsPlaying);
+                UpdateSmtcPlaybackStatus();
+            };
+            player.MediaEnded += async (s, e) => await NextAsync();
 
+            _smtc = player.SystemMediaTransportControls;
+            _smtc.IsEnabled = true;
+            _smtc.IsPlayEnabled = true;
+            _smtc.IsPauseEnabled = true;
+            _smtc.IsNextEnabled = true;
+            _smtc.IsPreviousEnabled = true;
+            _smtc.ButtonPressed += Smtc_ButtonPressed;
+
+            return player;
+        }
+
+        private static async void Smtc_ButtonPressed(
+            SystemMediaTransportControls sender,
+            SystemMediaTransportControlsButtonPressedEventArgs args)
+        {
+            switch (args.Button)
+            {
+                case SystemMediaTransportControlsButton.Play:
+                    Player.Play();
+                    break;
+                case SystemMediaTransportControlsButton.Pause:
+                    Player.Pause();
+                    break;
+                case SystemMediaTransportControlsButton.Next:
+                    await NextAsync();
+                    break;
+                case SystemMediaTransportControlsButton.Previous:
+                    await PreviousAsync();
+                    break;
+            }
+        }
+
+        private static void UpdateSmtcPlaybackStatus()
+        {
+            if (_smtc == null) return;
+            _smtc.PlaybackStatus = IsPlaying
+                ? MediaPlaybackStatus.Playing
+                : MediaPlaybackStatus.Paused;
+        }
+
+        private static async Task UpdateSmtcDisplayAsync(TrackItem track)
+        {
+            if (_smtc == null || track == null) return;
+
+            var updater = _smtc.DisplayUpdater;
+            updater.Type = MediaPlaybackType.Music;
+            updater.MusicProperties.Title = track.Title ?? "";
+            updater.MusicProperties.Artist = track.Artist ?? "";
+            updater.MusicProperties.AlbumTitle = track.Album ?? "";
+
+            try
+            {
+                var file = track.File ?? await StorageFile.GetFileFromPathAsync(track.FilePath);
+                using (var thumb = await file.GetThumbnailAsync(
+                    Windows.Storage.FileProperties.ThumbnailMode.MusicView, 300))
+                {
+                    updater.Thumbnail = (thumb != null && thumb.Size > 0)
+                        ? RandomAccessStreamReference.CreateFromStream(thumb)
+                        : null;
+                }
+            }
+            catch
+            {
+                updater.Thumbnail = null;
+            }
+
+            updater.Update();
+        }
         public static StorageFile CurrentFile
         {
             get => _currentFile;
@@ -99,9 +179,9 @@ namespace Singleton
         public static event EventHandler<TrackItem> TrackChanged;
         public static event EventHandler<bool> PlaybackStateChanged;
 
-        public static async Task PlayAsync(TrackItem track, List<TrackItem> playlist = null)
+        public static async Task<bool> PlayAsync(TrackItem track, List<TrackItem> playlist = null)
         {
-            if (track == null) return;
+            if (track == null) return false;
 
             if (playlist != null)
             {
@@ -110,7 +190,22 @@ namespace Singleton
             }
             CurrentIndex = CurrentPlaylist.IndexOf(track);
 
-            var file = track.File ?? await StorageFile.GetFileFromPathAsync(track.FilePath);
+            StorageFile file;
+            try
+            {
+                file = track.File ?? await StorageFile.GetFileFromPathAsync(track.FilePath);
+            }
+            catch (System.IO.FileNotFoundException)
+            {
+                System.Diagnostics.Debug.WriteLine($"⚠️ Файл не найден: {track.FilePath} (трек: {track.Title})");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"⚠️ Не удалось открыть файл трека: {ex.Message}");
+                return false;
+            }
+
             track.File = file;
             CurrentTrack = track;
 
@@ -120,8 +215,11 @@ namespace Singleton
             Player.Volume = saved is double v ? v : 1.0;
 
             TrackChanged?.Invoke(null, track);
-        }
+            _ = UpdateSmtcDisplayAsync(track);
+            UpdateSmtcPlaybackStatus();
 
+            return true;
+        }
         public static async Task NextAsync()
         {
             if (CurrentPlaylist.Count == 0) return;
@@ -132,15 +230,27 @@ namespace Singleton
                 return;
             }
 
-            int next = CurrentIndex + 1;
-            if (next >= CurrentPlaylist.Count)
-            {
-                if (RepeatMode != RepeatMode.All) { Player.Pause(); return; }
-                next = 0;
-            }
-            await PlayAsync(CurrentPlaylist[next]);
-        }
+            int attempts = 0;
+            int next = CurrentIndex;
 
+            while (attempts < CurrentPlaylist.Count)
+            {
+                next++;
+                if (next >= CurrentPlaylist.Count)
+                {
+                    if (RepeatMode != RepeatMode.All) { Player.Pause(); return; }
+                    next = 0;
+                }
+
+                bool started = await PlayAsync(CurrentPlaylist[next]);
+                if (started) return;
+
+                attempts++;
+            }
+
+            // Ни один трек в плейлисте не удалось открыть
+            Player.Pause();
+        }
         public static async Task PreviousAsync()
         {
             if (CurrentPlaylist.Count == 0) return;
@@ -152,15 +262,24 @@ namespace Singleton
                 return;
             }
 
-            int prev = CurrentIndex - 1;
-            if (prev < 0)
-            {
-                if (RepeatMode != RepeatMode.All) return;
-                prev = CurrentPlaylist.Count - 1;
-            }
-            await PlayAsync(CurrentPlaylist[prev]);
-        }
+            int attempts = 0;
+            int prev = CurrentIndex;
 
+            while (attempts < CurrentPlaylist.Count)
+            {
+                prev--;
+                if (prev < 0)
+                {
+                    if (RepeatMode != RepeatMode.All) return;
+                    prev = CurrentPlaylist.Count - 1;
+                }
+
+                bool started = await PlayAsync(CurrentPlaylist[prev]);
+                if (started) return;
+
+                attempts++;
+            }
+        }
         public static void ToggleShuffle()
         {
             IsShuffleEnabled = !IsShuffleEnabled;

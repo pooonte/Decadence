@@ -54,13 +54,6 @@
                        VerticalAlignment="Center"/>
 
             <Button Grid.Column="1"
-                    Content="✕"
-                    Background="Transparent"
-                    Foreground="{StaticResource TextBrush}"
-                    FontSize="20"
-                    HorizontalAlignment="Right"
-                    Click="CloseButton_Click"/>
-            <Button Grid.Column="1"
         Content="+"
         Background="Transparent"
         Foreground="{StaticResource TextBrush}"
@@ -68,7 +61,13 @@
         HorizontalAlignment="Right"
         Click="CreatePlaylistButton_Click" Margin="0,0,46,0"/>
         </Grid>
-
+        <Button x:Name="BackButton" Style="{StaticResource ImageButtonStyle}"
+                                    Width="50"
+                                    Height="50"
+                                    Background="Transparent"
+                                    Click="BackButton_Click" HorizontalAlignment="Right" VerticalAlignment="Top">
+            <Image Source="ms-appx:///Assets/prev_white.png" Margin="-10,-16,-20,-7" Width="60" Height="60" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+        </Button>
         <!-- Список плейлистов -->
         <ListView x:Name="PlaylistsList"
                   ItemClick="Playlist_Click" 

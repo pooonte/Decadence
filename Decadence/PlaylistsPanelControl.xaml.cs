@@ -77,7 +77,7 @@ namespace Decadence
             }
         }
 
-        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        private void BackButton_Click(object sender, RoutedEventArgs e)
         {
             Hide();
         }

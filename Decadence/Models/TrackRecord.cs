@@ -20,6 +20,14 @@ namespace Decadence.Models
         [Indexed]
         public string Album { get; set; }
 
+        [Indexed]
+        public string TitleLower { get; set; }
+
+        [Indexed]
+        public string ArtistLower { get; set; }
+
+        [Indexed]
+        public string AlbumLower { get; set; }
         public string Genre { get; set; }
         public int TrackNumber { get; set; }
         public long DurationMs { get; set; }

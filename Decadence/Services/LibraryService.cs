@@ -114,12 +114,19 @@ namespace Decadence.Services
             var props = await file.Properties.GetMusicPropertiesAsync();
             var basicProps = await file.GetBasicPropertiesAsync();
 
+            string title = string.IsNullOrEmpty(props.Title) ? file.DisplayName : props.Title;
+            string artist = string.IsNullOrEmpty(props.Artist) ? "Неизвестный исполнитель" : props.Artist;
+            string album = string.IsNullOrEmpty(props.Album) ? "Неизвестный альбом" : props.Album;
+
             return new TrackRecord
             {
                 FilePath = file.Path,
-                Title = string.IsNullOrEmpty(props.Title) ? file.DisplayName : props.Title,
-                Artist = string.IsNullOrEmpty(props.Artist) ? "Неизвестный исполнитель" : props.Artist,
-                Album = string.IsNullOrEmpty(props.Album) ? "Неизвестный альбом" : props.Album,
+                Title = title,
+                Artist = artist,
+                Album = album,
+                TitleLower = title.ToLower(),
+                ArtistLower = artist.ToLower(),
+                AlbumLower = album.ToLower(),
                 Genre = props.Genre?.FirstOrDefault() ?? "",
                 TrackNumber = (int)props.TrackNumber,
                 DurationMs = (long)props.Duration.TotalMilliseconds,

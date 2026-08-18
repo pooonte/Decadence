@@ -23,48 +23,62 @@
         <Grid x:Name="MainContainer">
             <Grid.RowDefinitions>
                 <RowDefinition Height="385*"/>
-                <RowDefinition Height="383*"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <ScrollViewer x:Name="MainPanorama"
-                      Grid.RowSpan="2"
-                      HorizontalScrollMode="Enabled"
-                      HorizontalScrollBarVisibility="Hidden"
-                      VerticalScrollMode="Disabled"
-                      VerticalScrollBarVisibility="Hidden"
-                      HorizontalSnapPointsType="MandatorySingle"
-                      HorizontalSnapPointsAlignment="Near"
-                      ZoomMode="Disabled"
-                      ViewChanged="MainPanorama_ViewChanged">
-                <StackPanel x:Name="PanoramaSections" Orientation="Horizontal">
-                    <Grid x:Name="HomeSection" Margin="0,0,0,0">
-                    <Grid  HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                        <TextBox x:Name="SearchBox" 
-                 PlaceholderText="Поиск треков, исполнителей, альбомов"
-                 TextChanged="SearchBox_TextChanged"
-                 Margin="10,120,10,0" Height="35" VerticalAlignment="Top"/>
+            <ScrollViewer x:Name="PageVerticalScroll"
+      Grid.RowSpan="2"
+      HorizontalScrollMode="Disabled"
+      HorizontalScrollBarVisibility="Disabled"
+      VerticalScrollMode="Enabled"
+      VerticalScrollBarVisibility="Hidden"
+      VerticalSnapPointsType="None"
+      ZoomMode="Disabled"
+      BringIntoViewOnFocusChange="False"
+      ViewChanged="PageVerticalScroll_ViewChanged">
+                <StackPanel x:Name="PageVerticalSections" Orientation="Vertical">
 
-                        <!-- Результаты поиска -->
-                        <ListView x:Name="SearchResults"
+
+                    <ScrollViewer x:Name="MainPanorama"
+      Grid.RowSpan="2"
+      HorizontalScrollMode="Enabled"
+      HorizontalScrollBarVisibility="Hidden"
+      VerticalScrollMode="Disabled"
+      VerticalScrollBarVisibility="Hidden"
+      HorizontalSnapPointsType="MandatorySingle"
+      HorizontalSnapPointsAlignment="Near"
+      ZoomMode="Disabled"
+      BringIntoViewOnFocusChange="False"
+      ViewChanged="MainPanorama_ViewChanged">
+                        <StackPanel x:Name="PanoramaSections" Orientation="Horizontal">
+                            <Grid x:Name="HomeSection" Margin="0,0,0,0">
+                                <Grid  HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                    <TextBox x:Name="SearchBox" 
+                                             IsTabStop="False"
+                                             PlaceholderText="Поиск треков, исполнителей, альбомов"
+                                             TextChanged="SearchBox_TextChanged"
+                                             Margin="10,120,10,0" Height="35" VerticalAlignment="Top"/>
+                                    <!-- Результаты поиска -->
+                                    <ListView x:Name="SearchResults"
                   ItemClick="SearchResult_Click"
                   IsItemClickEnabled="True"
                   Visibility="Collapsed" Margin="0,170,0,0">
-                            <ListView.ItemTemplate>
-                                <DataTemplate>
-                                    <Grid Height="50" Margin="0,4">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        <StackPanel Grid.Column="0">
-                                            <TextBlock Text="{Binding Title}" Foreground="{StaticResource TextBrush}" FontSize="16" FontWeight="SemiBold"/>
-                                            <TextBlock Text="{Binding Artist}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12"/>
-                                        </StackPanel>
-                                    </Grid>
-                                </DataTemplate>
-                            </ListView.ItemTemplate>
-                        </ListView>
-                        <TextBlock Text="библиотека" 
+                                        <ListView.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid Height="50" Margin="0,4">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <StackPanel Grid.Column="0">
+                                                        <TextBlock Text="{Binding Title}" Foreground="{StaticResource TextBrush}" FontSize="16" FontWeight="SemiBold"/>
+                                                        <TextBlock Text="{Binding Artist}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12"/>
+                                                    </StackPanel>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ListView.ItemTemplate>
+                                    </ListView>
+                                    <TextBlock Text="библиотека" 
                    FontSize="68" 
                    FontFamily="Segoe UI Light" 
                    FontWeight="Light"
@@ -73,8 +87,8 @@
                    HorizontalAlignment="Left" 
                    VerticalAlignment="Top" 
                    Margin="10,10,0,0"/>
-                        <Grid x:Name="MainButtonsPanel" Visibility="Visible" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                            <Button Content="моя музыка" 
+                                    <Grid x:Name="MainButtonsPanel" Visibility="Visible" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                        <Button Content="моя музыка" 
                     FontSize="34" 
                     FontFamily="Segoe UI" FontWeight="Light"
                     Padding="0" 
@@ -86,11 +100,11 @@
                     HorizontalAlignment="Left" 
                     VerticalAlignment="Top"/>
 
-                            <Button Content="исполнители" FontSize="34" FontFamily="Segoe UI" FontWeight="Light" Padding="0" BorderThickness="0" Background="Transparent" Foreground="{StaticResource TextBrush}" Margin="10,220,0,0" Click="ArtistsButton_Click" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-                            <Button Content="альбомы" FontSize="34" FontFamily="Segoe UI" FontWeight="Light" Padding="0" BorderThickness="0" Background="Transparent" Foreground="{StaticResource TextBrush}" Margin="10,270,0,0" Click="AlbumsButton_Click" HorizontalAlignment="Left" VerticalAlignment="Top"/>
-                            <Button Content="плейлисты" FontSize="34" FontFamily="Segoe UI" FontWeight="Light" Padding="0" BorderThickness="0" Background="Transparent" Foreground="{StaticResource TextBrush}" Margin="10,320,0,0" Click="PlaylistsButton_Click" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                                        <Button Content="исполнители" FontSize="34" FontFamily="Segoe UI" FontWeight="Light" Padding="0" BorderThickness="0" Background="Transparent" Foreground="{StaticResource TextBrush}" Margin="10,220,0,0" Click="ArtistsButton_Click" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                                        <Button Content="альбомы" FontSize="34" FontFamily="Segoe UI" FontWeight="Light" Padding="0" BorderThickness="0" Background="Transparent" Foreground="{StaticResource TextBrush}" Margin="10,270,0,0" Click="AlbumsButton_Click" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                                        <Button Content="плейлисты" FontSize="34" FontFamily="Segoe UI" FontWeight="Light" Padding="0" BorderThickness="0" Background="Transparent" Foreground="{StaticResource TextBrush}" Margin="10,320,0,0" Click="PlaylistsButton_Click" HorizontalAlignment="Left" VerticalAlignment="Top"/>
 
-                            <Button Content="о приложении" 
+                                        <Button Content="о приложении" 
                     FontSize="34" 
                     FontFamily="Segoe UI" FontWeight="Light" 
                     Padding="0" 
@@ -101,46 +115,49 @@
                     Click="AboutButton_Click" 
                     HorizontalAlignment="Left" 
                     VerticalAlignment="Top"/>
-                            <!-- 🔹 БЛОК СТАТИСТИКИ (Он же кнопка перехода в плеер) -->
-                            <Button x:Name="StatsButton" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="10,0,0,10" Click="StatsButton_Click" Background="Transparent">
-                                <StackPanel>
-                                    <TextBlock Text="ВАША МУЗЫКА" 
+                                        <!-- 🔹 БЛОК СТАТИСТИКИ (Он же кнопка перехода в плеер) -->
+                                        <Button x:Name="StatsButton"
+        ScrollViewer.BringIntoViewOnFocusChange="False"
+        HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="10,0,0,10"
+        Click="StatsButton_Click" Background="Transparent">
+                                            <StackPanel>
+                                                <TextBlock Text="ВАША МУЗЫКА" 
                    FontSize="12" 
                    FontWeight="Bold"
                    Foreground="{StaticResource TextBrush}"/>
-                                    <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
-                                        <TextBlock Text="ТРЕКИ: " 
+                                                <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
+                                                    <TextBlock Text="ТРЕКИ: " 
                        FontSize="28" 
                        FontWeight="Bold"
                        Foreground="{StaticResource TextBrush}"/>
-                                        <TextBlock x:Name="TrackCountNumber" 
+                                                    <TextBlock x:Name="TrackCountNumber" 
                        Text="0" 
                        FontSize="28" 
                        FontWeight="Bold"
                        Foreground="{StaticResource TextBrush}"/>
-                                    </StackPanel>
-                                </StackPanel>
-                            </Button>
-                        </Grid>
-                        <local:FullButtonsPanel x:Name="TracksPanelControl"
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </Button>
+                                    </Grid>
+                                    <local:FullButtonsPanel x:Name="TracksPanelControl"
                                 TrackClicked="TracksPanelControl_TrackClicked"
                                 BackClicked="TracksPanelControl_BackClicked" Margin="0,-2,0,0"/>
-                        <local:ArtistsPanelControl x:Name="ArtistsPanelControl"
+                                    <local:ArtistsPanelControl x:Name="ArtistsPanelControl"
                            ArtistClicked="ArtistsPanelControl_ArtistClicked"
                            TrackClicked="ArtistsPanelControl_TrackClicked"
                            BackClicked="ArtistsPanelControl_BackClicked" Margin="0,-2,0,0"/>
-                        <local:AlbumsPanelControl x:Name="AlbumsPanelControl"
+                                    <local:AlbumsPanelControl x:Name="AlbumsPanelControl"
                           AlbumClicked="AlbumsPanelControl_AlbumClicked"
                           TrackClicked="AlbumsPanelControl_TrackClicked"
                           BackClicked="AlbumsPanelControl_BackClicked" Margin="0,-2,0,0"/>
-                        <local:PlaylistsPanelControl x:Name="PlaylistsPanelControl"
+                                    <local:PlaylistsPanelControl x:Name="PlaylistsPanelControl"
                              PlaylistSelected="PlaylistsPanelControl_PlaylistSelected"
                              PlaylistEditRequested="PlaylistsPanelControl_PlaylistEditRequested"/>
-                    </Grid>
-                </Grid>
-                    <Grid Margin="0,0,0,0" x:Name="SettingButtonsPanel">
-                        <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                            <TextBlock Text="настройки" 
+                                </Grid>
+                            </Grid>
+                            <Grid Margin="0,0,0,0" x:Name="SettingButtonsPanel">
+                                <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                    <TextBlock Text="настройки" 
                        FontSize="68" 
                        FontFamily="Segoe UI Light" 
                        FontWeight="Light"
@@ -149,17 +166,17 @@
                        HorizontalAlignment="Left" 
                        VerticalAlignment="Top" 
                        Margin="10,10,0,0"/>
-                            <TextBlock Text="Библиотеки" FontSize="25" FontFamily="Segoe UI" FontWeight="Light" Foreground="{StaticResource TextBrush}" Margin="10,105,211,500"/>
-                            <TextBlock Text="При обновлении библиотеки приложение пересканирует все папки и найдет новые треки. Это может занять некоторое время." TextWrapping="Wrap" FontSize="14" Foreground="{StaticResource TextBrush}" Margin="10,195,10,384"/>
-                            <Button x:Name="RefreshLibraryButton" Content="Обновление библиотеки" Click="RefreshLibraryButton_Click" Height="45" Width="237" Padding="0" BorderThickness="0" Background="Transparent" Foreground="{StaticResource TextBrush}" BorderBrush="LightGray" FontSize="20" FontFamily="Segoe UI Light" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0,145,113,0"/>
+                                    <TextBlock Text="Библиотеки" FontSize="25" FontFamily="Segoe UI" FontWeight="Light" Foreground="{StaticResource TextBrush}" Margin="10,105,211,500"/>
+                                    <TextBlock Text="При обновлении библиотеки приложение пересканирует все папки и найдет новые треки. Это может занять некоторое время." TextWrapping="Wrap" FontSize="14" Foreground="{StaticResource TextBrush}" Margin="10,195,10,384"/>
+                                    <Button x:Name="RefreshLibraryButton" Content="Обновление библиотеки" Click="RefreshLibraryButton_Click" Height="45" Width="237" Padding="0" BorderThickness="0" Background="Transparent" Foreground="{StaticResource TextBrush}" BorderBrush="LightGray" FontSize="20" FontFamily="Segoe UI Light" VerticalAlignment="Top" HorizontalAlignment="Right" Margin="0,145,113,0"/>
 
-                            <TextBlock Text="Эксперименты" FontSize="25" FontFamily="Segoe UI" FontWeight="Light" Foreground="{StaticResource TextBrush}" Margin="10,261,180,342"/>
-                            <TextBlock Text="Внимание! Здесь находятся экспериментальные функции, которые могут повлиять на опыт пользования приложением и на работоспособность устройства. Включать на свой страх и риск." TextWrapping="Wrap" FontSize="14" Foreground="{StaticResource TextBrush}" Margin="10,303,10,255"/>
-                        </Grid>
-                    </Grid>
-                    <Grid Margin="0,0,0,0" x:Name="OnlineButtonsPanel">
-                        <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-                            <TextBlock Text="онлайн" 
+                                    <TextBlock Text="Эксперименты" FontSize="25" FontFamily="Segoe UI" FontWeight="Light" Foreground="{StaticResource TextBrush}" Margin="10,261,180,342"/>
+                                    <TextBlock Text="Внимание! Здесь находятся экспериментальные функции, которые могут повлиять на опыт пользования приложением и на работоспособность устройства. Включать на свой страх и риск." TextWrapping="Wrap" FontSize="14" Foreground="{StaticResource TextBrush}" Margin="10,303,10,255"/>
+                                </Grid>
+                            </Grid>
+                            <Grid Margin="0,0,0,0" x:Name="OnlineButtonsPanel">
+                                <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                    <TextBlock Text="онлайн" 
                        FontSize="68" 
                        FontFamily="Segoe UI Light" 
                        FontWeight="Light"
@@ -168,9 +185,192 @@
                        HorizontalAlignment="Left" 
                        VerticalAlignment="Top" 
                        Margin="10,10,0,0"/>
-                            
-                        </Grid>
-                    </Grid>
+
+                                </Grid>
+                            </Grid>
+                        </StackPanel>
+                    </ScrollViewer>
+                    <ScrollViewer x:Name="PlayerSection"
+              HorizontalScrollMode="Disabled"
+              HorizontalScrollBarVisibility="Disabled"
+              VerticalScrollMode="Disabled"
+              VerticalScrollBarVisibility="Disabled"
+              ZoomMode="Disabled"
+              Margin="0,0,0,0" Height="641">
+                        <Pivot x:Name="PlayerPivot">
+                            <PivotItem Margin="0,-48,0,0">
+                                <Grid>
+                                    <TextBlock Text="сейчас играет" FontFamily="Segoe UI" FontWeight="Light" Foreground="{StaticResource AccentBrush}" FontSize="46" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,10,0,0"/>
+                                    <Grid HorizontalAlignment="Left" VerticalAlignment="Top" Margin="20,90,0,0"
+                      Height="300" Width="330"
+                      ManipulationMode="TranslateX, TranslateInertia"
+                      ManipulationStarted="AlbumArt_ManipulationStarted"
+                      ManipulationDelta="AlbumArt_ManipulationDelta"
+                      ManipulationCompleted="AlbumArt_ManipulationCompleted">
+
+                                        <Border BorderBrush="{StaticResource SecondBackgroundBrush}" Width="200" Height="200" Margin="0,10,0,90" HorizontalAlignment="Center">
+                                            <Image x:Name="FullAlbumArt" Stretch="UniformToFill" RightTapped="AlbumArt_RightTapped"
+                               ManipulationStarted="AlbumArt_ManipulationStarted"
+                               ManipulationDelta="AlbumArt_ManipulationDelta"
+                               ManipulationCompleted="AlbumArt_ManipulationCompleted"/>
+                                        </Border>
+
+                                        <TextBlock x:Name="SwipeLeftHint" Text="◀" FontSize="24" Opacity="0"
+                               Foreground="{StaticResource TextBrush}" VerticalAlignment="Center"
+                               HorizontalAlignment="Left" Margin="10,0,0,0"/>
+                                        <TextBlock x:Name="SwipeRightHint" Text="▶" FontSize="24" Opacity="0"
+                               Foreground="{StaticResource TextBrush}" VerticalAlignment="Center"
+                               HorizontalAlignment="Right" Margin="0,0,10,0"/>
+
+                                        <Grid HorizontalAlignment="Left" VerticalAlignment="Bottom" Background="Transparent" Padding="20,18" MaxWidth="400">
+                                            <StackPanel>
+                                                <TextBlock x:Name="FullTrackTitle"
+                                       Foreground="{StaticResource TextBrush}"
+                                       FontSize="20" FontFamily="Segoe UI" FontWeight="Light"
+                                       TextWrapping="Wrap" LineHeight="26" MaxHeight="52" Margin="0,0,0,6"/>
+                                                <TextBlock x:Name="FullTrackArtist"
+                                       Foreground="{StaticResource TextBrush}"
+                                       FontSize="14" FontFamily="Segoe UI" FontWeight="Light" Opacity="0.75"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </Grid>
+
+                                    <Grid HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Margin="10,0,10,180">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="35"/>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="35"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" x:Name="CurrentTimeText" Text="0:00" Foreground="{StaticResource TextBrush}" VerticalAlignment="Center" TextAlignment="Right"/>
+                                        <Slider Grid.Column="1" x:Name="ProgressSlider" Height="30" Margin="5,0,5,0" VerticalAlignment="Center" ManipulationMode="TranslateX" ManipulationStarted="ProgressSlider_ManipulationStarted" ManipulationCompleted="ProgressSlider_ManipulationCompleted">
+                                            <Slider.Background>
+                                                <LinearGradientBrush EndPoint="1,0.5" StartPoint="0,0.5">
+                                                    <GradientStop Color="#15241C" Offset="0"/>
+                                                    <GradientStop Color="#E0E0E0" Offset="1"/>
+                                                </LinearGradientBrush>
+                                            </Slider.Background>
+                                            <Slider.Foreground>
+                                                <LinearGradientBrush EndPoint="1,0.5" StartPoint="0,0.5">
+                                                    <GradientStop Color="#00A0B1" Offset="0"/>
+                                                    <GradientStop Color="#2E8DEF" Offset="0.14"/>
+                                                    <GradientStop Color="#0A5BC4" Offset="0.28"/>
+                                                    <GradientStop Color="#643EBF" Offset="0.42"/>
+                                                    <GradientStop Color="#A700AE" Offset="0.57"/>
+                                                    <GradientStop Color="#BF1E4B" Offset="0.71"/>
+                                                    <GradientStop Color="#DC572E" Offset="0.85"/>
+                                                    <GradientStop Color="#00A600" Offset="1"/>
+                                                </LinearGradientBrush>
+                                            </Slider.Foreground>
+                                        </Slider>
+                                        <TextBlock Grid.Column="2" x:Name="TotalTimeText" Text="0:00" Foreground="{StaticResource TextBrush}" VerticalAlignment="Center" TextAlignment="Left"/>
+                                    </Grid>
+
+                                    <Grid x:Name="MenuSlidePanel" Width="250" HorizontalAlignment="Left" Background="{StaticResource BackgroundBrush}" Visibility="Collapsed" Canvas.ZIndex="200">
+                                        <Grid.RenderTransform>
+                                            <TranslateTransform x:Name="SlidePanelTransform" X="0"/>
+                                        </Grid.RenderTransform>
+                                        <Button x:Name="CloseMenuPanelButton" HorizontalAlignment="Left" VerticalAlignment="Top" Width="40" Height="40" Background="Transparent" Click="CloseMenuPanel_Click">
+                                            <Image Source="ms-appx:///Assets/prev_white.png" Stretch="Uniform" Width="50" Height="50" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="-25,-21,-15,-11"/>
+                                        </Button>
+                                        <Button Content="Добавить в..." FontSize="30" FontFamily="Segoe UI" FontWeight="Light" Padding="0" BorderThickness="0" Background="Transparent" Foreground="White" Margin="20,110,0,0" Click="AddToPlaylist_Click" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                                        <Button Content="О треке" FontSize="30" FontFamily="Segoe UI" FontWeight="Light" Padding="0" BorderThickness="0" Background="Transparent" Foreground="White" Margin="20,65,0,0" Click="TrackInfo_Click" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                                        <Button x:Name="RepeatButton" Background="Transparent" Foreground="White" FontFamily="Segoe UI" FontWeight="Light" Click="RepeatButton_Click" Margin="20,155,0,0" Padding="0" Height="46" HorizontalAlignment="Left" VerticalAlignment="Top">
+                                            <Grid HorizontalAlignment="Left" Width="218" Margin="-12,0,0,0">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock x:Name="RepeatButtonText" Grid.Column="0" Text="Зациклить" FontFamily="Segoe UI" FontWeight="Light" FontSize="30" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="10,0,0,0"/>
+                                                <Image x:Name="RepeatButtonImage" Grid.Column="1" Source="ms-appx:///Assets/repeat_none_white.png" Width="35" Height="35" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                                            </Grid>
+                                        </Button>
+                                        <Button x:Name="ShuffleButton" Click="ShuffleButton_Click" Margin="20,206,0,394" Background="Transparent" Padding="0">
+                                            <TextBlock Text="Перемешать" FontSize="30" FontFamily="Segoe UI" FontWeight="Light" Foreground="White"/>
+                                        </Button>
+                                    </Grid>
+
+                                    <Grid HorizontalAlignment="Stretch" VerticalAlignment="Bottom" Height="103">
+                                        <Button x:Name="PrevButton" Click="PrevButton_Click" Background="Transparent" Style="{StaticResource ImageButtonStyle}" Foreground="{StaticResource AccentBrush}" FontSize="24" HorizontalAlignment="Left" Margin="-8,0,0,0" VerticalAlignment="Bottom" Height="76" Width="100">
+                                            <Image x:Name="PrevButtonImage" Width="100" Height="100" Source="ms-appx:///Assets/prev_white.png"/>
+                                        </Button>
+                                        <Button x:Name="PlayPauseButton" Click="PlayPauseButton_Click" Background="Transparent" Style="{StaticResource ImageButtonStyle}" Foreground="{StaticResource AccentBrush}" HorizontalAlignment="Center" VerticalAlignment="Top" Height="70" Width="80" Margin="177,0,103,0">
+                                            <Image x:Name="FullPlayPauseIcon" Source="ms-appx:///Assets/play_white.png" Stretch="Uniform" Width="70" Height="70" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Button>
+                                        <Button x:Name="NextButton" Click="NextButton_Click" Background="Transparent" Style="{StaticResource ImageButtonStyle}" Foreground="{StaticResource AccentBrush}" FontSize="24" HorizontalAlignment="Right" Margin="0" VerticalAlignment="Bottom" Height="76" Width="92">
+                                            <Image x:Name="NextButtonImage" Height="100" Width="100" Source="ms-appx:///Assets/next_white.png"/>
+                                        </Button>
+                                        <Button x:Name="MenuToggleButton" HorizontalAlignment="Left" VerticalAlignment="Top" Style="{StaticResource ImageButtonStyle}" Margin="97,0,0,0" Width="80" Height="70" Click="MenuToggleButton_Click" Foreground="{StaticResource AccentBrush}" BorderThickness="0">
+                                            <Image x:Name="MenuToggleImage" Source="ms-appx:///Assets/menu_white.png" Stretch="Uniform" Width="70" Height="70" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Button>
+                                    </Grid>
+                                </Grid>
+                            </PivotItem>
+                            <PivotItem Margin="0,-48,0,0">
+                                <Grid>
+                                    <TextBlock Text="очередь" FontFamily="Segoe UI" FontWeight="Light" Foreground="{StaticResource AccentBrush}" FontSize="46" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10,10,0,0"/>
+                                    <ListView x:Name="QueueListView"
+          ItemClick="QueueListView_ItemClick"
+          IsItemClickEnabled="True"
+          ContainerContentChanging="QueueListView_ContainerContentChanging"
+          ScrollViewer.BringIntoViewOnFocusChange="False"
+          Margin="0,80,0,0">
+                                        <ListView.ItemContainerStyle>
+                                            <Style TargetType="ListViewItem">
+                                                <Setter Property="Padding" Value="0"/>
+                                                <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                                                <Setter Property="MinHeight" Value="64"/>
+                                            </Style>
+                                        </ListView.ItemContainerStyle>
+                                        <ListView.ItemTemplate>
+                                            <DataTemplate>
+                                                <Grid Height="64">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="40"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                    </Grid.ColumnDefinitions>
+
+                                                    <TextBlock x:Name="IndexText"
+                           Grid.Column="0"
+                           Text="{Binding Index}"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           FontSize="16"
+                           VerticalAlignment="Center"
+                           HorizontalAlignment="Center"/>
+
+                                                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="8,0,8,0">
+                                                        <TextBlock x:Name="TitleText"
+                               Text="{Binding Title}"
+                               FontSize="16"
+                               TextTrimming="CharacterEllipsis"
+                               Foreground="{StaticResource TextBrush}"/>
+                                                        <TextBlock Text="{Binding Artist}"
+                               FontSize="12"
+                               Opacity="0.7"
+                               TextTrimming="CharacterEllipsis"
+                               Foreground="{StaticResource TextSecondaryBrush}"/>
+                                                    </StackPanel>
+
+                                                    <TextBlock Grid.Column="2"
+                           Text="{Binding DurationText}"
+                           Foreground="{StaticResource TextSecondaryBrush}"
+                           FontSize="12"
+                           VerticalAlignment="Center"
+                           Margin="0,0,10,0"/>
+
+                                                    <Rectangle Grid.ColumnSpan="3"
+                           Height="1"
+                           VerticalAlignment="Bottom"
+                           Fill="{StaticResource TextSecondaryBrush}"
+                           Opacity="0.15"/>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ListView.ItemTemplate>
+                                    </ListView>
+                                </Grid>
+                            </PivotItem>
+                        </Pivot>
+                    </ScrollViewer>
                 </StackPanel>
             </ScrollViewer>
             <Frame x:Name="ContentFrame" Visibility="Collapsed"/>

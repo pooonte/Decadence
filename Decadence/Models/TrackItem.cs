@@ -1,7 +1,6 @@
 ﻿using Windows.Storage;
 using Windows.Storage.FileProperties;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 using System;
 
 namespace Decadence.Models
@@ -10,7 +9,6 @@ namespace Decadence.Models
     {
         public int Id { get; set; }
 
-        [JsonIgnore]
         public StorageFile File { get; set; }
 
         public string FilePath { get; set; }

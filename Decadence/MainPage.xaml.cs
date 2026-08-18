@@ -5,19 +5,17 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Numerics;
 using System.Threading.Tasks;
 using Windows.Storage;
-using Windows.UI;
 using Windows.UI.Core;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
-using Windows.UI.Xaml.Media;
-using Windows.UI.Xaml.Media.Animation;
 using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
 using System.Threading;
+using Windows.UI.Popups;
+using Windows.UI.Xaml.Media;
 
 namespace Decadence
 {
@@ -34,12 +32,27 @@ namespace Decadence
 
         private bool _isLoading = false;
         private bool _isInitialized = false;
+
+        private bool _isVerticalSnapping = false;
+
+        private double _verticalParallaxRatio = 0;
+
+        private readonly DispatcherTimer _searchDebounceTimer = new DispatcherTimer
+        {
+            Interval = TimeSpan.FromMilliseconds(250)
+        };
+
         public MainPage()
         {
             this.InitializeComponent();
             this.NavigationCacheMode = NavigationCacheMode.Required;
             this.Loaded += MainPage_Loaded;
+            _searchDebounceTimer.Tick += SearchDebounceTimer_Tick;
             MainPanorama.SizeChanged += MainPanorama_SizeChanged;
+            Window.Current.SizeChanged += Window_SizeChanged;
+            PageVerticalScroll.SizeChanged += PageVerticalScroll_SizeChanged;
+
+            InitializePlayerIcons();
 
             if (!_libraryInitialized && _tracks.Count == 0)
             {
@@ -53,17 +66,69 @@ namespace Decadence
             TracksPanelControl.AddToPlaylistRequested += TracksPanelControl_AddToPlaylistRequested;
             PlaylistsPanelControl.RemoveTrackRequested += PlaylistsPanelControl_RemoveTrackRequested;
         }
-
+        private void PageVerticalScroll_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            UpdateVerticalSectionHeights();
+        }
         private void MainPage_Loaded(object sender, RoutedEventArgs e)
         {
-            UpdateBackgroundSize();
             UpdatePanoramaSectionWidths();
+            UpdateVerticalSectionHeights();
+            this.UpdateLayout();
+
+            // Стартуем на "Главная/Настройки" (верх), плеер скрыт снизу
+            PageVerticalScroll.ChangeView(null, 0, null, true);
         }
 
+        private void UpdateVerticalSectionHeights()
+        {
+            double height = PageVerticalScroll.ActualHeight;
+            if (height <= 0) return;
+
+            PlayerSection.Height = height;
+            MainPanorama.Height = height;
+
+            this.UpdateLayout();
+            LogVerticalDiagnostics("UpdateVerticalSectionHeights");
+        }
+
+        private void PageVerticalScroll_ViewChanged(object sender, ScrollViewerViewChangedEventArgs e)
+        {
+            LogVerticalDiagnostics("ViewChanged");
+
+            UpdatePlayerSectionActiveState();
+
+            if (!e.IsIntermediate && !_isVerticalSnapping)
+            {
+                SnapVerticalToNearestSection();
+            }
+        }
+
+        private void SnapVerticalToNearestSection()
+        {
+            double sectionHeight = PlayerSection.ActualHeight;
+            if (sectionHeight <= 0) return;
+
+            double currentOffset = PageVerticalScroll.VerticalOffset;
+            double nearestSection = Math.Round(currentOffset / sectionHeight) * sectionHeight;
+
+            if (Math.Abs(currentOffset - nearestSection) > 1)
+            {
+                _isVerticalSnapping = true;
+                PageVerticalScroll.ChangeView(null, nearestSection, null, false);
+                _isVerticalSnapping = false;
+            }
+        }
+
+        private void UpdateVerticalSwipeAvailability()
+        {
+            bool isOnHome = MainPanorama.HorizontalOffset < HomeSection.ActualWidth / 2;
+            PageVerticalScroll.VerticalScrollMode = isOnHome ? ScrollMode.Enabled : ScrollMode.Disabled;
+        }
         private void MainPanorama_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            UpdateBackgroundSize();
             UpdatePanoramaSectionWidths();
+            UpdateVerticalSectionHeights();
         }
 
         private void UpdatePanoramaSectionWidths()
@@ -73,14 +138,22 @@ namespace Decadence
 
             HomeSection.Width = width;
             SettingButtonsPanel.Width = width;
-            OnlineButtonsPanel.Width = width;
+            OnlineButtonsPanel.Width = width;   // ← новая строка, иначе будет та же чернота, что мы чинили раньше
 
             this.UpdateLayout();
 
             UpdateBackgroundParallax();
-            SnapToNearestSection();   // сразу подправит текущее положение, если ресайз застал вид "между" секциями
+            SnapToNearestSection();
         }
-
+        private void LogVerticalDiagnostics(string context)
+        {
+            System.Diagnostics.Debug.WriteLine(
+                $"📐[{context}] PageVerticalScroll: ActualHeight={PageVerticalScroll.ActualHeight:F1}, " +
+                $"ExtentHeight={PageVerticalScroll.ExtentHeight:F1}, ViewportHeight={PageVerticalScroll.ViewportHeight:F1}, " +
+                $"VerticalOffset={PageVerticalScroll.VerticalOffset:F1} | " +
+                $"MainPanorama.ActualHeight={MainPanorama.ActualHeight:F1} | " +
+                $"PlayerSection.ActualHeight={PlayerSection.ActualHeight:F1}");
+        }
 
         private void PanoramaBackground_ImageOpened(object sender, RoutedEventArgs e)
         {
@@ -103,6 +176,8 @@ namespace Decadence
             {
                 SnapToNearestSection();
             }
+
+            UpdateVerticalSwipeAvailability();
         }
 
         private void SnapToNearestSection()
@@ -149,9 +224,30 @@ namespace Decadence
             ApplyParallaxOffset();
         }
 
+        private void UpdateVerticalBackgroundParallax()
+        {
+            double screenHeight = Window.Current.Bounds.Height;
+            double totalContentHeight = MainPanorama.ActualHeight + PlayerSection.ActualHeight;
+            double backgroundHeight = PanoramaBackground.ActualHeight;
+
+            double scrollableForeground = Math.Max(totalContentHeight - screenHeight, 1);
+            double scrollableBackground = Math.Max(backgroundHeight - screenHeight, 0);
+
+            _verticalParallaxRatio = scrollableBackground / scrollableForeground;
+            ApplyParallaxOffset();
+        }
+
         private void ApplyParallaxOffset()
         {
             PanoramaBackgroundTransform.TranslateX = -MainPanorama.HorizontalOffset * _parallaxRatio;
+            PanoramaBackgroundTransform.TranslateY = -PageVerticalScroll.VerticalOffset * _verticalParallaxRatio; // 🔹 новое
+        }
+
+        private void DismissKeyboard()
+        {
+            bool wasEnabled = SearchBox.IsEnabled;
+            SearchBox.IsEnabled = false;
+            SearchBox.IsEnabled = wasEnabled;
         }
 
         private void OnBackRequested(object sender, BackRequestedEventArgs e)
@@ -218,6 +314,8 @@ namespace Decadence
 
             UpdateBackgroundSize();
             UpdatePanoramaSectionWidths();
+            UpdateVerticalSectionHeights();
+            this.UpdateLayout();
 
             SystemNavigationManager.GetForCurrentView().BackRequested += OnBackRequested;
             Window.Current.CoreWindow.KeyDown += OnKeyDown;
@@ -226,6 +324,7 @@ namespace Decadence
 
         protected override void OnNavigatingFrom(NavigatingCancelEventArgs e)
         {
+            Window.Current.SizeChanged -= Window_SizeChanged;
             // 1. Отписка от глобальных событий (СТРОГО ДО base)
             SystemNavigationManager.GetForCurrentView().BackRequested -= OnBackRequested;
             Window.Current.CoreWindow.KeyDown -= OnKeyDown;
@@ -245,6 +344,16 @@ namespace Decadence
 
             base.OnNavigatingFrom(e);
         }
+
+        private void Window_SizeChanged(object sender, Windows.UI.Core.WindowSizeChangedEventArgs e)
+        {
+            UpdateBackgroundSize();
+            UpdatePanoramaSectionWidths();
+            UpdateVerticalSectionHeights();
+            UpdateVerticalBackgroundParallax();
+        }
+
+
         private async Task InitializeLibraryAsync()
         {
             if (_isLoading) return;
@@ -392,10 +501,25 @@ namespace Decadence
 
         private async void PlayAndOpenPlayer(TrackItem track, List<TrackItem> playlist)
         {
-            await MediaPlayerSingleton.PlayAsync(track, playlist);
-            Frame.Navigate(typeof(PlayerMenu));
+            bool started = await MediaPlayerSingleton.PlayAsync(track, playlist);
+            if (!started)
+            {
+                var dialog = new Windows.UI.Popups.MessageDialog(
+                    "Не удалось воспроизвести трек — файл не найден. Возможно, он был удалён или перемещён. Попробуйте обновить библиотеку в Настройках.",
+                    "Ошибка воспроизведения");
+                await dialog.ShowAsync();
+                return;
+            }
+            OpenPlayerSection();
         }
 
+        private void OpenPlayerSection()
+        {
+            LogFocusedElement("OpenPlayerSection — до DismissKeyboard");   // ← новая строка
+            DismissKeyboard();
+            LogFocusedElement("OpenPlayerSection — после DismissKeyboard");   // ← новая строка
+            PageVerticalScroll.ChangeView(null, MainPanorama.ActualHeight, null, false);
+        }
         private async void RefreshLibraryButton_Click(object sender, RoutedEventArgs e)
         {
             if (_isLoading) return;
@@ -459,31 +583,6 @@ namespace Decadence
 
         }
 
-        private async void TrackInfo_Click(object sender, RoutedEventArgs e)
-        {
-            var track = MediaPlayerSingleton.CurrentTrack;
-            if (track == null) return;
-
-            var dialog = new Windows.UI.Popups.MessageDialog(
-                $"Название: {track.Title}\n" +
-                $"Исполнитель: {track.Artist}\n" +
-                $"Альбом: {track.Album}\n" +
-                $"Длительность: {track.Duration:mm\\:ss}\n" +
-                $"Путь: {track.FilePath}",
-                "Информация о треке"
-            );
-            await dialog.ShowAsync();
-        }
-
-        // Добавить в плейлист (пока заглушка)
-        private async void AddToPlaylist_Click(object sender, RoutedEventArgs e)
-        {
-            var dialog = new Windows.UI.Popups.MessageDialog(
-                "Эта функция будет доступна в следующей версии",
-                "Добавление в плейлист"
-            );
-            await dialog.ShowAsync();
-        }
         // Обработчик клика по треку
         private void TracksPanelControl_TrackClicked(object sender, ItemClickEventArgs e)
         {
@@ -495,6 +594,7 @@ namespace Decadence
         }
         private void TracksButton_Click(object sender, RoutedEventArgs e)
         {
+            DismissKeyboard();
             if (_tracks.Count > 0)
             {
                 if (TracksPanelControl.Parent is Panel parent)
@@ -516,6 +616,7 @@ namespace Decadence
         }
         private void ArtistsButton_Click(object sender, RoutedEventArgs e)
         {
+            DismissKeyboard();
             if (_artists.Count > 0)
             {
                 if (ArtistsPanelControl.Parent is Panel parent)
@@ -530,6 +631,7 @@ namespace Decadence
 
         private void AlbumsButton_Click(object sender, RoutedEventArgs e)
         {
+            DismissKeyboard();
             if (_albums.Count > 0)
             {
                 if (AlbumsPanelControl.Parent is Panel parent)
@@ -544,6 +646,7 @@ namespace Decadence
 
         private void PlaylistsButton_Click(object sender, RoutedEventArgs e)
         {
+            DismissKeyboard();
             if (PlaylistsPanelControl.Parent is Panel parent)
                 parent.Children.Remove(PlaylistsPanelControl);
 
@@ -617,7 +720,7 @@ namespace Decadence
         // Переход в PlayerMenu
         private void StatsButton_Click(object sender, RoutedEventArgs e)
         {
-            Frame.Navigate(typeof(PlayerMenu));
+            OpenPlayerSection();
         }
 
         private void PlaylistsPanelControl_PlaylistSelected(object sender, Playlist playlist)
@@ -626,13 +729,102 @@ namespace Decadence
             PlayAndOpenPlayer(playlist.Tracks[0], playlist.Tracks.ToList());
         }
 
-        private void PlaylistsPanelControl_PlaylistEditRequested(object sender, Playlist playlist)
+        private async void PlaylistsPanelControl_PlaylistEditRequested(object sender, Playlist playlist)
         {
-            // Меню редактирования (пока заглушка)
-            var dialog = new Windows.UI.Popups.MessageDialog(
-                $"Плейлист: {playlist.Name}\nТреков: {playlist.TrackCount}",
-                "Редактирование");
-            _ = dialog.ShowAsync();
+            var dialog = new ContentDialog
+            {
+                Title = "Редактировать плейлист",
+                PrimaryButtonText = "Переименовать",
+                SecondaryButtonText = "Порядок треков",
+                CloseButtonText = "Закрыть"
+            };
+
+            var nameBox = new TextBox { Text = playlist.Name };
+            dialog.Content = nameBox;
+
+            var result = await dialog.ShowAsync();
+
+            if (result == ContentDialogResult.Primary)
+            {
+                string newName = nameBox.Text.Trim();
+                if (!string.IsNullOrEmpty(newName) && newName != playlist.Name)
+                {
+                    playlist.Name = newName;
+                    await PlaylistStorage.SavePlaylistsAsync(_playlists);
+                    PlaylistsPanelControl.SetPlaylists(_playlists);
+                }
+            }
+            else if (result == ContentDialogResult.Secondary)
+            {
+                await ShowReorderDialogAsync(playlist);
+            }
+        }
+
+        private async Task ShowReorderDialogAsync(Playlist playlist)
+        {
+            var listBox = new ListBox { SelectionMode = SelectionMode.Single };
+            foreach (var t in playlist.Tracks)
+                listBox.Items.Add($"{t.Title} — {t.Artist}");
+
+            var moveUpButton = new Button { Content = "▲ Вверх" };
+            var moveDownButton = new Button { Content = "▼ Вниз" };
+
+            moveUpButton.Click += (s, e) =>
+            {
+                int idx = listBox.SelectedIndex;
+                if (idx > 0)
+                {
+                    var track = playlist.Tracks[idx];
+                    playlist.Tracks.RemoveAt(idx);
+                    playlist.Tracks.Insert(idx - 1, track);
+
+                    var item = listBox.Items[idx];
+                    listBox.Items.RemoveAt(idx);
+                    listBox.Items.Insert(idx - 1, item);
+                    listBox.SelectedIndex = idx - 1;
+                }
+            };
+
+            moveDownButton.Click += (s, e) =>
+            {
+                int idx = listBox.SelectedIndex;
+                if (idx >= 0 && idx < playlist.Tracks.Count - 1)
+                {
+                    var track = playlist.Tracks[idx];
+                    playlist.Tracks.RemoveAt(idx);
+                    playlist.Tracks.Insert(idx + 1, track);
+
+                    var item = listBox.Items[idx];
+                    listBox.Items.RemoveAt(idx);
+                    listBox.Items.Insert(idx + 1, item);
+                    listBox.SelectedIndex = idx + 1;
+                }
+            };
+
+            var buttonsPanel = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 10 };
+            buttonsPanel.Children.Add(moveUpButton);
+            buttonsPanel.Children.Add(moveDownButton);
+
+            var content = new StackPanel();
+            content.Children.Add(listBox);
+            content.Children.Add(buttonsPanel);
+
+            var dialog = new ContentDialog
+            {
+                Title = $"Порядок треков — {playlist.Name}",
+                PrimaryButtonText = "Сохранить",
+                SecondaryButtonText = "Отмена",
+                Content = content
+            };
+
+            var result = await dialog.ShowAsync();
+            if (result == ContentDialogResult.Primary)
+            {
+                await PlaylistStorage.SavePlaylistsAsync(_playlists);
+
+                var orderedIds = playlist.Tracks.Select(t => t.Id).ToList();
+                await LibraryDatabase.ReorderPlaylistTracksAsync(playlist.Id, orderedIds);
+            }
         }
 
 
@@ -738,22 +930,30 @@ namespace Decadence
         {
             string query = SearchBox.Text.Trim();
 
+            // Пустой запрос — реагируем сразу, без задержки
             if (string.IsNullOrEmpty(query))
             {
-                // Показываем кнопки, скрываем результаты
+                _searchDebounceTimer.Stop();
                 MainButtonsPanel.Visibility = Visibility.Visible;
                 SearchResults.Visibility = Visibility.Collapsed;
                 return;
             }
 
-            // Ищем
-            var results = _tracks.Where(t =>
-                t.Title.ToLower().Contains(query.ToLower()) ||
-                t.Artist.ToLower().Contains(query.ToLower()) ||
-                t.Album.ToLower().Contains(query.ToLower())
-            ).ToList();
+            // Непустой запрос — ждём паузу в наборе перед реальным поиском
+            _searchDebounceTimer.Stop();
+            _searchDebounceTimer.Start();
+        }
 
-            // Скрываем кнопки, показываем результаты
+        private async void SearchDebounceTimer_Tick(object sender, object e)
+        {
+            _searchDebounceTimer.Stop();
+
+            string query = SearchBox.Text.Trim();
+            if (string.IsNullOrEmpty(query)) return;
+
+            var records = await LibraryDatabase.SearchTracksAsync(query.ToLower());
+            var results = records.Select(r => r.ToTrackItem()).ToList();
+
             MainButtonsPanel.Visibility = Visibility.Collapsed;
             SearchResults.Visibility = Visibility.Visible;
             SearchResults.ItemsSource = results;
@@ -768,6 +968,504 @@ namespace Decadence
                 SearchBox.Text = "";
                 SearchResults.Visibility = Visibility.Collapsed;
                 MainButtonsPanel.Visibility = Visibility.Visible;
+            }
+        }
+
+        private readonly List<QueueItem> _queueCache = new List<QueueItem>();
+
+        private bool _userIsSeeking = false;
+        private bool _wasPlayingBeforeSeek = false;
+        private DispatcherTimer _globalTimer;
+        private bool _isPlayerActive = false;
+        private BitmapImage _playIcon;
+        private BitmapImage _pauseIcon;
+        private BitmapImage _repeatNoneIcon;
+        private BitmapImage _repeatOneIcon;
+        private BitmapImage _repeatAllIcon;
+        private BitmapImage _currentAlbumArt;
+
+        private double _swipeThreshold = 80;
+        private bool _isSwiping = false;
+
+        private void InitializePlayerIcons()
+        {
+            _playIcon = new BitmapImage(new Uri("ms-appx:///Assets/play_white.png"));
+            _pauseIcon = new BitmapImage(new Uri("ms-appx:///Assets/pause_white.png"));
+            _repeatNoneIcon = new BitmapImage(new Uri("ms-appx:///Assets/repeat_none_white.png"));
+            _repeatOneIcon = new BitmapImage(new Uri("ms-appx:///Assets/repeat_one_white.png"));
+            _repeatAllIcon = new BitmapImage(new Uri("ms-appx:///Assets/repeat_all_white.png"));
+        }
+
+        private string FormatTime(TimeSpan t) => $"{(int)t.TotalMinutes}:{t.Seconds:D2}";
+
+        // ===== Активация/деактивация по видимости секции плеера =====
+
+        private void UpdatePlayerSectionActiveState()
+        {
+            double sectionHeight = MainPanorama.ActualHeight;
+            if (sectionHeight <= 0) return;
+
+            bool isPlayerVisible = PageVerticalScroll.VerticalOffset >= sectionHeight / 2;
+
+            if (isPlayerVisible && !_isPlayerActive)
+            {
+                _isPlayerActive = true;
+                ActivatePlayerSection();
+            }
+            else if (!isPlayerVisible && _isPlayerActive)
+            {
+                _isPlayerActive = false;
+                DeactivatePlayerSection();
+            }
+        }
+
+        private async void ActivatePlayerSection()
+        {
+            MediaPlayerSingleton.TrackChanged += MediaPlayerSingleton_TrackChanged;
+            MediaPlayerSingleton.PlaybackStateChanged += MediaPlayerSingleton_PlaybackStateChanged;
+
+            var track = MediaPlayerSingleton.CurrentTrack;
+            if (track != null)
+            {
+                await ShowTrackAsync(track);
+            }
+            else
+            {
+                FullTrackTitle.Text = "Нет трека";
+                FullTrackArtist.Text = "Выберите трек в библиотеке";
+            }
+
+            UpdateRepeatButtonIcon();
+            UpdateShuffleButtonState();
+
+            if (_globalTimer != null)
+            {
+                _globalTimer.Stop();
+                _globalTimer.Tick -= GlobalTimer_Tick;
+            }
+            _globalTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
+            _globalTimer.Tick += GlobalTimer_Tick;
+            _globalTimer.Start();
+
+            UpdateQueue();
+            ForceUpdatePosition();
+        }
+
+        private void DeactivatePlayerSection()
+        {
+            MediaPlayerSingleton.TrackChanged -= MediaPlayerSingleton_TrackChanged;
+            MediaPlayerSingleton.PlaybackStateChanged -= MediaPlayerSingleton_PlaybackStateChanged;
+
+            if (_globalTimer != null)
+            {
+                _globalTimer.Stop();
+                _globalTimer.Tick -= GlobalTimer_Tick;
+                _globalTimer = null;
+            }
+        }
+
+        private void GlobalTimer_Tick(object sender, object e)
+        {
+            if (_isPlayerActive) UpdatePlaybackPosition();
+        }
+
+        private void MediaPlayerSingleton_TrackChanged(object sender, TrackItem track)
+        {
+            _ = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+            {
+                if (!_isPlayerActive) return;
+                _ = ShowTrackAsync(track);
+                UpdateQueue();
+                ForceUpdatePosition();
+            });
+        }
+
+        private void MediaPlayerSingleton_PlaybackStateChanged(object sender, bool isPlaying)
+        {
+            _ = Dispatcher.RunAsync(CoreDispatcherPriority.Normal, () =>
+            {
+                if (!_isPlayerActive) return;
+                UpdatePlayButtonState();
+            });
+        }
+
+        private async Task ShowTrackAsync(TrackItem track)
+        {
+            FullTrackTitle.Text = track.Title;
+            FullTrackArtist.Text = track.Artist;
+            ProgressSlider.Value = 0;
+            CurrentTimeText.Text = "0:00";
+            _userIsSeeking = false;
+
+            await LoadAlbumArt(track.FilePath);
+            UpdatePlayButtonState();
+        }
+
+        // ===== Позиция/время =====
+
+        private void ForceUpdatePosition()
+        {
+            var session = MediaPlayerSingleton.Player?.PlaybackSession;
+            var track = MediaPlayerSingleton.CurrentTrack;
+
+            if (session != null && session.NaturalDuration > TimeSpan.Zero)
+            {
+                ProgressSlider.Maximum = session.NaturalDuration.TotalSeconds;
+                ProgressSlider.Value = session.Position.TotalSeconds;
+                CurrentTimeText.Text = FormatTime(session.Position);
+                TotalTimeText.Text = FormatTime(session.NaturalDuration);
+            }
+            else if (track != null && track.Duration > TimeSpan.Zero)
+            {
+                ProgressSlider.Maximum = track.Duration.TotalSeconds;
+                TotalTimeText.Text = FormatTime(track.Duration);
+            }
+        }
+
+        private void UpdatePlaybackPosition()
+        {
+            var session = MediaPlayerSingleton.Player?.PlaybackSession;
+            if (session != null && session.NaturalDuration > TimeSpan.Zero && FullTrackTitle != null)
+            {
+                ProgressSlider.Maximum = session.NaturalDuration.TotalSeconds;
+                TotalTimeText.Text = FormatTime(session.NaturalDuration);
+
+                if (!_userIsSeeking)
+                {
+                    ProgressSlider.Value = session.Position.TotalSeconds;
+                    CurrentTimeText.Text = FormatTime(session.Position);
+                }
+            }
+        }
+
+        private async Task LoadAlbumArt(string filePath)
+        {
+            try
+            {
+                if (_currentAlbumArt != null)
+                {
+                    FullAlbumArt.Source = null;
+                    _currentAlbumArt = null;
+                }
+
+                var file = await StorageFile.GetFileFromPathAsync(filePath);
+                using (var thumb = await file.GetThumbnailAsync(
+                    Windows.Storage.FileProperties.ThumbnailMode.MusicView, 128))
+                {
+                    if (thumb != null && thumb.Size > 0)
+                    {
+                        _currentAlbumArt = new BitmapImage
+                        {
+                            CreateOptions = BitmapCreateOptions.IgnoreImageCache
+                        };
+                        await _currentAlbumArt.SetSourceAsync(thumb);
+                        FullAlbumArt.Source = _currentAlbumArt;
+                    }
+                }
+            }
+            catch { }
+        }
+
+        private void UpdatePlayButtonState()
+        {
+            if (FullPlayPauseIcon != null)
+                FullPlayPauseIcon.Source = MediaPlayerSingleton.IsPlaying ? _pauseIcon : _playIcon;
+        }
+
+        private void UpdateRepeatButtonIcon()
+        {
+            switch (MediaPlayerSingleton.RepeatMode)
+            {
+                case RepeatMode.None: RepeatButtonImage.Source = _repeatNoneIcon; break;
+                case RepeatMode.One: RepeatButtonImage.Source = _repeatOneIcon; break;
+                case RepeatMode.All: RepeatButtonImage.Source = _repeatAllIcon; break;
+            }
+        }
+
+        private void UpdateShuffleButtonState()
+        {
+            if (ShuffleButton.Content is TextBlock textBlock)
+                textBlock.Text = MediaPlayerSingleton.IsShuffleEnabled ? "Перемешать ✓" : "Перемешать";
+        }
+
+        // ===== Управление воспроизведением =====
+
+        private void PlayPauseButton_Click(object sender, RoutedEventArgs e)
+        {
+            MediaPlayerSingleton.TogglePlayPause();
+            UpdatePlayButtonState();
+        }
+
+        private async void PrevButton_Click(object sender, RoutedEventArgs e)
+        {
+            await MediaPlayerSingleton.PreviousAsync();
+        }
+
+        private async void NextButton_Click(object sender, RoutedEventArgs e)
+        {
+            await MediaPlayerSingleton.NextAsync();
+        }
+
+        private void ProgressSlider_ManipulationStarted(object sender, ManipulationStartedRoutedEventArgs e)
+        {
+            _userIsSeeking = true;
+            _wasPlayingBeforeSeek = MediaPlayerSingleton.IsPlaying;
+            if (_wasPlayingBeforeSeek)
+            {
+                MediaPlayerSingleton.Player.Pause();
+                UpdatePlayButtonState();
+            }
+        }
+
+        private async void ProgressSlider_ManipulationCompleted(object sender, ManipulationCompletedRoutedEventArgs e)
+        {
+            _userIsSeeking = false;
+            var session = MediaPlayerSingleton.Player.PlaybackSession;
+            if (session == null) return;
+
+            double remainingTime = session.NaturalDuration.TotalSeconds - ProgressSlider.Value;
+
+            if (remainingTime < 2 && ProgressSlider.Value > 0)
+            {
+                await MediaPlayerSingleton.NextAsync();
+            }
+            else
+            {
+                session.Position = TimeSpan.FromSeconds(ProgressSlider.Value);
+                if (_wasPlayingBeforeSeek)
+                {
+                    MediaPlayerSingleton.Player.Play();
+                    UpdatePlayButtonState();
+                }
+            }
+        }
+
+        private void RepeatButton_Click(object sender, RoutedEventArgs e)
+        {
+            switch (MediaPlayerSingleton.RepeatMode)
+            {
+                case RepeatMode.None: MediaPlayerSingleton.RepeatMode = RepeatMode.One; break;
+                case RepeatMode.One: MediaPlayerSingleton.RepeatMode = RepeatMode.All; break;
+                case RepeatMode.All: MediaPlayerSingleton.RepeatMode = RepeatMode.None; break;
+            }
+            UpdateRepeatButtonIcon();
+        }
+
+        private void ShuffleButton_Click(object sender, RoutedEventArgs e)
+        {
+            MediaPlayerSingleton.ToggleShuffle();
+            UpdateShuffleButtonState();
+            UpdateQueue();
+        }
+
+        // ===== Инфо / избранное / плейлисты =====
+
+        private async void TrackInfo_Click(object sender, RoutedEventArgs e)
+        {
+            var track = MediaPlayerSingleton.CurrentTrack;
+            if (track == null) return;
+
+            var dialog = new MessageDialog(
+                $"Название: {track.Title}\n" +
+                $"Исполнитель: {track.Artist}\n" +
+                $"Альбом: {track.Album}\n" +
+                $"Длительность: {track.Duration:mm\\:ss}\n" +
+                $"Путь: {track.FilePath}",
+                "Информация о треке"
+            );
+            await dialog.ShowAsync();
+        }
+
+        private async void AlbumArt_RightTapped(object sender, RightTappedRoutedEventArgs e)
+        {
+            var track = MediaPlayerSingleton.CurrentTrack;
+            if (track == null) return;
+
+            var menu = new MenuFlyout();
+            var favoriteItem = new MenuFlyoutItem
+            {
+                Text = track.IsFavorite ? "Убрать из избранного" : "В избранное"
+            };
+            favoriteItem.Click += async (s, args) =>
+            {
+                bool nowFavorite = await LibraryDatabase.ToggleFavoriteAsync(track.Id);
+                track.IsFavorite = nowFavorite;
+            };
+            menu.Items.Add(favoriteItem);
+
+            menu.ShowAt(sender as UIElement, e.GetPosition(sender as UIElement));
+        }
+
+        private async void AddToPlaylist_Click(object sender, RoutedEventArgs e)
+        {
+            var track = MediaPlayerSingleton.CurrentTrack;
+            if (track == null)
+            {
+                await new MessageDialog("Нет активного трека").ShowAsync();
+                return;
+            }
+
+            var playlists = App.CurrentPlaylists;
+            if (playlists == null || playlists.Count == 0)
+            {
+                await new MessageDialog("Нет плейлистов. Создайте первый в главном меню.").ShowAsync();
+                return;
+            }
+
+            var options = playlists.Select(p => p.Name).ToArray();
+            var selectedName = await ShowPlaylistPickerForPlayer(options);
+
+            if (selectedName != null)
+            {
+                var playlist = playlists.First(p => p.Name == selectedName);
+                if (!playlist.Tracks.Any(t => t.FilePath == track.FilePath))
+                {
+                    playlist.Tracks.Add(track);
+                    await PlaylistStorage.SavePlaylistsAsync(playlists);
+                    await new MessageDialog($"Трек добавлен в плейлист \"{playlist.Name}\"").ShowAsync();
+                    App.NotifyPlaylistsUpdated();
+                }
+                else
+                {
+                    await new MessageDialog("Трек уже есть в этом плейлисте").ShowAsync();
+                }
+            }
+        }
+
+        private async Task<string> ShowPlaylistPickerForPlayer(string[] options)
+        {
+            var dialog = new ContentDialog
+            {
+                Title = "Выберите плейлист",
+                PrimaryButtonText = "Добавить",
+                SecondaryButtonText = "Отмена"
+            };
+
+            var listBox = new ListBox();
+            foreach (var opt in options) listBox.Items.Add(opt);
+            if (listBox.Items.Count > 0) listBox.SelectedIndex = 0;
+            dialog.Content = listBox;
+
+            var result = await dialog.ShowAsync();
+            if (result == ContentDialogResult.Primary && listBox.SelectedItem != null)
+                return listBox.SelectedItem.ToString();
+            return null;
+        }
+
+        private void MenuToggleButton_Click(object sender, RoutedEventArgs e)
+        {
+            MenuSlidePanel.Visibility = Visibility.Visible;
+        }
+
+        private void CloseMenuPanel_Click(object sender, RoutedEventArgs e)
+        {
+            MenuSlidePanel.Visibility = Visibility.Collapsed;
+        }
+
+        // ===== Очередь =====
+
+        private void UpdateQueue()
+        {
+            _queueCache.Clear();
+            var playlist = MediaPlayerSingleton.CurrentPlaylist;
+            int currentIndex = MediaPlayerSingleton.CurrentIndex;
+
+            for (int i = 0; i < playlist.Count; i++)
+            {
+                var track = playlist[i];
+                _queueCache.Add(new QueueItem
+                {
+                    Index = i + 1,
+                    Title = track.Title,
+                    Artist = track.Artist,
+                    DurationText = FormatTime(track.Duration),
+                    IsCurrent = i == currentIndex
+                });
+            }
+
+            QueueListView.ItemsSource = null;
+            QueueListView.ItemsSource = _queueCache;
+        }
+
+        private async void QueueListView_ItemClick(object sender, ItemClickEventArgs e)
+        {
+            if (e.ClickedItem is QueueItem item)
+            {
+                int index = item.Index - 1;
+                var playlist = MediaPlayerSingleton.CurrentPlaylist;
+                if (index >= 0 && index < playlist.Count)
+                {
+                    await MediaPlayerSingleton.PlayAsync(playlist[index]);
+                }
+            }
+        }
+
+        // ===== Свайп по обложке =====
+
+        private void AlbumArt_ManipulationStarted(object sender, ManipulationStartedRoutedEventArgs e)
+        {
+            _isSwiping = true;
+        }
+
+        private void AlbumArt_ManipulationDelta(object sender, ManipulationDeltaRoutedEventArgs e)
+        {
+            if (!_isSwiping) return;
+
+            double deltaX = e.Cumulative.Translation.X;
+
+            if (deltaX > 30)
+            {
+                SwipeRightHint.Opacity = Math.Min(1, deltaX / _swipeThreshold);
+                SwipeLeftHint.Opacity = 0;
+            }
+            else if (deltaX < -30)
+            {
+                SwipeLeftHint.Opacity = Math.Min(1, -deltaX / _swipeThreshold);
+                SwipeRightHint.Opacity = 0;
+            }
+            else
+            {
+                SwipeLeftHint.Opacity = 0;
+                SwipeRightHint.Opacity = 0;
+            }
+        }
+
+        private async void AlbumArt_ManipulationCompleted(object sender, ManipulationCompletedRoutedEventArgs e)
+        {
+            _isSwiping = false;
+            SwipeLeftHint.Opacity = 0;
+            SwipeRightHint.Opacity = 0;
+
+            double totalDeltaX = e.Cumulative.Translation.X;
+
+            if (Math.Abs(totalDeltaX) > _swipeThreshold)
+            {
+                if (totalDeltaX > 0)
+                    await MediaPlayerSingleton.PreviousAsync();
+                else
+                    await MediaPlayerSingleton.NextAsync();
+            }
+        }
+        private void LogFocusedElement(string context)
+        {
+            var focused = FocusManager.GetFocusedElement() as FrameworkElement;
+            System.Diagnostics.Debug.WriteLine(
+                $"🔎[{context}] Фокус на: {focused?.GetType().Name ?? "null"}, Name={focused?.Name ?? "—"}");
+        }
+        private void QueueListView_ContainerContentChanging(ListViewBase sender, ContainerContentChangingEventArgs args)
+        {
+            if (args.Item is QueueItem item && args.ItemContainer.ContentTemplateRoot is Grid root)
+            {
+                var indexText = root.FindName("IndexText") as TextBlock;
+                var titleText = root.FindName("TitleText") as TextBlock;
+
+                if (indexText != null)
+                    indexText.Text = item.IsCurrent ? "▶" : item.Index.ToString();
+
+                if (titleText != null)
+                    titleText.Foreground = item.IsCurrent
+                        ? (Brush)Application.Current.Resources["AccentBrush"]
+                        : (Brush)Application.Current.Resources["TextBrush"];
             }
         }
     }
